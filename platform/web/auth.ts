@@ -1,10 +1,12 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 
-import { publicAppUrl } from "@/lib/config";
+import { authEnabled, publicAppUrl } from "@/lib/config";
 
 const githubConfigured = Boolean(
-  process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET,
+  authEnabled() &&
+    process.env.AUTH_GITHUB_ID &&
+    process.env.AUTH_GITHUB_SECRET,
 );
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

@@ -1,6 +1,10 @@
 import "server-only";
 import { auth } from "@/auth";
-import { developmentMockEnabled, validateRuntimeConfig } from "@/lib/config";
+import {
+  authEnabled,
+  developmentMockEnabled,
+  validateRuntimeConfig,
+} from "@/lib/config";
 import { query } from "@/lib/db";
 
 export type AppUser = { externalAuthId: string; email: string; name: string };
@@ -14,6 +18,7 @@ export async function currentUser(): Promise<AppUser | null> {
       name: "Development User",
     };
   }
+  if (!authEnabled()) return null;
   const session = await auth();
   if (!session?.user?.email) return null;
   return {

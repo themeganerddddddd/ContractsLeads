@@ -4,10 +4,10 @@ const productionRequired = [
   "DATABASE_URL",
   "NEXT_PUBLIC_APP_URL",
   "AUTH_SECRET",
-  "AUTH_GITHUB_ID",
-  "AUTH_GITHUB_SECRET",
   "INTERNAL_HEALTH_TOKEN",
 ] as const;
+
+const oauthRequired = ["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"] as const;
 
 const billingRequired = [
   "STRIPE_SECRET_KEY",
@@ -28,6 +28,20 @@ export function validateRuntimeConfig(
     throw new Error(
       `Production configuration is missing: ${missing.join(", ")}`,
     );
+
+  if (!["true", "false"].includes(env.AUTH_ENABLED || "")) {
+    throw new Error(
+      "Production configuration requires AUTH_ENABLED=true or AUTH_ENABLED=false",
+    );
+  }
+  if (env.AUTH_ENABLED === "true") {
+    const missingOauth = oauthRequired.filter((name) => !env[name]?.trim());
+    if (missingOauth.length) {
+      throw new Error(
+        `Enabled authentication is missing configuration: ${missingOauth.join(", ")}`,
+      );
+    }
+  }
 
   if (!["true", "false"].includes(env.BILLING_ENABLED || "")) {
     throw new Error(
@@ -69,6 +83,10 @@ export function developmentMockEnabled(
 
 export function billingEnabled(env: RuntimeEnvironment = process.env): boolean {
   return env.BILLING_ENABLED === "true";
+}
+
+export function authEnabled(env: RuntimeEnvironment = process.env): boolean {
+  return env.AUTH_ENABLED === "true";
 }
 
 export function developmentPlan(

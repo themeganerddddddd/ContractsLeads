@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  authEnabled,
   developmentMockEnabled,
   developmentPlan,
   validateRuntimeConfig,
@@ -11,6 +12,7 @@ const completeProduction = {
   DATABASE_URL: "postgres://pooled",
   NEXT_PUBLIC_APP_URL: "https://example.test",
   AUTH_SECRET: "secret",
+  AUTH_ENABLED: "true",
   AUTH_GITHUB_ID: "id",
   AUTH_GITHUB_SECRET: "secret",
   INTERNAL_HEALTH_TOKEN: "secret",
@@ -52,6 +54,26 @@ describe("production configuration", () => {
   });
   it("accepts a fully configured production environment", () => {
     expect(() => validateRuntimeConfig(completeProduction)).not.toThrow();
+  });
+  it("supports an anonymous production beta without OAuth credentials", () => {
+    const { AUTH_GITHUB_ID, AUTH_GITHUB_SECRET, ...anonymousProduction } =
+      completeProduction;
+    expect(() =>
+      validateRuntimeConfig({
+        ...anonymousProduction,
+        AUTH_ENABLED: "false",
+      }),
+    ).not.toThrow();
+    expect(
+      authEnabled({ APP_ENV: "production", AUTH_ENABLED: "false" }),
+    ).toBe(false);
+  });
+  it("requires OAuth credentials when production authentication is enabled", () => {
+    const { AUTH_GITHUB_ID, AUTH_GITHUB_SECRET, ...missingOauth } =
+      completeProduction;
+    expect(() => validateRuntimeConfig(missingOauth)).toThrow(
+      /AUTH_GITHUB_ID/,
+    );
   });
   it("requires Stripe settings only when billing is enabled", () => {
     expect(() =>

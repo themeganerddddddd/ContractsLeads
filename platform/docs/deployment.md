@@ -23,6 +23,7 @@ DATABASE_URL
 DATABASE_POOL_MAX
 NEXT_PUBLIC_APP_URL
 AUTH_SECRET
+AUTH_ENABLED
 AUTH_GITHUB_ID
 AUTH_GITHUB_SECRET
 BILLING_ENABLED
@@ -33,7 +34,10 @@ DEV_STRIPE
 
 Set `APP_ENV=production`, `DEV_AUTH=false`, and `DEV_STRIPE=false` in Production. Do not configure `DEV_PLAN` in Vercel. Development auth, billing, and plan overrides are rejected at production runtime unless the separately named `ALLOW_UNSAFE_PRODUCTION_MOCKS=true` emergency override is deliberately enabled. Keep that override unset during normal operation.
 
-Register the GitHub OAuth callback as:
+Set `AUTH_ENABLED=false` for the anonymous public beta. Public search and profile
+pages remain available, while account APIs return their existing unauthenticated
+responses and no development user is created. To enable GitHub sign-in later, set
+`AUTH_ENABLED=true`, configure both GitHub OAuth variables, and register the callback:
 
 ```text
 <NEXT_PUBLIC_APP_URL>/api/auth/callback/github

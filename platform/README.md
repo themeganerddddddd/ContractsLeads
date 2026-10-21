@@ -234,6 +234,7 @@ Free and Local users can see performance-location and intelligence controls, but
 
 ```text
 DEV_AUTH=false
+AUTH_ENABLED=true
 AUTH_SECRET=<strong-random-secret>
 AUTH_GITHUB_ID=<oauth-client-id>
 AUTH_GITHUB_SECRET=<oauth-client-secret>
@@ -288,7 +289,7 @@ The default test suite is offline; it does not depend on live federal APIs. When
 
 See `.env.example` for the complete credential-free template. Locally, `DATABASE_URL` and `PLATFORM_DATABASE_DIRECT_URL` use the same Docker database. In production, `DATABASE_URL` must be the provider's pooled web URL and `PLATFORM_DATABASE_DIRECT_URL` the worker/migration URL. USAspending requires no key. Secrets belong in `.env.local`, CI secrets, or Vercel Secret variables—not tracked files.
 
-`APP_ENV=production` enables fail-closed validation, and the same safeguards also activate whenever Node runs in production mode. Production requires the pooled database, public URL, Auth.js, and internal-health credentials. Set `BILLING_ENABLED=false` for the first beta when Stripe is not live; Stripe credentials, price IDs, and webhook secret become mandatory only when `BILLING_ENABLED=true`. `DEV_AUTH` and `DEV_STRIPE` are exact opt-ins and are rejected in production unless `ALLOW_UNSAFE_PRODUCTION_MOCKS=true` is deliberately used for an emergency. A normal deployment must leave that override unset.
+`APP_ENV=production` enables fail-closed validation, and the same safeguards also activate whenever Node runs in production mode. Production requires the pooled database, public URL, Auth.js secret, explicit `AUTH_ENABLED`, and internal-health credentials. `AUTH_ENABLED=false` supports an anonymous public beta without OAuth credentials; enabling it requires both GitHub OAuth variables. Set `BILLING_ENABLED=false` for the first beta when Stripe is not live; Stripe credentials, price IDs, and webhook secret become mandatory only when `BILLING_ENABLED=true`. `DEV_AUTH` and `DEV_STRIPE` are exact opt-ins and are rejected in production unless `ALLOW_UNSAFE_PRODUCTION_MOCKS=true` is deliberately used for an emergency. A normal deployment must leave that override unset.
 
 ## Deployment
 
