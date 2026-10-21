@@ -32,6 +32,7 @@ def main() -> int:
     reconcile.add_argument("--days", type=int, default=None)
     reconcile.add_argument("--start", type=date.fromisoformat)
     reconcile.add_argument("--end", type=date.fromisoformat)
+    reconcile.add_argument("--limit", type=int, help="Optional bounded validation limit")
     backfill = subparsers.add_parser("backfill", help="Import official USAspending full contract archives")
     backfill.add_argument("--start", type=date.fromisoformat, required=True)
     backfill.add_argument("--end", type=date.fromisoformat, required=True)
@@ -64,9 +65,12 @@ def main() -> int:
             elif args.start or args.end:
                 if not (args.start and args.end):
                     raise ValueError("reconcile --start and --end must be provided together")
-                result = service.reconcile_window(args.start, args.end)
+                result = service.reconcile_window(args.start, args.end, max_records=args.limit)
             else:
-                result = service.reconcile(args.days or settings.reconciliation_days)
+                result = service.reconcile(
+                    args.days or settings.reconciliation_days,
+                    max_records=args.limit,
+                )
         elif args.command == "uk-sync":
             end_date = args.end or date.today()
             start_date = args.start or (end_date - timedelta(days=1))

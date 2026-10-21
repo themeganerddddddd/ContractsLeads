@@ -94,6 +94,9 @@ python -m ingestion sync --start 2026-10-19 --end 2026-10-19 --limit 100
 # Weekly U.S. reconciliation
 python -m ingestion reconcile --days 30
 
+# Explicit bounded action-date validation window
+python -m ingestion reconcile --start 2026-10-20 --end 2026-10-20 --limit 100
+
 # Manual FY2022-present historical backfill (restart-safe and idempotent)
 python -m ingestion backfill --start 2021-10-01 --end 2026-10-20 --batch-size 1000
 

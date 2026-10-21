@@ -6,6 +6,7 @@ export type HealthRun = {
   records_failed: string;
   duration_ms: string | null;
   error_summary: string | null;
+  metadata: Record<string, unknown>;
 };
 
 export type HealthStatus = "healthy" | "degraded" | "initializing";
@@ -19,7 +20,12 @@ export function deriveHealthStatus(runs: HealthRun[], now = new Date()): { statu
   for (const run of runs) if (!latestBySource.has(run.source)) latestBySource.set(run.source, run);
   for (const run of latestBySource.values()) {
     if (run.status === "failed") reasons.push(`latest ${run.source} run failed`);
-    if (run.status === "partial") reasons.push(`latest ${run.source} run was partial`);
+    const intentionalBoundedPartial = run.status === "partial"
+      && run.metadata?.limit_reached === true
+      && Number(run.records_failed) === 0;
+    if (run.status === "partial" && !intentionalBoundedPartial) {
+      reasons.push(`latest ${run.source} run was partial`);
+    }
   }
   if (!runs.length || (!daily && reasons.length === 1)) return { status: "initializing", reasons };
   return { status: reasons.length ? "degraded" : "healthy", reasons };

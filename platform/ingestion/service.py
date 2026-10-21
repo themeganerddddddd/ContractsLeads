@@ -141,12 +141,34 @@ class IngestionService:
             raise ValueError("end date must be on or after start date")
         return self._run(start, end, "last_modified_date", "usaspending", max_records=max_records)
 
-    def reconcile(self, days: int, today: date | None = None) -> dict:
+    def reconcile(
+        self,
+        days: int,
+        today: date | None = None,
+        max_records: int | None = None,
+    ) -> dict:
         end = today or date.today()
         start = end - timedelta(days=max(1, days))
-        return self._run(start, end, "action_date", "usaspending_reconciliation")
+        return self._run(
+            start,
+            end,
+            "action_date",
+            "usaspending_reconciliation",
+            max_records=max_records,
+        )
 
-    def reconcile_window(self, start: date, end: date) -> dict:
+    def reconcile_window(
+        self,
+        start: date,
+        end: date,
+        max_records: int | None = None,
+    ) -> dict:
         if end < start:
             raise ValueError("end date must be on or after start date")
-        return self._run(start, end, "action_date", "usaspending_reconciliation")
+        return self._run(
+            start,
+            end,
+            "action_date",
+            "usaspending_reconciliation",
+            max_records=max_records,
+        )

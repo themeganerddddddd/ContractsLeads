@@ -120,6 +120,7 @@ Periodic recent-history reconciliation queries by action date and reuses the sam
 ```powershell
 python -m ingestion reconcile --days 30
 python -m ingestion reconcile --start 2022-01-02 --end 2022-01-02
+python -m ingestion reconcile --start 2026-10-20 --end 2026-10-20 --limit 100
 ```
 
 The default window comes from `RECONCILIATION_DAYS`. Recommended production schedule:

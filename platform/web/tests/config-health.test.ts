@@ -127,6 +127,7 @@ describe("ingestion health model", () => {
     records_failed: "0",
     duration_ms: "50",
     error_summary: null,
+    metadata: {},
     ...overrides,
   });
   it("is healthy for a recent successful daily run", () => {
@@ -147,5 +148,18 @@ describe("ingestion health model", () => {
   });
   it("reports an empty database as initializing", () => {
     expect(deriveHealthStatus([]).status).toBe("initializing");
+  });
+  it("does not degrade for an intentional bounded validation run without failures", () => {
+    expect(
+      deriveHealthStatus([
+        run({
+          source: "usaspending_reconciliation",
+          status: "partial",
+          records_failed: "0",
+          metadata: { bounded_limit: 100, limit_reached: true },
+        }),
+        run(),
+      ], new Date("2026-10-12T12:00:00Z")),
+    ).toEqual({ status: "healthy", reasons: [] });
   });
 });

@@ -5,7 +5,7 @@ import { deriveHealthStatus, type HealthRun } from "@/lib/health-model";
 export async function getIngestionHealth() {
   const [runs, jobs, inventory] = await Promise.all([
     query<HealthRun>(
-      `SELECT source,status,completed_at::text,records_received::text,records_failed::text,duration_ms::text,error_summary
+      `SELECT source,status,completed_at::text,records_received::text,records_failed::text,duration_ms::text,error_summary,metadata
        FROM ingestion_runs WHERE status IN ('success','partial','failed')
        ORDER BY completed_at DESC NULLS LAST LIMIT 60`
     ),
