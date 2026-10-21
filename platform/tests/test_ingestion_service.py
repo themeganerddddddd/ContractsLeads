@@ -58,6 +58,37 @@ def test_reconciliation_uses_action_date_window():
     assert client.calls[0][0] == date(2026,9,12)
 
 
+def test_sync_accepts_an_explicit_bounded_last_modified_window():
+    repository = MemoryRepository()
+    client = FakeClient([])
+    result = IngestionService(repository, client).sync_window(
+        date(2026, 10, 20), date(2026, 10, 21)
+    )
+
+    assert result["start"] == "2026-10-20" and result["end"] == "2026-10-21"
+    assert client.calls[0] == (
+        date(2026, 10, 20),
+        date(2026, 10, 21),
+        "last_modified_date",
+    )
+
+
+def test_bounded_sync_marks_a_truncated_window_partial():
+    rows = [
+        {**RAW, "internal_id": f"tx-{index}", "generated_internal_id": f"award-{index}"}
+        for index in range(3)
+    ]
+    repository = MemoryRepository()
+    result = IngestionService(repository, FakeClient(rows), batch_size=2).sync_window(
+        date(2026, 10, 19), date(2026, 10, 19), max_records=2
+    )
+
+    assert result["status"] == "partial"
+    assert result["received"] == 2
+    assert result["metadata"] == {"bounded_limit": 2, "limit_reached": True}
+    assert repository.runs[-1]["status"] == "partial"
+
+
 def test_reconciliation_accepts_an_explicit_historical_window():
     repository=MemoryRepository(); client=FakeClient([])
     result=IngestionService(repository,client).reconcile_window(date(2022,1,2),date(2022,1,2))

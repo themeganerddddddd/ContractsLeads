@@ -20,7 +20,10 @@ from .uk import FindATenderAdapter, UKSyncService
 def main() -> int:
     parser = argparse.ArgumentParser(description="Nationwide USAspending transaction importer")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("sync", help="Import newly added or modified contract transactions")
+    sync = subparsers.add_parser("sync", help="Import newly added or modified contract transactions")
+    sync.add_argument("--start", type=date.fromisoformat, help="Inclusive last-modified date (YYYY-MM-DD)")
+    sync.add_argument("--end", type=date.fromisoformat, help="Inclusive last-modified date (YYYY-MM-DD)")
+    sync.add_argument("--limit", type=int, help="Optional bounded validation limit")
     uk_sync = subparsers.add_parser("uk-sync", help="Import official Find a Tender OCDS releases")
     uk_sync.add_argument("--start", type=date.fromisoformat, help="Inclusive updated date (YYYY-MM-DD)")
     uk_sync.add_argument("--end", type=date.fromisoformat, help="Inclusive updated date (YYYY-MM-DD)")
@@ -52,7 +55,12 @@ def main() -> int:
             client = USAspendingClient(settings.usaspending_base_url, settings.page_limit)
             service = IngestionService(repository, client, settings.overlap_days, batch_size=settings.batch_size)
             if args.command == "sync":
-                result = service.sync()
+                if args.start or args.end:
+                    if not (args.start and args.end):
+                        raise ValueError("sync --start and --end must be provided together")
+                    result = service.sync_window(args.start, args.end, max_records=args.limit)
+                else:
+                    result = service.sync(max_records=args.limit)
             elif args.start or args.end:
                 if not (args.start and args.end):
                     raise ValueError("reconcile --start and --end must be provided together")

@@ -88,6 +88,9 @@ Run these from `platform/` with `PLATFORM_DATABASE_DIRECT_URL` configured:
 # Daily U.S. incremental sync
 python -m ingestion sync
 
+# Explicit bounded U.S. validation window
+python -m ingestion sync --start 2026-10-19 --end 2026-10-19 --limit 100
+
 # Weekly U.S. reconciliation
 python -m ingestion reconcile --days 30
 

@@ -75,7 +75,14 @@ class IngestionService:
                     if len(errors) < 20:
                         errors.append(f"{type(exc).__name__}: {exc}")
 
-    def _run(self, start: date, end: date, date_type: str, source: str) -> dict:
+    def _run(
+        self,
+        start: date,
+        end: date,
+        date_type: str,
+        source: str,
+        max_records: int | None = None,
+    ) -> dict:
         started = clock.monotonic()
         start_checkpoint = datetime.combine(start, time.min, tzinfo=timezone.utc)
         end_checkpoint = datetime.combine(end, time.max, tzinfo=timezone.utc)
@@ -86,9 +93,15 @@ class IngestionService:
         }
         errors: list[str] = []
         batch: list[dict] = []
+        bounded = max_records is not None
+        limit = max(1, max_records or 1)
+        limit_reached = False
         _log("ingestion_started", run_id=run_id, source=source, start=start, end=end, date_type=date_type)
         try:
             for raw in self.client.iter_transactions(start, end, date_type=date_type):
+                if bounded and stats["received"] >= limit:
+                    limit_reached = True
+                    break
                 stats["requested"] += 1
                 stats["received"] += 1
                 try:
@@ -101,7 +114,9 @@ class IngestionService:
                     if len(errors) < 20:
                         errors.append(f"{type(exc).__name__}: {exc}")
             self._write_batch(batch, stats, errors)
-            status = "partial" if stats["failed"] else "success"
+            status = "partial" if stats["failed"] or limit_reached else "success"
+            if bounded:
+                stats["metadata"] = {"bounded_limit": limit, "limit_reached": limit_reached}
             stats["duration_ms"] = round((clock.monotonic() - started) * 1000)
             self.repository.finish_run(run_id, status, stats, "\n".join(errors) or None)
             _log("ingestion_completed", run_id=run_id, source=source, status=status, **stats)
@@ -112,14 +127,19 @@ class IngestionService:
             _log("ingestion_failed", run_id=run_id, source=source, error_type=type(exc).__name__, **stats)
             raise
 
-    def sync(self, today: date | None = None) -> dict:
+    def sync(self, today: date | None = None, max_records: int | None = None) -> dict:
         end = today or date.today()
         checkpoint = self.repository.last_successful_checkpoint("usaspending")
         if checkpoint:
             start = checkpoint.date() - timedelta(days=self.overlap_days)
         else:
             start = end - timedelta(days=30)
-        return self._run(start, end, "last_modified_date", "usaspending")
+        return self._run(start, end, "last_modified_date", "usaspending", max_records=max_records)
+
+    def sync_window(self, start: date, end: date, max_records: int | None = None) -> dict:
+        if end < start:
+            raise ValueError("end date must be on or after start date")
+        return self._run(start, end, "last_modified_date", "usaspending", max_records=max_records)
 
     def reconcile(self, days: int, today: date | None = None) -> dict:
         end = today or date.today()

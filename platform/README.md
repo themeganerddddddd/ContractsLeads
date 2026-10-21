@@ -112,6 +112,7 @@ The daily importer uses USAspending's transaction search endpoint with `date_typ
 ```powershell
 cd platform
 python -m ingestion sync
+python -m ingestion sync --start 2026-10-19 --end 2026-10-19 --limit 100
 ```
 
 Periodic recent-history reconciliation queries by action date and reuses the same idempotent upserts:
