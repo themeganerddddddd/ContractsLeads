@@ -88,6 +88,37 @@ def test_service_commits_configured_batches_and_reports_entity_counts():
     assert result["transactions_created"] == 5
 
 
+def test_transient_batch_failure_retries_the_whole_batch_before_row_isolation():
+    class TransientBatchRepository(MemoryRepository):
+        def __init__(self):
+            super().__init__()
+            self.calls = 0
+
+        def ingest_batch(self, records):
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("connection dropped")
+            inserted = sum(self.ingest(record) for record in records)
+            return {
+                "records_inserted": inserted,
+                "records_updated": len(records) - inserted,
+                "companies_created": inserted,
+                "awards_created": inserted,
+                "transactions_created": inserted,
+                "batches_committed": 1,
+            }
+
+    repository = TransientBatchRepository()
+    result = IngestionService(repository, FakeClient([RAW]), batch_size=10).reconcile(
+        3, today=date(2026, 10, 12)
+    )
+
+    assert repository.calls == 2
+    assert result["status"] == "success"
+    assert result["failed"] == 0
+    assert result["transactions_created"] == 1
+
+
 def test_source_failure_marks_run_failed_without_advancing_success_checkpoint():
     class FailingClient:
         def iter_transactions(self, start, end, date_type):

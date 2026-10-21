@@ -30,6 +30,13 @@ class IngestionService:
         self.classifier = classifier or IndustryClassifier()
         self.batch_size = max(1, batch_size)
 
+    @staticmethod
+    def _merge_batch_result(stats: dict, result: dict) -> None:
+        stats["inserted"] += result["records_inserted"]
+        stats["updated"] += result["records_updated"]
+        for key in ("companies_created", "awards_created", "transactions_created", "batches_committed"):
+            stats[key] += result[key]
+
     def _write_batch(self, batch: list[dict], stats: dict, errors: list[str]) -> None:
         if not batch:
             return
@@ -48,21 +55,21 @@ class IngestionService:
             return
         try:
             result = self.repository.ingest_batch(batch)
-            stats["inserted"] += result["records_inserted"]
-            stats["updated"] += result["records_updated"]
-            for key in ("companies_created", "awards_created", "transactions_created", "batches_committed"):
-                stats[key] += result[key]
+            self._merge_batch_result(stats, result)
         except Exception as batch_exc:
             _log("ingestion_batch_retry", size=len(batch), error_type=type(batch_exc).__name__)
+            try:
+                result = self.repository.ingest_batch(batch)
+                self._merge_batch_result(stats, result)
+                return
+            except Exception as retry_exc:
+                _log("ingestion_batch_isolation", size=len(batch), error_type=type(retry_exc).__name__)
             # The repository rolls the batch back. Isolate malformed rows so one
             # source record does not make the whole date window unrecoverable.
             for normalized in batch:
                 try:
                     result = self.repository.ingest_batch([normalized])
-                    stats["inserted"] += result["records_inserted"]
-                    stats["updated"] += result["records_updated"]
-                    for key in ("companies_created", "awards_created", "transactions_created", "batches_committed"):
-                        stats[key] += result[key]
+                    self._merge_batch_result(stats, result)
                 except Exception as exc:
                     stats["failed"] += 1
                     if len(errors) < 20:
