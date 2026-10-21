@@ -33,6 +33,14 @@ DEV_STRIPE
 
 Set `APP_ENV=production`, `DEV_AUTH=false`, and `DEV_STRIPE=false` in Production. Do not configure `DEV_PLAN` in Vercel. Development auth, billing, and plan overrides are rejected at production runtime unless the separately named `ALLOW_UNSAFE_PRODUCTION_MOCKS=true` emergency override is deliberately enabled. Keep that override unset during normal operation.
 
+Register the GitHub OAuth callback as:
+
+```text
+<NEXT_PUBLIC_APP_URL>/api/auth/callback/github
+```
+
+Auth.js post-login redirects are constrained to the configured public application origin.
+
 When `BILLING_ENABLED=false`, Stripe is not required and checkout/portal endpoints return a controlled unavailable response. When `BILLING_ENABLED=true`, also configure these Vercel Secret variables:
 
 ```text
