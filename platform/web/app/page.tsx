@@ -28,7 +28,7 @@ export default async function HomePage() {
         <MetricCard label="Disclosed obligations" value={compactMoney(data.metrics?.activity)} note="transaction obligations only" />
         <MetricCard label="States represented" value={Number(data.metrics?.states || 0).toLocaleString()} note="recipient or performance" />
       </div>
-      <DataNote updated={data.lastUpdated} demo />
+      <DataNote updated={data.lastUpdated} />
       <section className="section"><div className="section-header"><div><p className="eyebrow">Market pulse</p><h2>Recent contracts</h2></div><Link href="/contracts">All contracts →</Link></div><AwardTable rows={data.recent} compact /></section>
       <section className="section"><div className="section-header"><div><p className="eyebrow">Capital at work</p><h2>Largest recent awards</h2></div></div><AwardTable rows={data.largest} compact /></section>
       <section className="section split-grid"><div className="panel"><div className="panel-header"><h2>Top companies</h2><Link href="/companies">View all →</Link></div><RankedList rows={data.companies} route="company" /></div><div className="panel"><div className="panel-header"><h2>Top industries</h2><Link href="/industries">View all →</Link></div><RankedList rows={data.industries} route="industry" /></div></section>
