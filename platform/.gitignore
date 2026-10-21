@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.backfill-cache/
+web/node_modules/
+web/.next/
+web/.vercel/
+__pycache__/
+*.py[cod]
+*.dump
+*.backup
+*.sql.gz
+*.csv.gz
+*.jsonl.gz
+*.zip
+models/
+reports/*.json

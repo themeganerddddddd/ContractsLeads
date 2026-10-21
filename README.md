@@ -1,4 +1,10 @@
-# Montgomery County Federal Contract Tracker
+# Federal Ledger / ContractsLeads
+
+This repository is the production source for Federal Ledger. The managed PostgreSQL and Next.js application lives under [`platform/`](platform/README.md), with `platform/web` as the Vercel project root. The original Montgomery County static tracker remains below as a legacy prototype and continues to preserve its own relative GitHub Pages asset paths.
+
+Production repository: `themeganerddddddd/ContractsLeads`
+
+## Montgomery County Federal Contract Tracker
 
 The public dashboard has two intentionally separate markets:
 

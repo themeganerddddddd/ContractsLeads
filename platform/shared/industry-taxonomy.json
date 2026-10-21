@@ -1,0 +1,35 @@
+{
+  "industries": [
+    {"name":"Aerospace & Defense","slug":"aerospace-defense","keywords":["weapon","missile","radar","aircraft","defense system"]},
+    {"name":"Space & Satellite","slug":"space-satellite","keywords":["satellite","spacecraft","orbital","launch vehicle","payload"]},
+    {"name":"Information Technology","slug":"information-technology","keywords":["software","cloud","information technology","data center","devsecops"]},
+    {"name":"Cybersecurity","slug":"cybersecurity","keywords":["cybersecurity","cyber security","zero trust","information assurance","threat detection"]},
+    {"name":"Artificial Intelligence & Data","slug":"artificial-intelligence-data","keywords":["artificial intelligence","machine learning","data analytics","data fusion","neural network"]},
+    {"name":"Telecommunications","slug":"telecommunications","keywords":["telecommunications","radio frequency","5g","network communications"]},
+    {"name":"Semiconductors & Electronics","slug":"semiconductors-electronics","keywords":["semiconductor","microelectronics","integrated circuit","sensor electronics"]},
+    {"name":"Advanced Manufacturing","slug":"advanced-manufacturing","keywords":["additive manufacturing","advanced manufacturing","digital manufacturing"]},
+    {"name":"Construction","slug":"construction","keywords":["construction","renovation","civil works"]},
+    {"name":"Architecture & Engineering","slug":"architecture-engineering","keywords":["architecture","engineering design","technical design"]},
+    {"name":"Professional Services","slug":"professional-services","keywords":["consulting","management support","professional services"]},
+    {"name":"Healthcare","slug":"healthcare","keywords":["healthcare","clinical care","medical services"]},
+    {"name":"Biotechnology & Pharmaceuticals","slug":"biotechnology-pharmaceuticals","keywords":["biotechnology","pharmaceutical","therapeutic","vaccine"]},
+    {"name":"Research & Science","slug":"research-science","keywords":["research","laboratory","scientific study"]},
+    {"name":"Energy","slug":"energy","keywords":["energy system","power generation","electric grid"]},
+    {"name":"Environmental Services","slug":"environmental-services","keywords":["environmental","remediation","hazardous waste"]},
+    {"name":"Transportation & Logistics","slug":"transportation-logistics","keywords":["transportation","logistics","freight","distribution"]},
+    {"name":"Facilities & Real Estate","slug":"facilities-real-estate","keywords":["facility management","real estate","building operations"]},
+    {"name":"Food & Agriculture","slug":"food-agriculture","keywords":["food supply","agriculture","farming"]},
+    {"name":"Education & Training","slug":"education-training","keywords":["training","education","curriculum"]},
+    {"name":"Other","slug":"other","keywords":[]}
+  ],
+  "naics": {
+    "336414":"space-satellite","336415":"space-satellite","336419":"space-satellite",
+    "541511":"information-technology","541512":"information-technology","541513":"information-technology","541519":"information-technology",
+    "541715":"research-science","541611":"professional-services","236220":"construction",
+    "517311":"telecommunications","334413":"semiconductors-electronics","621111":"healthcare","325412":"biotechnology-pharmaceuticals"
+  },
+  "psc": {
+    "D302":"information-technology","D310":"cybersecurity","AR11":"space-satellite","Y1JZ":"construction",
+    "R408":"professional-services","R425":"professional-services","Q201":"healthcare","V119":"transportation-logistics"
+  }
+}
