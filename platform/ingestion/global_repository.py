@@ -15,6 +15,7 @@ class GlobalProcurementRepositoryMixin:
     """Persistence shared by all non-USAspending source adapters."""
 
     def start_source_sync(self, source_system: str, checkpoint_key: str) -> None:
+        self._ensure_connection()
         self.connection.execute(
             """INSERT INTO source_checkpoints (source_system,checkpoint_key,status)
                VALUES (%s,%s,'running') ON CONFLICT (source_system,checkpoint_key) DO UPDATE SET
@@ -36,6 +37,7 @@ class GlobalProcurementRepositoryMixin:
         checkpoint_value: str | None = None,
         error_summary: str | None = None,
     ) -> None:
+        self._ensure_connection()
         self.connection.execute(
             """UPDATE source_checkpoints SET checkpoint_value=%s,status=%s,records_seen=%s,records_written=%s,
                error_summary=%s,metadata=%s::jsonb,updated_at=now()

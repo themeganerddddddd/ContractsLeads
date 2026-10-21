@@ -21,12 +21,23 @@ def slugify(value: str) -> str:
 
 class PostgresRepository(GlobalProcurementRepositoryMixin):
     def __init__(self, database_url: str):
-        self.connection = psycopg.connect(database_url, row_factory=dict_row)
+        self._database_url = database_url
+        self.connection = self._connect()
+
+    def _connect(self):
+        return psycopg.connect(self._database_url, row_factory=dict_row)
+
+    def _ensure_connection(self):
+        """Reconnect between transactions after a transient database disconnect."""
+        if self.connection.closed or self.connection.broken:
+            self.connection = self._connect()
+        return self.connection
 
     def close(self) -> None:
         self.connection.close()
 
     def last_successful_checkpoint(self, source: str) -> datetime | None:
+        self._ensure_connection()
         row = self.connection.execute(
             "SELECT end_checkpoint FROM ingestion_runs WHERE source=%s AND status='success' AND end_checkpoint IS NOT NULL ORDER BY completed_at DESC LIMIT 1",
             (source,),
@@ -34,6 +45,7 @@ class PostgresRepository(GlobalProcurementRepositoryMixin):
         return row["end_checkpoint"] if row else None
 
     def start_run(self, source: str, start_checkpoint: datetime, end_checkpoint: datetime) -> str:
+        self._ensure_connection()
         row = self.connection.execute(
             "INSERT INTO ingestion_runs (status,source,start_checkpoint,end_checkpoint) VALUES ('running',%s,%s,%s) RETURNING id::text",
             (source, start_checkpoint, end_checkpoint),
@@ -42,6 +54,7 @@ class PostgresRepository(GlobalProcurementRepositoryMixin):
         return row["id"]
 
     def finish_run(self, run_id: str, status: str, stats: dict, error_summary: str | None = None) -> None:
+        self._ensure_connection()
         self.connection.execute(
             """UPDATE ingestion_runs SET completed_at=now(),status=%s,records_requested=%s,records_received=%s,
                records_inserted=%s,records_updated=%s,records_failed=%s,records_skipped=%s,
@@ -59,11 +72,13 @@ class PostgresRepository(GlobalProcurementRepositoryMixin):
     @contextmanager
     def transaction(self):
         """One explicit transaction boundary for an import batch and checkpoint."""
+        connection = self._ensure_connection()
         try:
             yield
-            self.connection.commit()
+            connection.commit()
         except Exception:
-            self.connection.rollback()
+            if not connection.closed and not connection.broken:
+                connection.rollback()
             raise
 
     def _industry_id(self, slug: str):
@@ -365,6 +380,7 @@ class PostgresRepository(GlobalProcurementRepositoryMixin):
         source_updated_at: datetime | None = None,
         metadata: dict | None = None,
     ) -> dict:
+        self._ensure_connection()
         row = self.connection.execute(
             """INSERT INTO backfill_jobs (
                  start_date,end_date,fiscal_year,source_url,source_file_name,source_updated_at,status,batch_size,metadata
@@ -387,6 +403,7 @@ class PostgresRepository(GlobalProcurementRepositoryMixin):
         source_size_bytes: int | None = None,
         source_etag: str | None = None,
     ) -> None:
+        self._ensure_connection()
         self.connection.execute(
             """UPDATE backfill_jobs SET status=%s,started_at=COALESCE(started_at,now()),
                bytes_downloaded=COALESCE(%s,bytes_downloaded),source_size_bytes=COALESCE(%s,source_size_bytes),
@@ -409,6 +426,7 @@ class PostgresRepository(GlobalProcurementRepositoryMixin):
         member_row: int | None = None,
         rows_processed: int | None = None,
     ) -> dict:
+        self._ensure_connection()
         row = self.connection.execute(
             """UPDATE backfill_jobs SET status=%s,records_skipped=records_skipped+%s,
                records_failed=records_failed+%s,completed_at=CASE WHEN %s IN ('success','partial','failed') THEN now() END,
