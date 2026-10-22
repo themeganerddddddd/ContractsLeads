@@ -1,28 +1,34 @@
 # Production storage-capacity report
 
 Measured 2026-10-22 against the live Neon production database after migrations
-0008–0011 and bounded U.S., UK, and TED samples. Provider capacity is supplied
-at runtime as `DATABASE_CAPACITY_BYTES=1073741824` (1 GiB). Thresholds are
-configuration: warning 60%, historical stop 72%, critical incremental stop 90%.
+0008–0011, bounded U.S./UK/TED samples, and the records committed by the active
+scheduled U.S. incremental sync. Provider capacity is supplied at runtime as
+`DATABASE_CAPACITY_BYTES=1073741824` (1 GiB). Thresholds are configuration:
+warning 60%, historical stop 72%, critical incremental stop 90%. Because that
+incremental run was still active at the ending snapshot, later totals will be
+higher; the guard checks before every committed batch.
 
 ## Current footprint
 
 | Measure | Bytes | Share of database |
 |---|---:|---:|
-| Whole database | 145,039,360 | 100% |
-| Raw/version-bearing relations | 41,558,016 | 28.653% |
-| Other normalized/index/overhead | 103,481,344 | 71.347% |
+| Whole database | 352,559,104 | 100% |
+| Table data | 223,559,680 | 63.410% |
+| Indexes | 111,648,768 | 31.668% |
+| Raw/version-bearing relations | 133,988,352 | 38.005% |
 
 Raw/version-bearing relations are `raw_source_transactions`,
 `raw_source_transaction_versions`, `procurement_process_releases`, and
-`procurement_notices`. The largest individual relations are
-`procurement_events` (33,374,208 bytes), `procurement_processes` (19,079,168),
-`raw_source_transaction_versions` (18,710,528),
-`raw_source_transactions` (17,809,408), and `awards` (13,025,280).
+`procurement_notices`. The largest individual relations at the ending snapshot
+are `raw_source_transaction_versions` (68,902,912 bytes),
+`raw_source_transactions` (59,047,936), `awards` (45,555,712),
+`procurement_events` (43,245,568), and `procurement_processes` (29,671,424).
 
-At the measured footprint, 499,205,734 bytes remain before warning,
-628,054,753 before the historical stop, and 821,328,281 before the critical
-incremental stop. Relation and index sizes are page-granular, so small-sample
+At the ending snapshot, approximately 291,685,990 bytes remain before warning,
+420,535,009 before the historical stop, and 613,808,538 before the critical
+incremental stop. The post-sample, pre-scheduled-run footprint was 145,039,360
+bytes; the ending footprint was 352,559,104 bytes (32.835% of configured
+capacity). Relation and index sizes are page-granular, so small-sample
 bytes-per-record values are estimates, not exact forecasts.
 
 ## Source enumeration and sample growth
@@ -49,8 +55,8 @@ pre-download maximum and processes one package at a time.
 | TED three to five years | about 2.6–4.4 million at 2025 volume | about 32–54 GiB at the initial measured representation; remeasure after the compact release-pointer optimization |
 
 Even the lower bounds exceed the 1 GiB project. At the present stop buffer,
-only about 143,000 U.S. sample-shaped transactions, 109,000 UK releases, or
-47,000 TED sample-shaped notices would fit if loaded alone. A complete
+only about 95,700 U.S. sample-shaped transactions, 73,200 UK releases, or
+31,800 TED sample-shaped notices would fit if loaded alone. A complete
 multi-market historical backfill is therefore unsafe on the current plan.
 
 ## Decision
