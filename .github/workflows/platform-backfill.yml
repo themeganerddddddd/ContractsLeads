@@ -29,7 +29,6 @@ jobs:
       START_DATE: ${{ inputs.start_date }}
       END_DATE: ${{ inputs.end_date }}
       MAX_RECORDS: ${{ inputs.max_records }}
-      BACKFILL_CACHE_DIR: ${{ runner.temp }}/federal-ledger-backfill
       INGESTION_BATCH_SIZE: "1000"
       DATABASE_CAPACITY_BYTES: "1073741824"
       DATABASE_CAPACITY_WARNING_FRACTION: "0.60"
@@ -44,6 +43,8 @@ jobs:
       - run: python -m pip install -r platform/requirements.txt
       - run: python platform/scripts/manage_db.py migrate
       - working-directory: platform
+        env:
+          BACKFILL_CACHE_DIR: ${{ runner.temp }}/federal-ledger-backfill
         run: |
           python - <<'PY'
           import os

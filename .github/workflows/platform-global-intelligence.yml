@@ -50,6 +50,7 @@ jobs:
 
   intelligence:
     needs: uk-find-a-tender
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     env:
       PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}

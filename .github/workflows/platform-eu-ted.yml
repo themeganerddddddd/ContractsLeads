@@ -43,7 +43,6 @@ jobs:
       MAX_RECORDS: ${{ inputs.max_records }}
       BULK_YEAR: ${{ inputs.bulk_year }}
       BULK_MONTH: ${{ inputs.bulk_month }}
-      BACKFILL_CACHE_DIR: ${{ runner.temp }}/federal-ledger-ted
       BACKFILL_MAX_DOWNLOAD_BYTES: "1073741824"
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +54,8 @@ jobs:
       - run: python platform/scripts/manage_db.py migrate
       - name: Import official TED data
         working-directory: platform
+        env:
+          BACKFILL_CACHE_DIR: ${{ runner.temp }}/federal-ledger-ted
         run: |
           if [ -n "$BULK_YEAR" ] || [ -n "$BULK_MONTH" ]; then
             test -n "$BULK_YEAR" && test -n "$BULK_MONTH" || { echo "bulk_year and bulk_month must be provided together"; exit 2; }
