@@ -181,7 +181,7 @@ export async function getProcessProfile(id: string) {
   );
   const process = rows[0];
   if (!process) return null;
-  const [suppliers, events, releases, predictions, source] = await Promise.all([
+  const [suppliers, events, releases, predictions, source, notices, lots, contracts] = await Promise.all([
     query<any>(
       `SELECT c.id::text,c.slug,c.canonical_name,c.legal_name,s.source_supplier_id,s.is_primary
        FROM procurement_process_suppliers s JOIN companies c ON c.id=s.company_id
@@ -203,9 +203,57 @@ export async function getProcessProfile(id: string) {
        FROM predictions pr JOIN prediction_models pm ON pm.id=pr.model_id
        WHERE pr.process_id=$1 ORDER BY prediction_type,horizon_days,as_of_date DESC,generated_at DESC`, [process.id]
     ),
-    query<any>("SELECT * FROM data_sources WHERE source_system=$1", [process.source_system])
+    query<any>("SELECT * FROM data_sources WHERE source_system=$1", [process.source_system]),
+    query<any>(
+      `SELECT source_notice_id,publication_number,notice_version,notice_type,notice_subtype,form_type,
+       language_codes,publication_date::text,dispatch_date::text,change_notice_id,previous_notice_id,
+       source_url,xml_url,fetched_at::text
+       FROM procurement_notices WHERE process_id=$1 ORDER BY publication_date DESC,notice_version DESC`, [process.id]
+    ),
+    query<any>(
+      `SELECT id::text,source_lot_id,title,description,status,value_native::text,currency,cpv_codes,
+       performance_countries,nuts_codes,tender_deadline::text,source_url
+       FROM procurement_lots WHERE process_id=$1 ORDER BY source_lot_id`, [process.id]
+    ),
+    query<any>(
+      `SELECT c.id::text,c.source_contract_id,c.title,c.status,c.signed_at::text,c.start_date::text,c.end_date::text,
+       c.value_native::text,c.currency,c.source_url,l.source_lot_id
+       FROM procurement_contracts c LEFT JOIN procurement_lots l ON l.id=c.lot_id
+       WHERE c.process_id=$1 ORDER BY c.signed_at DESC NULLS LAST,c.source_contract_id`, [process.id]
+    )
   ]);
-  return { process, suppliers, events, releases, predictions, source: source[0] || null, lastUpdated: await getDataFreshness() };
+  return { process, suppliers, events, releases, predictions, source: source[0] || null, notices, lots, contracts, lastUpdated: await getDataFreshness() };
+}
+
+export async function getBuyerProfile(id: string) {
+  const buyers = await query<any>(
+    `SELECT b.*,b.id::text AS id,count(DISTINCT p.id)::text AS process_count,
+     min(p.published_at)::date::text AS first_publication,max(p.published_at)::date::text AS latest_publication
+     FROM buyers b LEFT JOIN procurement_processes p ON p.buyer_id=b.id
+     WHERE b.id::text=$1 OR (b.source_system || ':' || b.source_buyer_id)=$1
+     GROUP BY b.id LIMIT 1`, [id]
+  );
+  const buyer = buyers[0];
+  if (!buyer) return null;
+  const [processes, stages, suppliers] = await Promise.all([
+    query<any>(
+      `SELECT p.id::text,p.source_process_id,p.title,p.current_stage,p.published_at::date::text,p.value_native::text,
+       p.currency,p.source_url,count(DISTINCT ps.company_id)::text AS supplier_count
+       FROM procurement_processes p LEFT JOIN procurement_process_suppliers ps ON ps.process_id=p.id
+       WHERE p.buyer_id=$1 AND NOT p.is_demo GROUP BY p.id ORDER BY p.published_at DESC NULLS LAST LIMIT 100`, [buyer.id]
+    ),
+    query<any>(
+      `SELECT current_stage,count(*)::text AS count FROM procurement_processes
+       WHERE buyer_id=$1 AND NOT is_demo GROUP BY current_stage ORDER BY count(*) DESC`, [buyer.id]
+    ),
+    query<any>(
+      `SELECT c.slug,c.canonical_name,count(DISTINCT p.id)::text AS process_count
+       FROM procurement_processes p JOIN procurement_process_suppliers ps ON ps.process_id=p.id
+       JOIN companies c ON c.id=ps.company_id WHERE p.buyer_id=$1 AND NOT p.is_demo
+       GROUP BY c.id ORDER BY count(DISTINCT p.id) DESC,c.canonical_name LIMIT 25`, [buyer.id]
+    )
+  ]);
+  return { buyer, processes, stages, suppliers, lastUpdated: await getDataFreshness() };
 }
 
 export async function getModelAudit() {

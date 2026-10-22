@@ -17,6 +17,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from operations.capacity import CapacityGuard, CapacityStop
+
 from .industry import IndustryClassifier
 from .normalize import normalize_transaction
 
@@ -226,10 +228,17 @@ def iter_archive_rows(path: Path) -> Iterator[tuple[str, int, dict[str, str]]]:
 
 
 class BackfillRunner:
-    def __init__(self, repository, client: USAspendingArchiveClient, classifier: IndustryClassifier | None = None):
+    def __init__(
+        self,
+        repository,
+        client: USAspendingArchiveClient,
+        classifier: IndustryClassifier | None = None,
+        capacity_guard: CapacityGuard | None = None,
+    ):
         self.repository = repository
         self.client = client
         self.classifier = classifier or IndustryClassifier()
+        self.capacity_guard = capacity_guard
 
     def _run_archive(
         self,
@@ -256,6 +265,13 @@ class BackfillRunner:
         job_id = str(job["id"])
         started = time.monotonic()
         try:
+            if self.capacity_guard:
+                self.capacity_guard.check(
+                    source_system="usaspending",
+                    operation="us-historical-backfill",
+                    chunk_key=archive.file_name,
+                    metadata={"phase": "before_download", "job_id": job_id},
+                )
             if source_file:
                 path = source_file
                 self.repository.update_backfill_download(job_id, status="importing", bytes_downloaded=path.stat().st_size, source_size_bytes=path.stat().st_size)
@@ -310,6 +326,13 @@ class BackfillRunner:
                     # batch must never move the restart checkpoint past it.
                     break
                 if len(batch) >= batch_size:
+                    if self.capacity_guard:
+                        self.capacity_guard.check(
+                            source_system="usaspending",
+                            operation="us-historical-backfill",
+                            chunk_key=f"{archive.file_name}:{member}:{row_number}",
+                            metadata={"phase": "before_batch", "job_id": job_id, "batch_records": len(batch)},
+                        )
                     self.repository.ingest_batch(batch, backfill_job_id=job_id, checkpoint=batch_checkpoint)
                     committed_member = batch_checkpoint["member"]
                     committed_row = batch_checkpoint["member_row"]
@@ -319,6 +342,13 @@ class BackfillRunner:
                 if max_records is not None and accepted >= max_records:
                     break
             if batch:
+                if self.capacity_guard:
+                    self.capacity_guard.check(
+                        source_system="usaspending",
+                        operation="us-historical-backfill",
+                        chunk_key=f"{archive.file_name}:{batch_checkpoint['member']}:{batch_checkpoint['member_row']}",
+                        metadata={"phase": "before_batch", "job_id": job_id, "batch_records": len(batch)},
+                    )
                 self.repository.ingest_batch(batch, backfill_job_id=job_id, checkpoint=batch_checkpoint)
                 committed_member = batch_checkpoint["member"]
                 committed_row = batch_checkpoint["member_row"]
@@ -357,6 +387,25 @@ class BackfillRunner:
                 )},
             }
             _log("backfill_completed", **result)
+            return result
+        except CapacityStop as exc:
+            completed = self.repository.finish_backfill_job(
+                job_id,
+                "partial",
+                error=str(exc),
+            )
+            result = {
+                "job_id": job_id,
+                "status": "controlled_stop",
+                "source_file": archive.file_name,
+                "reason": str(exc),
+                "capacity": exc.report,
+                "totals": {key: completed[key] for key in (
+                    "rows_processed", "rows_in_window", "batches_committed", "records_inserted", "records_updated",
+                    "records_skipped", "records_failed", "companies_created", "awards_created", "transactions_created"
+                )},
+            }
+            _log("backfill_controlled_stop", **result)
             return result
         except Exception as exc:
             self.repository.finish_backfill_job(job_id, "failed", error=f"{type(exc).__name__}: {exc}")

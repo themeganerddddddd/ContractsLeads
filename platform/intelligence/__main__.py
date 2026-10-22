@@ -43,7 +43,7 @@ def main() -> int:
         if args.command in {"train", "backtest"}:
             _, observed_end = repository.event_bounds()
             test_end = args.test_end or observed_end or date.today()
-            validation_end = args.validation_end or (test_end - timedelta(days=90))
+            validation_end = args.validation_end or (test_end - timedelta(days=180))
             training_end = args.training_end or (validation_end - timedelta(days=90))
             result = service.train_backtest(
                 args.type,

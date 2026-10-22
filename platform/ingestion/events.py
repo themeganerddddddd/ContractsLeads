@@ -16,6 +16,12 @@ def _event_time(value: object) -> datetime:
         return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
     if hasattr(value, "year"):
         return datetime.combine(value, time.min, tzinfo=timezone.utc)  # type: ignore[arg-type]
+    if isinstance(value, str) and value.strip():
+        try:
+            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
     return datetime.now(timezone.utc)
 
 

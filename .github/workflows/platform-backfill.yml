@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: national-platform-ingestion
+  group: production-procurement-ingestion
   cancel-in-progress: false
 
 jobs:
@@ -31,6 +31,10 @@ jobs:
       MAX_RECORDS: ${{ inputs.max_records }}
       BACKFILL_CACHE_DIR: ${{ runner.temp }}/federal-ledger-backfill
       INGESTION_BATCH_SIZE: "1000"
+      DATABASE_CAPACITY_BYTES: "1073741824"
+      DATABASE_CAPACITY_WARNING_FRACTION: "0.60"
+      DATABASE_CAPACITY_STOP_FRACTION: "0.72"
+      DATABASE_CAPACITY_CRITICAL_FRACTION: "0.90"
     steps:
       - uses: actions/checkout@v4
       - name: Require production database secret

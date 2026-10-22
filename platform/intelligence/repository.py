@@ -19,27 +19,38 @@ class IntelligenceRepository:
     def event_bounds(self) -> tuple[date | None, date | None]:
         row = self.connection.execute(
             """SELECT min(e.event_at)::date AS start,max(e.event_at)::date AS end FROM procurement_events e
-               WHERE (e.award_id IS NOT NULL AND EXISTS (
+               WHERE e.source_market='US_FEDERAL' AND ((e.award_id IS NOT NULL AND EXISTS (
                  SELECT 1 FROM awards a WHERE a.id=e.award_id AND NOT a.is_demo AND NOT a.is_benchmark
                )) OR (e.award_id IS NULL AND e.process_id IS NOT NULL AND EXISTS (
                  SELECT 1 FROM procurement_processes p WHERE p.id=e.process_id AND NOT p.is_demo
-               ))"""
+               )))"""
         ).fetchone()
         return row["start"], row["end"]
+
+    def training_readiness(self) -> dict[str, Any]:
+        row = self.connection.execute(
+            """SELECT
+                 (SELECT count(*) FROM transactions t WHERE NOT t.is_demo AND NOT t.is_benchmark)::bigint AS transaction_count,
+                 (SELECT count(DISTINCT action_date) FROM transactions t WHERE NOT t.is_demo AND NOT t.is_benchmark)::bigint AS observed_action_days,
+                 COALESCE((SELECT sum(end_date-start_date+1) FROM backfill_jobs WHERE status='success'),0)::bigint AS successful_backfill_days,
+                 (SELECT min(action_date) FROM transactions t WHERE NOT t.is_demo AND NOT t.is_benchmark) AS action_start,
+                 (SELECT max(action_date) FROM transactions t WHERE NOT t.is_demo AND NOT t.is_benchmark) AS action_end"""
+        ).fetchone()
+        return dict(row)
 
     def candidate_ids(self, prediction_type: str) -> list[str]:
         if prediction_type == "new_award":
             return [row["id"] for row in self.connection.execute(
                 """SELECT DISTINCT e.company_id::text AS id FROM procurement_events e
                    JOIN companies c ON c.id=e.company_id
-                   WHERE e.company_id IS NOT NULL AND NOT c.is_demo AND NOT c.is_benchmark"""
+                   WHERE e.source_market='US_FEDERAL' AND e.company_id IS NOT NULL AND NOT c.is_demo AND NOT c.is_benchmark"""
             ).fetchall()]
         return [row["id"] for row in self.connection.execute(
             """SELECT DISTINCT 'award:' || e.award_id::text AS id FROM procurement_events e
-               JOIN awards a ON a.id=e.award_id WHERE e.award_id IS NOT NULL AND NOT a.is_demo AND NOT a.is_benchmark
+               JOIN awards a ON a.id=e.award_id WHERE e.source_market='US_FEDERAL' AND e.award_id IS NOT NULL AND NOT a.is_demo AND NOT a.is_benchmark
                UNION SELECT DISTINCT 'process:' || e.process_id::text AS id FROM procurement_events e
                JOIN procurement_processes p ON p.id=e.process_id
-               WHERE e.process_id IS NOT NULL AND e.award_id IS NULL AND NOT p.is_demo"""
+               WHERE e.source_market='US_FEDERAL' AND e.process_id IS NOT NULL AND e.award_id IS NULL AND NOT p.is_demo"""
         ).fetchall()]
 
     def events_for(self, prediction_type: str, entity_id: str) -> list[dict[str, Any]]:
@@ -50,7 +61,7 @@ class IntelligenceRepository:
             column = "award_id" if kind == "award" else "process_id"
         return [dict(row) for row in self.connection.execute(
             f"""SELECT event_at,event_type,value_delta_native,value_native,buyer_id::text,company_id::text,award_id::text
-                FROM procurement_events WHERE {column}=%s ORDER BY event_at""", (value,)
+                FROM procurement_events WHERE source_market='US_FEDERAL' AND {column}=%s ORDER BY event_at""", (value,)
         ).fetchall()]
 
     def contract_end(self, award_id: str) -> date | None:

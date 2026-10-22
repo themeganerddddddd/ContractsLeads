@@ -10,8 +10,8 @@ export function SearchForm({ input, options }: { input: SearchInput; options: Op
       <label><input type="radio" name="mode" value="companies" defaultChecked={input.mode === "companies"} /> Companies</label>
       <label><input type="radio" name="mode" value="contracts" defaultChecked={input.mode === "contracts"} /> Contracts</label>
     </div>
-    <div className="query-row"><label><span>Search</span><input name="q" defaultValue={value(input.q)} placeholder="Company, description, award ID, buyer, classification…" /></label><label className="country-control"><span>Country</span><select name="country" defaultValue={input.country}><option value="US">United States</option><option value="GB">United Kingdom</option></select></label><button className="button primary" type="submit">Search database</button></div>
-    <div className="filter-grid">
+    <div className="query-row"><label><span>Search</span><input name="q" defaultValue={value(input.q)} placeholder="Company, description, award ID, buyer, classification…" /></label><label className="country-control"><span>Market / source</span><select name="market" defaultValue={input.market}><option value="US_FEDERAL">U.S. federal · USAspending</option><option value="UK_FTS">United Kingdom · Find a Tender</option><option value="EU_TED">European procurement · TED</option></select></label><button className="button primary" type="submit">Search database</button></div>
+    {input.market === "US_FEDERAL" ? <div className="filter-grid">
       <fieldset><legend>Company / recipient location</legend><div className="field-row">
         <label>State<input name="recipient_state" defaultValue={value(input.recipientState)} placeholder="MD" maxLength={2} /></label>
         <label>County FIPS<input name="recipient_county" defaultValue={value(input.recipientCounty)} placeholder="24031" /></label>
@@ -24,7 +24,7 @@ export function SearchForm({ input, options }: { input: SearchInput; options: Op
         <label>City<input name="performance_city" defaultValue={value(input.performanceCity)} /></label>
         <label>ZIP<input name="performance_zip" defaultValue={value(input.performanceZip)} /></label>
       </div></fieldset>
-    </div>
+    </div> : null}
     <details className="advanced-filters" open={Boolean(input.agency || input.industry || input.dateFrom || input.minValue)}><summary>Advanced filters</summary><div className="advanced-grid">
       <label>Award date from<input type="date" name="date_from" defaultValue={value(input.dateFrom)} /></label>
       <label>Award date to<input type="date" name="date_to" defaultValue={value(input.dateTo)} /></label>
@@ -35,6 +35,13 @@ export function SearchForm({ input, options }: { input: SearchInput; options: Op
       <label>Industry<select name="industry" defaultValue={value(input.industry)}><option value="">All industries</option>{options.industries.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select></label>
       <label>NAICS<input name="naics" defaultValue={value(input.naics)} /></label>
       <label>PSC<input name="psc" defaultValue={value(input.psc)} /></label>
+      {input.market === "EU_TED" ? <>
+        <label>Buyer country<input name="buyer_country" defaultValue={value(input.buyerCountry)} placeholder="DEU" /></label>
+        <label>Supplier country<input name="supplier_country" defaultValue={value(input.supplierCountry)} placeholder="FRA" /></label>
+        <label>Performance country<input name="place_country" defaultValue={value(input.placeCountry)} placeholder="BEL" /></label>
+        <label>NUTS code<input name="nuts" defaultValue={value(input.nuts)} placeholder="DE11" /></label>
+        <label>Procedure stage<select name="stage" defaultValue={value(input.stage)}><option value="">All stages</option><option value="planning">Planning</option><option value="tender">Tender</option><option value="award">Award</option><option value="contract">Contract</option><option value="notice">Other notice</option></select></label>
+      </> : null}
       <label>Minimum prediction <span className="pro-chip">Pro</span><input type="number" name="prediction_min" min="0" max="1" step="0.05" defaultValue={value(input.predictionMin)} placeholder="0.65" /></label>
       {input.mode === "companies" ? <label>Minimum momentum <span className="pro-chip">Pro</span><input type="number" name="momentum_min" min="0" max="100" defaultValue={value(input.momentumMin)} placeholder="60" /></label> : null}
       <label>Sort by<select name="sort" defaultValue={input.sort}><option value="newest">Newest</option><option value="largest">Largest</option><option value="company">Company</option><option value="agency">Agency</option></select></label>

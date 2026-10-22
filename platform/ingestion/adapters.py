@@ -25,6 +25,7 @@ class ProcurementSourceAdapter(Protocol):
     """Boundary every country source implements before database persistence."""
 
     source_system: str
+    source_market: str
     country_code: str
 
     def fetch(self, window: FetchWindow, *, limit: int | None = None) -> Iterable[SourceEnvelope]: ...

@@ -27,6 +27,14 @@ class GlobalProcurementRepositoryMixin:
         )
         self.connection.commit()
 
+    def source_checkpoint(self, source_system: str, checkpoint_key: str) -> dict[str, Any] | None:
+        self._ensure_connection()
+        row = self.connection.execute(
+            "SELECT * FROM source_checkpoints WHERE source_system=%s AND checkpoint_key=%s",
+            (source_system, checkpoint_key),
+        ).fetchone()
+        return dict(row) if row else None
+
     def finish_source_sync(
         self,
         source_system: str,
@@ -55,21 +63,46 @@ class GlobalProcurementRepositoryMixin:
         )
         self.connection.commit()
 
+    def update_source_checkpoint(
+        self,
+        source_system: str,
+        checkpoint_key: str,
+        checkpoint_value: str,
+        stats: dict[str, Any],
+    ) -> None:
+        self._ensure_connection()
+        self.connection.execute(
+            """UPDATE source_checkpoints SET checkpoint_value=%s,status='running',records_seen=%s,
+               records_written=%s,metadata=%s::jsonb,updated_at=now()
+               WHERE source_system=%s AND checkpoint_key=%s""",
+            (
+                checkpoint_value,
+                stats.get("received", 0),
+                stats.get("written", 0),
+                json.dumps(stats),
+                source_system,
+                checkpoint_key,
+            ),
+        )
+        self.connection.commit()
+
     def _upsert_global_buyer(self, record: dict[str, Any]) -> str:
         buyer = record["buyer"]
         row = self.connection.execute(
             """INSERT INTO buyers (
-                 source_country,source_system,source_buyer_id,name,identifier_scheme,identifier_value,address,source_url
-               ) VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s)
+                 source_country,source_market,source_system,source_buyer_id,name,identifier_scheme,identifier_value,address,source_url,
+                 source_identity_is_synthetic
+               ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
                ON CONFLICT (source_system,source_buyer_id) DO UPDATE SET
-                 name=EXCLUDED.name,identifier_scheme=COALESCE(EXCLUDED.identifier_scheme,buyers.identifier_scheme),
+                 name=COALESCE(EXCLUDED.name,buyers.name),identifier_scheme=COALESCE(EXCLUDED.identifier_scheme,buyers.identifier_scheme),
                  identifier_value=COALESCE(EXCLUDED.identifier_value,buyers.identifier_value),
                  address=CASE WHEN EXCLUDED.address='{}'::jsonb THEN buyers.address ELSE EXCLUDED.address END,
+                 source_identity_is_synthetic=buyers.source_identity_is_synthetic AND EXCLUDED.source_identity_is_synthetic,
                  source_url=EXCLUDED.source_url RETURNING id::text""",
             (
-                record["source_country"], record["source_system"], buyer["source_buyer_id"], buyer["name"],
+                record["source_country"], record["source_market"], record["source_system"], buyer["source_buyer_id"], buyer["name"],
                 buyer.get("identifier_scheme"), buyer.get("identifier_value"), json.dumps(buyer.get("address") or {}),
-                record["source_url"],
+                record["source_url"], buyer.get("source_identity_is_synthetic", False),
             ),
         ).fetchone()
         return row["id"]
@@ -149,12 +182,12 @@ class GlobalProcurementRepositoryMixin:
             industry_id = self._common_industry_id(record.get("native_category_code"))
             process = self.connection.execute(
                 """INSERT INTO procurement_processes (
-                     source_country,source_system,source_process_id,ocid,buyer_id,primary_supplier_company_id,
+                     source_country,source_market,source_system,source_process_id,ocid,buyer_id,primary_supplier_company_id,
                      title,description,current_stage,status,procurement_method,published_at,tender_start_at,tender_end_at,
                      award_date,contract_start_date,contract_end_date,value_native,currency,value_usd,fx_rate,
                      fx_rate_date,fx_source_url,performance_locations,native_category_scheme,native_category_code,
                      common_industry_id,source_url,source_last_modified
-                   ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s)
+                   ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s)
                    ON CONFLICT (source_system,source_process_id) DO UPDATE SET
                      buyer_id=EXCLUDED.buyer_id,
                      primary_supplier_company_id=COALESCE(EXCLUDED.primary_supplier_company_id,procurement_processes.primary_supplier_company_id),
@@ -179,7 +212,7 @@ class GlobalProcurementRepositoryMixin:
                      source_last_modified=GREATEST(EXCLUDED.source_last_modified,procurement_processes.source_last_modified)
                    RETURNING id::text""",
                 (
-                    record["source_country"], record["source_system"], record["source_process_id"], record.get("ocid"),
+                    record["source_country"], record["source_market"], record["source_system"], record["source_process_id"], record.get("ocid"),
                     buyer_id, supplier_ids[0] if supplier_ids else None, record.get("title"), record.get("description"),
                     record.get("current_stage"), record.get("status"), record.get("procurement_method"),
                     record.get("published_at"), record.get("tender_start_at"), record.get("tender_end_at"),
@@ -207,7 +240,7 @@ class GlobalProcurementRepositoryMixin:
                 (
                     process_id, record["source_system"], record["source_release_id"], record.get("release_date"),
                     record.get("tags") or [], record["payload_hash"], record["source_url"],
-                    json.dumps(record["raw"], default=str),
+                    json.dumps(record.get("release_raw", record["raw"]), default=str),
                 ),
             ).fetchone()
             for index, company_id in enumerate(supplier_ids):
@@ -222,12 +255,12 @@ class GlobalProcurementRepositoryMixin:
             for event in record.get("events") or []:
                 self.connection.execute(
                     """INSERT INTO procurement_events (
-                         event_fingerprint,source_system,source_country,raw_source_id,process_id,company_id,buyer_id,
+                         event_fingerprint,source_system,source_country,source_market,raw_source_id,process_id,company_id,buyer_id,
                          event_type,event_at,title,description,value_delta_native,value_native,currency,source_url,evidence
-                       ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                       ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
                        ON CONFLICT (event_fingerprint) DO NOTHING""",
                     (
-                        event["event_fingerprint"], record["source_system"], record["source_country"],
+                        event["event_fingerprint"], record["source_system"], record["source_country"], record["source_market"],
                         event.get("raw_source_id"), process_id, supplier_ids[0] if supplier_ids else None, buyer_id,
                         event["event_type"], event["event_at"], event.get("title"), event.get("description"),
                         event.get("value_delta_native"), event.get("value_native") or record.get("value_native"),
@@ -236,6 +269,86 @@ class GlobalProcurementRepositoryMixin:
                     ),
                 )
             return bool(release)
+
+    def ingest_eu_notice(self, record: dict[str, Any]) -> bool:
+        """Persist a TED release plus durable notice, lot, and contract records."""
+        release_inserted = self.ingest_global_release(record)
+        notice = record["notice"]
+        with self.transaction():
+            process = self.connection.execute(
+                "SELECT id::text FROM procurement_processes WHERE source_system=%s AND source_process_id=%s",
+                (record["source_system"], record["source_process_id"]),
+            ).fetchone()
+            process_id = process["id"]
+            inserted = self.connection.execute(
+                """INSERT INTO procurement_notices (
+                     process_id,source_system,source_market,source_notice_id,publication_number,notice_version,
+                     notice_type,notice_subtype,form_type,language_codes,publication_date,dispatch_date,
+                     change_notice_id,previous_notice_id,source_url,xml_url,payload_hash,payload
+                   ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                   ON CONFLICT (source_system,source_notice_id,notice_version,payload_hash) DO NOTHING RETURNING id""",
+                (
+                    process_id, record["source_system"], record["source_market"], notice["source_notice_id"],
+                    notice.get("publication_number"), notice.get("notice_version") or "1", notice.get("notice_type"),
+                    notice.get("notice_subtype"), notice.get("form_type"), notice.get("language_codes") or [],
+                    notice.get("publication_date"), notice.get("dispatch_date"), notice.get("change_notice_id"),
+                    notice.get("previous_notice_id"), record["source_url"], notice.get("xml_url"),
+                    record["payload_hash"], json.dumps(record["raw"], default=str),
+                ),
+            ).fetchone()
+            lot_ids: dict[str, str] = {}
+            for lot in record.get("lots") or []:
+                row = self.connection.execute(
+                    """INSERT INTO procurement_lots (
+                         process_id,source_system,source_lot_id,title,description,status,value_native,currency,
+                         cpv_codes,performance_countries,nuts_codes,tender_deadline,source_url,metadata
+                       ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                       ON CONFLICT (process_id,source_lot_id) DO UPDATE SET
+                         title=COALESCE(EXCLUDED.title,procurement_lots.title),
+                         description=COALESCE(EXCLUDED.description,procurement_lots.description),
+                         status=COALESCE(EXCLUDED.status,procurement_lots.status),
+                         value_native=COALESCE(EXCLUDED.value_native,procurement_lots.value_native),
+                         currency=COALESCE(EXCLUDED.currency,procurement_lots.currency),
+                         cpv_codes=CASE WHEN cardinality(EXCLUDED.cpv_codes)=0 THEN procurement_lots.cpv_codes ELSE EXCLUDED.cpv_codes END,
+                         performance_countries=CASE WHEN cardinality(EXCLUDED.performance_countries)=0 THEN procurement_lots.performance_countries ELSE EXCLUDED.performance_countries END,
+                         nuts_codes=CASE WHEN cardinality(EXCLUDED.nuts_codes)=0 THEN procurement_lots.nuts_codes ELSE EXCLUDED.nuts_codes END,
+                         tender_deadline=COALESCE(EXCLUDED.tender_deadline,procurement_lots.tender_deadline),
+                         source_url=EXCLUDED.source_url,metadata=procurement_lots.metadata || EXCLUDED.metadata,updated_at=now()
+                       RETURNING id::text""",
+                    (
+                        process_id, record["source_system"], lot["source_lot_id"], lot.get("title"), lot.get("description"),
+                        lot.get("status"), lot.get("value_native"), lot.get("currency"), lot.get("cpv_codes") or [],
+                        lot.get("performance_countries") or [], lot.get("nuts_codes") or [], lot.get("tender_deadline"),
+                        record["source_url"], json.dumps(lot.get("metadata") or {}),
+                    ),
+                ).fetchone()
+                lot_ids[lot["source_lot_id"]] = row["id"]
+            default_lot_id = next(iter(lot_ids.values()), None) if len(lot_ids) == 1 else None
+            for contract in record.get("contracts") or []:
+                self.connection.execute(
+                    """INSERT INTO procurement_contracts (
+                         process_id,lot_id,source_system,source_contract_id,title,status,signed_at,start_date,end_date,
+                         value_native,currency,source_url,metadata
+                       ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                       ON CONFLICT (process_id,source_contract_id) DO UPDATE SET
+                         lot_id=COALESCE(EXCLUDED.lot_id,procurement_contracts.lot_id),
+                         title=COALESCE(EXCLUDED.title,procurement_contracts.title),
+                         status=COALESCE(EXCLUDED.status,procurement_contracts.status),
+                         signed_at=COALESCE(EXCLUDED.signed_at,procurement_contracts.signed_at),
+                         start_date=COALESCE(EXCLUDED.start_date,procurement_contracts.start_date),
+                         end_date=COALESCE(EXCLUDED.end_date,procurement_contracts.end_date),
+                         value_native=COALESCE(EXCLUDED.value_native,procurement_contracts.value_native),
+                         currency=COALESCE(EXCLUDED.currency,procurement_contracts.currency),
+                         source_url=EXCLUDED.source_url,metadata=procurement_contracts.metadata || EXCLUDED.metadata,updated_at=now()""",
+                    (
+                        process_id, lot_ids.get(contract.get("source_lot_id")) or default_lot_id,
+                        record["source_system"], contract["source_contract_id"], contract.get("title"),
+                        contract.get("status"), contract.get("signed_at"), contract.get("start_date"),
+                        contract.get("end_date"), contract.get("value_native"), contract.get("currency"),
+                        record["source_url"], json.dumps(contract.get("metadata") or {}),
+                    ),
+                )
+        return bool(inserted) or release_inserted
 
     def upsert_us_procurement_process_and_events(
         self,
@@ -251,18 +364,18 @@ class GlobalProcurementRepositoryMixin:
         buyer_id = None
         if agency_name:
             buyer_id = self.connection.execute(
-                """INSERT INTO buyers (source_country,source_system,source_buyer_id,name,source_url)
-                   VALUES ('US','usaspending',%s,%s,%s)
+                """INSERT INTO buyers (source_country,source_market,source_system,source_buyer_id,name,source_url)
+                   VALUES ('US','US_FEDERAL','usaspending',%s,%s,%s)
                    ON CONFLICT (source_system,source_buyer_id) DO UPDATE SET name=EXCLUDED.name
                    RETURNING id::text""",
                 (agency_name, agency_name, award.get("source_url") or "https://www.usaspending.gov/"),
             ).fetchone()["id"]
         process = self.connection.execute(
             """INSERT INTO procurement_processes (
-                 source_country,source_system,source_process_id,buyer_id,primary_supplier_company_id,title,description,
+                 source_country,source_market,source_system,source_process_id,buyer_id,primary_supplier_company_id,title,description,
                  current_stage,status,award_date,contract_start_date,contract_end_date,value_native,currency,
                  performance_locations,native_category_scheme,native_category_code,common_industry_id,source_url,source_last_modified
-               ) SELECT 'US','usaspending',%s,%s,%s,%s,%s,'award','active',%s,%s,%s,%s,'USD',%s::jsonb,
+               ) SELECT 'US','US_FEDERAL','usaspending',%s,%s,%s,%s,%s,'award','active',%s,%s,%s,%s,'USD',%s::jsonb,
                  CASE WHEN %s::text IS NOT NULL THEN 'NAICS' WHEN %s::text IS NOT NULL THEN 'PSC' END,
                  COALESCE(%s,%s),%s,%s,%s
                FROM awards a WHERE a.id=%s
@@ -295,12 +408,12 @@ class GlobalProcurementRepositoryMixin:
         for event in events:
             self.connection.execute(
                 """INSERT INTO procurement_events (
-                     event_fingerprint,source_system,source_country,raw_source_id,process_id,award_id,company_id,buyer_id,
+                     event_fingerprint,source_system,source_country,source_market,raw_source_id,process_id,award_id,company_id,buyer_id,
                      event_type,event_at,title,description,value_delta_native,value_native,currency,source_url,evidence
-                   ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                   ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
                    ON CONFLICT (event_fingerprint) DO NOTHING""",
                 (
-                    event["event_fingerprint"], event["source_system"], event["source_country"], event.get("raw_source_id"),
+                    event["event_fingerprint"], event["source_system"], event["source_country"], "US_FEDERAL", event.get("raw_source_id"),
                     process_id, award_id, company_id, buyer_id, event["event_type"], event["event_at"], event.get("title"),
                     event.get("description"), event.get("value_delta_native"), event.get("value_native"),
                     event.get("currency"), event["source_url"], json.dumps(event.get("evidence") or {}),

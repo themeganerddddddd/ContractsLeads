@@ -7,7 +7,7 @@ Federal Ledger produces decision-support indicators, not certainty. It never use
 - **New Award:** probability that an awarded legal entity receives an observed award in 30, 60, or 90 days.
 - **Contract Change:** probability that an observed contract or process receives a modification, value change, or option exercise in 30, 60, or 90 days.
 - **Renewal / recompete:** schema and UI are ready, but activation requires an independently validated outcome definition and adequate end-date history.
-- **Government Momentum (0–100):** a descriptive activity index, not a probability. It combines event recency, recent volume, contract actions, buyer breadth, and positive value trend.
+- **Observed-activity index (0–100):** a descriptive activity index, never a probability. It combines event recency, recent volume, contract actions, buyer breadth, and positive value trend.
 
 ## Point-in-time safeguards
 
@@ -22,7 +22,7 @@ Current features are intentionally simple and auditable:
 
 A candidate model may emit visible probabilities only when its out-of-time test contains at least 100 samples, at least 10 positive and 10 negative outcomes, ROC AUC of at least 0.55, and a Brier score better than the constant base-rate forecast. Metrics include ROC AUC, PR AUC, Brier score, log loss, precision and recall at 0.5, base rate, and calibration buckets.
 
-If history is shorter than 180 days, training has fewer than 50 samples, an outcome class is absent, or the calibration gate fails, the version is persisted as `insufficient_history` or `rejected`. Its probabilities are null and the UI says **Insufficient history** or explains the failed calibration. Historical predictions are append-only and keyed by model, cutoff, horizon, and entity.
+Training is restricted to `US_FEDERAL` events until the other markets have independently sufficient history. It also requires at least 365 days represented by successfully completed U.S. historical backfill jobs and 100,000 observed U.S. transactions. If those coverage gates fail, history is shorter than 180 days, training has fewer than 50 samples, the out-of-time set lacks 100 samples with 10 outcomes in each class, or calibration fails, the version is persisted as `insufficient_history` or `rejected`. Its probabilities are null and prediction generation returns `disabled`. Historical predictions are append-only and keyed by model, cutoff, horizon, and entity.
 
 ## Commands
 
@@ -34,7 +34,7 @@ python -m intelligence backtest --type new_award --training-end 2024-06-30 --val
 python -m intelligence backtest --type contract_change --training-end 2024-06-30 --validation-end 2024-12-31 --test-end 2025-06-30 --horizon 90
 ```
 
-Generate append-only predictions and momentum snapshots:
+Generate append-only predictions and sufficient observed-activity snapshots:
 
 ```powershell
 python -m intelligence predict --type new_award --horizons 30,60,90
@@ -46,4 +46,4 @@ Omit explicit boundaries to derive conservative rolling boundaries from the loca
 
 ## Current evidence limitation
 
-The checked local QA report contains 791 official USAspending transactions but only one action date, 2022-01-02. That is insufficient for a real temporal backtest. The system therefore persists an audited insufficient-history model version and withholds probabilities; it does not substitute demo or benchmark rows for model validation. A legitimate performance report requires a completed multi-year official backfill and repeated event derivation.
+The production readiness audit on 2026-10-22 found 8,318 official U.S. transactions but zero days certified by a successfully completed historical backfill job. Both New Award and Contract Change therefore persist audited `insufficient_history` versions and generate zero probabilities. All 1,856 U.S. companies evaluated for the observed-activity index lacked the minimum history, so no index rows were persisted. The system does not substitute UK, TED, demo, or benchmark rows for U.S. model validation.

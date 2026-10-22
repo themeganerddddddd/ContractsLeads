@@ -11,7 +11,7 @@ export function Header() {
       <div className="nav-shell">
         <Link className="brand" href="/" aria-label="Federal Ledger home">
           <span className="brand-mark" aria-hidden="true">FL</span>
-          <span><strong>Federal Ledger</strong><small>Contract intelligence</small></span>
+          <span><strong>Federal Ledger</strong><small>Government procurement intelligence</small></span>
         </Link>
         <nav aria-label="Primary navigation">
           {links.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}

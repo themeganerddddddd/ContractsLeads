@@ -9,9 +9,11 @@ import {
 } from "@/lib/entitlements";
 
 export type SearchMode = "companies" | "contracts";
+export type SourceMarket = "US_FEDERAL" | "UK_FTS" | "EU_TED";
 export type SearchInput = {
   mode: SearchMode;
-  country: "US" | "GB";
+  market: SourceMarket;
+  country: "US" | "GB" | "EU";
   q?: string;
   page: number;
   pageSize: number;
@@ -35,6 +37,11 @@ export type SearchInput = {
   psc?: string;
   predictionMin?: number;
   momentumMin?: number;
+  buyerCountry?: string;
+  supplierCountry?: string;
+  placeCountry?: string;
+  nuts?: string;
+  stage?: string;
 };
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -50,9 +57,17 @@ function positiveNumber(value: string | undefined, fallback: number): number {
 
 export function parseSearchInput(params: RawParams): SearchInput {
   const sort = one(params.sort);
+  const marketValue = one(params.market);
+  const legacyCountry = one(params.country);
+  const market: SourceMarket = marketValue === "EU_TED"
+    ? "EU_TED"
+    : marketValue === "UK_FTS" || legacyCountry === "GB"
+      ? "UK_FTS"
+      : "US_FEDERAL";
   return {
     mode: one(params.mode) === "companies" ? "companies" : "contracts",
-    country: one(params.country) === "GB" ? "GB" : "US",
+    market,
+    country: market === "EU_TED" ? "EU" : market === "UK_FTS" ? "GB" : "US",
     q: one(params.q),
     page: Math.floor(positiveNumber(one(params.page), 1)),
     pageSize: Math.min(
@@ -85,6 +100,11 @@ export function parseSearchInput(params: RawParams): SearchInput {
     momentumMin: one(params.momentum_min)
       ? Number(one(params.momentum_min))
       : undefined,
+    buyerCountry: one(params.buyer_country)?.toUpperCase(),
+    supplierCountry: one(params.supplier_country)?.toUpperCase(),
+    placeCountry: one(params.place_country)?.toUpperCase(),
+    nuts: one(params.nuts)?.toUpperCase(),
+    stage: one(params.stage),
   };
 }
 
@@ -235,6 +255,7 @@ export type ContractRow = {
   is_demo: boolean;
   href?: string;
   source_country?: string;
+  source_market?: string;
   currency?: string | null;
   prediction_probability?: string | null;
   prediction_sufficiency?: string | null;
@@ -280,7 +301,7 @@ export async function searchContracts(
   plan: Plan,
   exportMode = false,
 ): Promise<SearchResult<ContractRow>> {
-  if (input.country === "GB") return searchUKProcesses(input, plan, exportMode);
+  if (input.market !== "US_FEDERAL") return searchGlobalProcesses(input, plan, exportMode);
   const where = new SqlWhere();
   where.clauses.push("NOT a.is_benchmark");
   const historyRestricted = applyFilters(where, input, plan);
@@ -368,7 +389,7 @@ export async function searchCompanies(
   input: SearchInput,
   plan: Plan,
 ): Promise<SearchResult<CompanyRow>> {
-  if (input.country === "GB") return searchUKCompanies(input, plan);
+  if (input.market !== "US_FEDERAL") return searchGlobalCompanies(input, plan);
   const where = new SqlWhere();
   where.clauses.push("NOT a.is_benchmark AND NOT c.is_benchmark");
   const historyRestricted = applyFilters(where, input, plan);
@@ -417,7 +438,7 @@ export async function searchCompanies(
   };
 }
 
-function applyUKFilters(
+function applyGlobalFilters(
   where: SqlWhere,
   input: SearchInput,
   plan: Plan,
@@ -440,6 +461,13 @@ function applyUKFilters(
   if (input.agency) where.add("b.name = ?", input.agency);
   if (input.industry) where.add("i.slug = ?", input.industry);
   if (input.psc) where.add("p.native_category_code LIKE ? || '%'", input.psc);
+  if (input.buyerCountry) where.add("p.source_country = ?", input.buyerCountry);
+  if (input.supplierCountry) where.add("c.legal_entity_country = ?", input.supplierCountry);
+  if (input.placeCountry)
+    where.add("(EXISTS (SELECT 1 FROM procurement_lots pl WHERE pl.process_id=p.id AND ?=ANY(pl.performance_countries)) OR EXISTS (SELECT 1 FROM jsonb_array_elements(p.performance_locations) loc WHERE loc->>'country'=$$VALUE$$))".replace("$$VALUE$$", `$${where.values.length + 1}`), input.placeCountry);
+  if (input.nuts)
+    where.add("(EXISTS (SELECT 1 FROM procurement_lots pl WHERE pl.process_id=p.id AND EXISTS (SELECT 1 FROM unnest(pl.nuts_codes) code WHERE code LIKE ? || '%')) OR EXISTS (SELECT 1 FROM jsonb_array_elements(p.performance_locations) loc WHERE loc->>'nuts' LIKE $$VALUE$$ || '%'))".replace("$$VALUE$$", `$${where.values.length + 1}`), input.nuts);
+  if (input.stage) where.add("p.current_stage = ?", input.stage);
   if (input.predictionMin != null && can(plan, "prediction_filters")) {
     const relation =
       mode === "companies"
@@ -463,14 +491,15 @@ function applyUKFilters(
   return date.restricted;
 }
 
-async function searchUKProcesses(
+async function searchGlobalProcesses(
   input: SearchInput,
   plan: Plan,
   exportMode: boolean,
 ): Promise<SearchResult<ContractRow>> {
   const where = new SqlWhere();
-  where.clauses.push("p.source_country='GB' AND NOT p.is_demo");
-  const historyRestricted = applyUKFilters(where, input, plan, "contracts");
+  where.add("p.source_market = ?", input.market);
+  where.clauses.push("NOT p.is_demo");
+  const historyRestricted = applyGlobalFilters(where, input, plan, "contracts");
   const from = `FROM procurement_processes p LEFT JOIN buyers b ON b.id=p.buyer_id
     LEFT JOIN companies c ON c.id=p.primary_supplier_company_id LEFT JOIN industries i ON i.id=p.common_industry_id
     LEFT JOIN LATERAL (SELECT probability,data_sufficiency FROM predictions WHERE process_id=p.id AND prediction_type='contract_change' ORDER BY as_of_date DESC,horizon_days LIMIT 1) pred ON true`;
@@ -507,7 +536,7 @@ async function searchUKProcesses(
        NULL::text AS parent_company,c.recipient_city,NULL::text AS recipient_county,c.recipient_state,c.recipient_zip,
        NULL::text AS performance_city,NULL::text AS performance_county,NULL::text AS performance_state,
        NULL::text AS performance_zip,p.published_at::date::text AS action_date,NULL::text AS obligation,p.source_url,
-       p.is_demo,('/process/' || p.id::text) AS href,p.source_country,p.currency,
+       p.is_demo,('/process/' || p.id::text) AS href,p.source_country,p.currency,p.source_market,
        pred.probability::text AS prediction_probability,pred.data_sufficiency AS prediction_sufficiency
      ${from} ${where.text()} ORDER BY ${sortSql} LIMIT $${values.length - 1} OFFSET $${values.length}`,
     values,
@@ -525,15 +554,14 @@ async function searchUKProcesses(
   };
 }
 
-async function searchUKCompanies(
+async function searchGlobalCompanies(
   input: SearchInput,
   plan: Plan,
 ): Promise<SearchResult<CompanyRow>> {
   const where = new SqlWhere();
-  where.clauses.push(
-    "p.source_country='GB' AND NOT p.is_demo AND NOT c.is_benchmark",
-  );
-  const historyRestricted = applyUKFilters(where, input, plan, "companies");
+  where.add("p.source_market = ?", input.market);
+  where.clauses.push("NOT p.is_demo AND NOT c.is_benchmark");
+  const historyRestricted = applyGlobalFilters(where, input, plan, "companies");
   const from = `FROM procurement_process_suppliers ps JOIN procurement_processes p ON p.id=ps.process_id
     JOIN companies c ON c.id=ps.company_id LEFT JOIN buyers b ON b.id=p.buyer_id
     LEFT JOIN industries i ON i.id=COALESCE(c.primary_industry_id,p.common_industry_id)
@@ -561,7 +589,7 @@ async function searchUKCompanies(
        CASE WHEN count(DISTINCT p.currency) FILTER (WHERE p.value_native IS NOT NULL)=1
             THEN sum(p.value_native) END::text AS total_activity,
        max(p.published_at)::date::text AS latest_award,c.is_demo,
-       'GB'::text AS source_country,
+       c.legal_entity_country AS source_country,
        CASE WHEN count(DISTINCT p.currency) FILTER (WHERE p.value_native IS NOT NULL)=1
             THEN max(p.currency) FILTER (WHERE p.value_native IS NOT NULL) END AS currency,
        max(pred.probability)::text AS prediction_probability,

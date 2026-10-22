@@ -82,22 +82,40 @@ class IntelligenceService:
         feature_names = list(self._features(prediction_type))
         provenance = {
             "source": "procurement_events",
+            "source_market": "US_FEDERAL",
+            "excluded_markets": ["UK_FTS", "EU_TED"],
             "point_in_time_rule": "features use event_at <= cutoff; outcomes use cutoff < event_at <= cutoff+horizon",
             "training_end": training_end.isoformat(),
             "validation_end": validation_end.isoformat(),
             "test_end": test_end.isoformat(),
         }
         insufficient_reason = None
+        readiness = self.repository.training_readiness() if hasattr(self.repository, "training_readiness") else None
+        if readiness:
+            version += f"-n{int(readiness.get('transaction_count') or 0)}-b{int(readiness.get('successful_backfill_days') or 0)}"
+            provenance["training_readiness"] = {
+                key: value.isoformat() if isinstance(value, (date, datetime)) else value
+                for key, value in readiness.items()
+            }
+            if int(readiness.get("successful_backfill_days") or 0) < 365:
+                insufficient_reason = "At least 365 days of successfully completed U.S. historical backfill coverage are required."
+            elif int(readiness.get("transaction_count") or 0) < 100_000:
+                insufficient_reason = "At least 100,000 observed U.S. contract transactions are required."
         if not observation_start or not observed_end or (observed_end - observation_start).days < 180:
-            insufficient_reason = "At least 180 days of observed official event history are required."
+            insufficient_reason = insufficient_reason or "At least 180 days of observed official event history are required."
         train_start = observation_start or training_end
         training_cutoffs = rolling_cutoffs(train_start + timedelta(days=30), training_end - timedelta(days=horizon)) if train_start + timedelta(days=30) <= training_end - timedelta(days=horizon) else []
         test_start = validation_end + timedelta(days=1)
         test_cutoffs = rolling_cutoffs(test_start, test_end - timedelta(days=horizon)) if test_start <= test_end - timedelta(days=horizon) else []
-        train_rows, train_labels = self._samples(prediction_type, training_cutoffs, horizon)
-        test_rows, test_labels = self._samples(prediction_type, test_cutoffs, horizon)
+        if insufficient_reason:
+            train_rows, train_labels, test_rows, test_labels = [], [], [], []
+        else:
+            train_rows, train_labels = self._samples(prediction_type, training_cutoffs, horizon)
+            test_rows, test_labels = self._samples(prediction_type, test_cutoffs, horizon)
         if len(train_rows) < 50 or len(set(train_labels)) < 2:
             insufficient_reason = insufficient_reason or "Training requires at least 50 samples containing both outcomes."
+        if len(test_rows) < 100 or sum(test_labels) < 10 or len(test_labels) - sum(test_labels) < 10:
+            insufficient_reason = insufficient_reason or "Out-of-time testing requires at least 100 samples with 10 positive and 10 negative outcomes."
 
         if insufficient_reason:
             payload = {
@@ -153,10 +171,19 @@ class IntelligenceService:
         stored = self.repository.latest_model(prediction_type)
         if not stored:
             raise ValueError(f"no {prediction_type} model has been trained")
+        if not stored["probability_eligible"]:
+            return {
+                "status": "disabled",
+                "model_id": str(stored["id"]),
+                "generated": 0,
+                "sufficient": 0,
+                "insufficient": 0,
+                "reason": stored.get("notes") or "the latest model did not pass the probability gate",
+            }
         model = LogisticModel.from_json(
             list(stored["feature_names"]), dict(stored["coefficients"]), float(stored["intercept"])
         )
-        stats = {"model_id": str(stored["id"]), "generated": 0, "sufficient": 0, "insufficient": 0}
+        stats = {"status": "active", "model_id": str(stored["id"]), "generated": 0, "sufficient": 0, "insufficient": 0}
         for entity_id in self.repository.candidate_ids(prediction_type):
             events = self.repository.events_for(prediction_type, entity_id)
             end = self.repository.contract_end(entity_id) if prediction_type != "new_award" else None
@@ -187,10 +214,14 @@ class IntelligenceService:
         return stats
 
     def momentum(self, as_of: date) -> dict[str, int]:
-        stats = {"generated": 0, "sufficient": 0, "insufficient": 0}
+        stats = {"evaluated": 0, "generated": 0, "sufficient": 0, "insufficient": 0}
         for company_id in self.repository.candidate_ids("new_award"):
+            stats["evaluated"] += 1
             snapshot = momentum_snapshot(self.repository.events_for("new_award", company_id), as_of)
+            if snapshot["score"] is None:
+                stats["insufficient"] += 1
+                continue
             inserted = self.repository.persist_momentum(company_id, as_of, snapshot)
             stats["generated"] += int(inserted)
-            stats["sufficient" if snapshot["score"] is not None else "insufficient"] += int(inserted)
+            stats["sufficient"] += int(inserted)
         return stats

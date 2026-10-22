@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: global-platform-ingestion
+  group: production-procurement-ingestion
   cancel-in-progress: false
 
 jobs:
@@ -26,6 +26,10 @@ jobs:
       PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
       UK_START: ${{ inputs.uk_start }}
       UK_END: ${{ inputs.uk_end }}
+      DATABASE_CAPACITY_BYTES: "1073741824"
+      DATABASE_CAPACITY_WARNING_FRACTION: "0.60"
+      DATABASE_CAPACITY_STOP_FRACTION: "0.72"
+      DATABASE_CAPACITY_CRITICAL_FRACTION: "0.90"
     steps:
       - uses: actions/checkout@v4
       - name: Require production database secret
@@ -39,12 +43,13 @@ jobs:
         run: |
           if [ -n "$UK_START" ] || [ -n "$UK_END" ]; then
             test -n "$UK_START" && test -n "$UK_END" || { echo "uk_start and uk_end must be provided together"; exit 2; }
-            python -m ingestion uk-sync --start "$UK_START" --end "$UK_END"
+            python -m ingestion uk-backfill --start "$UK_START" --end "$UK_END" --window-days 7
           else
             python -m ingestion uk-sync
           fi
 
   intelligence:
+    needs: uk-find-a-tender
     runs-on: ubuntu-latest
     env:
       PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}

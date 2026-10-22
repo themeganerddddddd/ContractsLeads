@@ -44,8 +44,9 @@ export default async function SearchPage({
           <p className="eyebrow">Global procurement database</p>
           <h1>Search government contracts</h1>
           <p>
-            Search U.S. awards or UK Find a Tender processes while keeping
-            native identifiers, currencies, and source links intact.
+            Search U.S. federal awards, UK Find a Tender processes, and EU TED
+            notices while keeping native identifiers, currencies, countries,
+            and official source links intact.
           </p>
         </section>
         <SearchForm input={input} options={options} />
@@ -106,7 +107,7 @@ export default async function SearchPage({
                   <th>Processes</th>
                   <th>Disclosed native activity</th>
                   <th>Latest award</th>
-                  <th>Momentum</th>
+                  <th>Observed-activity index</th>
                   <th>Outlook</th>
                 </tr>
               </thead>

@@ -1,6 +1,6 @@
 # International procurement architecture
 
-Federal Ledger keeps the existing USAspending award and transaction model intact and adds a source-neutral procurement-process layer beside it. A process represents the lifecycle known to one official publishing system; source releases and events are append-only evidence attached to that process.
+Federal Ledger keeps the existing USAspending award and transaction model intact and adds a source-neutral procurement-process layer beside it. A process represents the lifecycle known to one official publishing system; source releases and events are append-only evidence attached to that process. `source_market` identifies the publishing market (`US_FEDERAL`, `UK_FTS`, or `EU_TED`); it never substitutes for the actual buyer, supplier, or performance country.
 
 ## Identity boundaries
 
@@ -37,9 +37,38 @@ cd platform
 python -m ingestion uk-sync --start 2025-01-01 --end 2025-01-31 --limit 100
 ```
 
+Use `uk-backfill` for historical windows so capacity is checked between
+restartable chunks:
+
+```powershell
+python -m ingestion uk-backfill --start 2025-01-01 --end 2025-03-31 --window-days 7
+```
+
 Omit dates for the most recent two-day overlap. Re-running a window is safe. The adapter groups releases by OCID, retains every distinct release payload, extracts buyers and all disclosed suppliers, preserves Companies House and other native identifiers, maps CPV prefixes to the common industry taxonomy, and derives lifecycle events from OCDS release tags.
 
 GBP remains GBP in `value_native`. `value_usd` is null unless the same row includes an explicit FX rate, observation date, and source URL. The initial adapter deliberately does not bundle an FX provider.
+
+## European Union: Tenders Electronic Daily
+
+`ingestion/eu_ted/` integrates the official public TED Search API v3 for daily
+collection and official monthly XML reuse packages for controlled historical
+loading. Search API paging uses `ITERATION`, not the 15,000-result page-number
+ceiling. The adapter preserves notice UUID and version, publication number,
+procedure UUID, notice/change references, buyer and tenderer identifiers,
+CPV, lot and contract identifiers, actual countries, NUTS values when supplied,
+native amount/currency, the exact notice URL, and XML URL.
+
+```powershell
+python -m ingestion eu-sync --start 2026-10-15 --end 2026-10-21 --limit 250 --historical
+python -m ingestion eu-backfill --year 2025 --month 1 --max-records 250
+```
+
+Notice versions are immutable rows in `procurement_notices`; lots and contracts
+are durable linked entities. Planning notices without a procedure UUID receive
+a source-scoped process container and remain explicitly unlinked rather than
+being guessed onto a later procedure. eForms and legacy XML parsers retain null
+for missing facts. EU is never treated as a country in search: the UI first
+filters by the `EU_TED` market, then by actual buyer/supplier/performance country.
 
 ## Extending to another country
 

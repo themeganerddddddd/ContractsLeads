@@ -1,4 +1,4 @@
 from .adapter import FindATenderAdapter
-from .service import UKSyncService
+from .service import UKBackfillService, UKSyncService
 
-__all__ = ["FindATenderAdapter", "UKSyncService"]
+__all__ = ["FindATenderAdapter", "UKBackfillService", "UKSyncService"]

@@ -22,6 +22,7 @@ describe("URL search state", () => {
   it("parses country and explainable-intelligence filters", () => {
     const parsed=parseSearchInput({country:"GB",prediction_min:"0.65",momentum_min:"60"});
     expect(parsed.country).toBe("GB");
+    expect(parsed.market).toBe("UK_FTS");
     expect(parsed.predictionMin).toBe(0.65);
     expect(parsed.momentumMin).toBe(60);
   });
@@ -77,9 +78,23 @@ describe("URL search state", () => {
     const result=await searchContracts(parseSearchInput({country:"GB",q:"cloud"}),"pro");
     const sql=mockedQuery.mock.calls.map(([statement])=>String(statement)).join("\n");
     expect(sql).toContain("procurement_processes p");
-    expect(sql).toContain("p.source_country='GB'");
+    expect(sql).toContain("p.source_market = $1");
+    expect(mockedQuery.mock.calls[0][1]?.[0]).toBe("UK_FTS");
     expect(sql).toContain("'/process/'");
     expect(result.total).toBe(1);
+  });
+
+  it("treats TED as a market and applies actual-country and NUTS filters", async () => {
+    mockedQuery.mockResolvedValueOnce([{ count: "0" }] as never).mockResolvedValueOnce([] as never);
+    const input=parseSearchInput({market:"EU_TED",buyer_country:"deu",supplier_country:"fra",nuts:"de11"});
+    await searchContracts(input,"pro");
+    expect(input.country).toBe("EU");
+    const [sql, values]=mockedQuery.mock.calls[0];
+    expect(sql).toContain("p.source_market = $1");
+    expect(sql).toContain("p.source_country = $2");
+    expect(sql).toContain("c.legal_entity_country = $3");
+    expect(sql).toContain("unnest(pl.nuts_codes)");
+    expect(values).toEqual(["EU_TED","DEU","FRA","DE11"]);
   });
 
   it("does not apply prediction filters below Pro", async () => {

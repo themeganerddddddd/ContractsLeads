@@ -233,6 +233,7 @@ class FindATenderAdapter:
         dates = _dates(release)
         return {
             "source_system": self.source_system,
+            "source_market": "UK_FTS",
             "source_country": self.country_code,
             "source_process_id": str(release["ocid"]),
             "ocid": str(release["ocid"]),

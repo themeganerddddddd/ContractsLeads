@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: national-platform-ingestion
+  group: production-procurement-ingestion
   cancel-in-progress: false
 
 jobs:
@@ -22,6 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      DATABASE_CAPACITY_BYTES: "1073741824"
+      DATABASE_CAPACITY_WARNING_FRACTION: "0.60"
+      DATABASE_CAPACITY_STOP_FRACTION: "0.72"
+      DATABASE_CAPACITY_CRITICAL_FRACTION: "0.90"
       RECONCILE_DAYS: ${{ inputs.days || '30' }}
     steps:
       - uses: actions/checkout@v4

@@ -7,6 +7,7 @@ from datetime import date, datetime, time, timedelta, timezone
 
 from .industry import IndustryClassifier
 from .normalize import normalize_transaction
+from operations.capacity import CapacityGuard, CapacityStop
 
 LOGGER = logging.getLogger("federal_ledger.ingestion")
 
@@ -23,12 +24,14 @@ class IngestionService:
         overlap_days: int = 3,
         classifier: IndustryClassifier | None = None,
         batch_size: int = 500,
+        capacity_guard: CapacityGuard | None = None,
     ):
         self.repository = repository
         self.client = client
         self.overlap_days = max(1, overlap_days)
         self.classifier = classifier or IndustryClassifier()
         self.batch_size = max(1, batch_size)
+        self.capacity_guard = capacity_guard
 
     @staticmethod
     def _merge_batch_result(stats: dict, result: dict) -> None:
@@ -40,6 +43,13 @@ class IngestionService:
     def _write_batch(self, batch: list[dict], stats: dict, errors: list[str]) -> None:
         if not batch:
             return
+        if self.capacity_guard:
+            self.capacity_guard.check(
+                source_system="usaspending",
+                operation="us-incremental-sync",
+                historical=False,
+                metadata={"batch_records": len(batch), "records_received": stats["received"]},
+            )
         if not hasattr(self.repository, "ingest_batch"):
             for normalized in batch:
                 try:
@@ -121,6 +131,11 @@ class IngestionService:
             self.repository.finish_run(run_id, status, stats, "\n".join(errors) or None)
             _log("ingestion_completed", run_id=run_id, source=source, status=status, **stats)
             return {**stats, "status": status, "start": start.isoformat(), "end": end.isoformat(), "date_type": date_type}
+        except CapacityStop as exc:
+            stats["duration_ms"] = round((clock.monotonic() - started) * 1000)
+            stats["metadata"] = {**stats.get("metadata", {}), "controlled_stop": exc.report}
+            self.repository.finish_run(run_id, "partial", stats, str(exc))
+            return {**stats, "status": "controlled_stop", "start": start.isoformat(), "end": end.isoformat(), "date_type": date_type}
         except Exception as exc:
             stats["duration_ms"] = round((clock.monotonic() - started) * 1000)
             self.repository.finish_run(run_id, "failed", stats, f"{type(exc).__name__}: {exc}")

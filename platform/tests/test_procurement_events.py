@@ -25,3 +25,10 @@ def test_usaspending_modification_derives_stable_explainable_events():
 
 def test_negative_obligation_is_a_value_decrease():
     assert "value_decreased" in {event["event_type"] for event in derive_usaspending_events(fixture("-10"), award_inserted=False)}
+
+
+def test_iso_action_date_is_used_instead_of_ingestion_time():
+    row = fixture()
+    row["transaction"]["action_date"] = "2022-03-04"
+    events = derive_usaspending_events(row, award_inserted=False)
+    assert all(event["event_at"].date().isoformat() == "2022-03-04" for event in events)

@@ -17,13 +17,33 @@ cd platform
 python scripts/manage_db.py migrate
 ```
 
+Configure the provider's current project storage ceiling and inspect the live
+database before every historical operation:
+
+```powershell
+$env:DATABASE_CAPACITY_BYTES="1073741824" # verify against the current provider plan first
+python -m operations storage-report
+```
+
+Historical loaders fail closed when `DATABASE_CAPACITY_BYTES` is absent. They
+record a capacity observation before download and before every major batch,
+warn at 60%, and stop cleanly at 72% by default. Committed chunks remain
+restartable. Daily feeds use the separate 90% critical threshold. Thresholds
+are environment configuration, not assumptions embedded in application code.
+TED monthly packages are streamed as `.tar.gz` files and can be hundreds of
+megabytes (recent observed packages were roughly 334–382 MB). Set
+`BACKFILL_MAX_DOWNLOAD_BYTES` to the runner's verified scratch-disk allowance;
+the downloader checks `Content-Length` before transfer and resumes partial files.
+
 Run one fiscal year at a time so the downloaded file, database load, and validation are independently recoverable:
 
 ```powershell
 python -m ingestion backfill --start 2021-10-01 --end 2022-09-30 --batch-size 1000
 ```
 
-The equivalent single request for the complete Phase 2 target is:
+Do not issue a multi-year request until measured sample growth and conservative
+projection show that it fits below the stop threshold. If it does, the
+equivalent request is:
 
 ```powershell
 python -m ingestion backfill --start 2021-10-01 --end 2026-10-20 --batch-size 1000
@@ -31,7 +51,7 @@ python -m ingestion backfill --start 2021-10-01 --end 2026-10-20 --batch-size 10
 
 Repeat for subsequent fiscal years through the current date. The current checkpoint is stored in `backfill_jobs` only in the same database commit as the corresponding data batch. After a process or network failure, run the identical command; the partial archive download and CSV checkpoint are resumed. A job marked `success` is a no-op on rerun. Do not change the date window during a resume.
 
-Capacity-plan `BACKFILL_CACHE_DIR` for at least one compressed full-year archive at a time plus database and WAL growth; official archives can be multiple gigabytes. The importer upserts observed corrections and retains append-only source versions. It deliberately does not infer that a transaction was deleted solely because it is absent from a later full archive, so investigate upstream deletions/tombstones separately before treating the local database as an exact deletion mirror.
+Capacity-plan `BACKFILL_CACHE_DIR` for at least one compressed full-year archive at a time plus database and WAL growth; official archives can be multiple gigabytes. The production database also retains append-only raw payload versions, which are frequently the dominant storage category. Prefer compressed raw-source archives in object storage with hashes and database pointers once that tier is provisioned; do not silently delete database history. The importer upserts observed corrections and retains append-only source versions. It deliberately does not infer that a transaction was deleted solely because it is absent from a later full archive, so investigate upstream deletions/tombstones separately before treating the local database as an exact deletion mirror.
 
 For a bounded production-like validation using an official-format local file:
 
@@ -55,10 +75,12 @@ Golden-market comparison queries USAspending transactions directly for Montgomer
 - `.github/workflows/platform-ingestion.yml`: daily changed-transaction sync.
 - `.github/workflows/platform-reconciliation.yml`: weekly 30-day action-date reconciliation, with a validated manual window.
 - `.github/workflows/platform-backfill.yml`: manual historical window, serialized with other ingestion.
+- `.github/workflows/platform-global-intelligence.yml`: UK daily sync and then U.S.-only model audit.
+- `.github/workflows/platform-eu-ted.yml`: TED daily Search API sync or manual capacity-governed monthly XML package.
 
 All workers use `PLATFORM_DATABASE_DIRECT_URL`. The web application uses a provider-pooled `DATABASE_URL`. The workflows serialize through one concurrency group so a reconciliation cannot advance alongside a historical batch. Partial and failed ingestion runs never become the daily successful checkpoint. Structured logs include run/job ID, event, window, counts, duration, and exception type; they exclude environment values and source payloads.
 
-The internal `GET /api/health/data` route requires `Authorization: Bearer $INTERNAL_HEALTH_TOKEN` in production and returns inventory, recent run status, backfill progress, and freshness. Treat `503 initializing` as expected before the first completed sync; investigate `503 degraded`, stale daily data, partial runs, and latest failures.
+The internal `GET /api/health/data` route requires `Authorization: Bearer $INTERNAL_HEALTH_TOKEN` in production and returns inventory, recent run status, source checkpoints, per-market coverage, capacity state, backfill progress, and freshness. `/admin/data` is a browser shell that asks an operator for that token and does not embed it in HTML or JavaScript. Treat `503 initializing` as expected before the first completed sync; investigate `503 degraded`, stale daily data, partial runs, and latest failures.
 
 ## Managed PostgreSQL and Vercel
 
