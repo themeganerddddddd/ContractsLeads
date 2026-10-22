@@ -43,7 +43,7 @@ jobs:
       - run: python platform/scripts/manage_db.py seed
       - run: python -m pytest
       - uses: actions/setup-node@v4
-        with: { node-version: "22", cache: npm, cache-dependency-path: platform/web/package-lock.json }
+        with: { node-version: "24.22.1", cache: npm, cache-dependency-path: platform/web/package-lock.json }
       - working-directory: platform/web
         run: npm ci
       - working-directory: platform/web
