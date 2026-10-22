@@ -60,11 +60,30 @@ class CapacityGuard:
         ).fetchall()
         return [dict(row) for row in rows]
 
+    def _counts(self) -> dict[str, int]:
+        row = self.connection.execute(
+            """SELECT
+                 (SELECT count(*) FROM companies) AS companies,
+                 (SELECT count(*) FROM awards) AS awards,
+                 (SELECT count(*) FROM transactions) AS transactions,
+                 (SELECT count(*) FROM raw_source_transactions) AS raw_source_records,
+                 (SELECT count(*) FROM procurement_processes) AS procurement_processes,
+                 (SELECT count(*) FROM procurement_process_releases) AS procurement_releases,
+                 (SELECT count(*) FROM procurement_notices) AS procurement_notices,
+                 (SELECT count(*) FROM procurement_events) AS events,
+                 (SELECT count(*) FROM predictions) AS predictions"""
+        ).fetchone()
+        return {name: int(value or 0) for name, value in dict(row).items()}
+
     def measure(self) -> dict[str, Any]:
         database_bytes = int(
             self.connection.execute("SELECT pg_database_size(current_database()) AS bytes").fetchone()["bytes"]
         )
         relations = self._relations()
+        counts = self._counts()
+        table_data_bytes = sum(int(row["data_bytes"]) for row in relations)
+        index_bytes = sum(int(row["index_bytes"]) for row in relations)
+        relation_total_bytes = sum(int(row["total_bytes"]) for row in relations)
         raw_names = {
             "raw_source_transactions",
             "raw_source_transaction_versions",
@@ -74,13 +93,29 @@ class CapacityGuard:
         raw_bytes = sum(int(row["total_bytes"]) for row in relations if row["name"] in raw_names)
         capacity = self.thresholds.capacity_bytes
         utilization = database_bytes / capacity if capacity else None
+        relation_lookup = {row["name"]: int(row["total_bytes"]) for row in relations}
+        observed_bytes_per_100k = {
+            label: round(relation_lookup.get(table, 0) * 100_000 / counts[count_key])
+            if counts[count_key]
+            else None
+            for label, table, count_key in (
+                ("transactions", "transactions", "transactions"),
+                ("awards", "awards", "awards"),
+                ("procurement_events", "procurement_events", "events"),
+            )
+        }
         return {
             "database_bytes": database_bytes,
+            "table_data_bytes": table_data_bytes,
+            "index_bytes": index_bytes,
+            "relation_total_bytes": relation_total_bytes,
             "capacity_bytes": capacity,
             "utilization": utilization,
             "utilization_percent": round(utilization * 100, 3) if utilization is not None else None,
             "raw_bytes": raw_bytes,
             "raw_share_percent": round(raw_bytes / database_bytes * 100, 3) if database_bytes else 0,
+            "counts": counts,
+            "observed_relation_bytes_per_100k": observed_bytes_per_100k,
             "relations": relations,
         }
 

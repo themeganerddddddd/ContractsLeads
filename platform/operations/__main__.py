@@ -36,10 +36,18 @@ def main() -> int:
         print(json.dumps(result, indent=2, default=str))
     else:
         print(f"Database: {result['database_bytes']:,} bytes")
+        print(f"Table data: {result['table_data_bytes']:,} bytes")
+        print(f"Indexes: {result['index_bytes']:,} bytes")
         print(f"Configured capacity: {result['capacity_bytes'] or 'not configured'}")
         print(f"Utilization: {result['utilization_percent'] if result['utilization_percent'] is not None else 'unknown'}%")
         print(f"Raw/version storage: {result['raw_bytes']:,} bytes ({result['raw_share_percent']}%)")
         print(f"Decision: {result['decision']} — {result['reason']}")
+        print("Counts:")
+        for name, count in result["counts"].items():
+            print(f"  {name}: {count:,}")
+        print("Observed relation bytes per 100k rows (current average; not a projection):")
+        for name, value in result["observed_relation_bytes_per_100k"].items():
+            print(f"  {name}: {value:,}" if value is not None else f"  {name}: unavailable")
         print("Largest relations:")
         for row in result["relations"][:20]:
             print(f"  {row['name']}: {row['total_bytes']:,} (data {row['data_bytes']:,}; indexes {row['index_bytes']:,})")
