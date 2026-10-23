@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-10-11T16:40:19Z",
+  "last_updated": "2026-10-23T15:46:28Z",
   "sources_checked": [
     "War.gov",
     "USAspending",
@@ -16,7 +16,7 @@
     "diu": "success",
     "darpa": "success",
     "sbir": "failed: RuntimeError: SBIR public feed is not configured; collector skipped safely",
-    "sam": "success"
+    "sam": "skipped"
   },
   "collector_details": {
     "war": {
@@ -24,27 +24,27 @@
       "rss_status": 200,
       "discovery_method": "rss",
       "announcements_discovered": 20,
-      "article_requests": 18,
+      "article_requests": 13,
       "article_http_successes": 0,
-      "browser_attempts": 18,
+      "browser_attempts": 13,
       "browser_successes": 0,
       "structured_fallback_status": 200,
-      "structured_fallback_awards": 22,
-      "unresolved_announcements": 13,
+      "structured_fallback_awards": 24,
+      "unresolved_announcements": 8,
       "status": "partial",
-      "records_retrieved": 22,
-      "moco_matches": 2
+      "records_retrieved": 24,
+      "moco_matches": 1
     },
     "usaspending": {
       "status": "success",
-      "records_retrieved": 98,
-      "known_company_matches": 7,
-      "county_discovery_matches": 57,
-      "place_of_performance_matches": 34,
-      "outside_company_performance_matches": 34,
+      "records_retrieved": 158,
+      "known_company_matches": 4,
+      "county_discovery_matches": 104,
+      "place_of_performance_matches": 50,
+      "outside_company_performance_matches": 50,
       "place_of_performance_lookback_days": 7,
-      "new_entities_discovered": 36,
-      "moco_matches": 62
+      "new_entities_discovered": 70,
+      "moco_matches": 106
     },
     "nasa": {
       "records_retrieved": 0,
@@ -62,30 +62,30 @@
       "moco_matches": 0
     },
     "darpa": {
-      "records_retrieved": 0,
+      "records_retrieved": 1,
       "moco_matches": 0
     },
     "sam": {
-      "status": "success",
+      "status": "skipped",
+      "reason": "SAM_API_KEY not set",
       "records_retrieved": 0,
-      "mode": "entity_contact_enrichment",
       "moco_matches": 0
     }
   },
-  "record_count": 12814,
+  "record_count": 12905,
   "market_counts": {
-    "outside_company_working_in_moco": 6237,
-    "moco_company": 385,
-    "moco_company_working_in_moco": 6192
+    "moco_company": 436,
+    "outside_company_working_in_moco": 6254,
+    "moco_company_working_in_moco": 6215
   },
   "contact_stats": {
-    "companies_examined": 2987,
+    "companies_examined": 3000,
     "company_contacts_found": 386,
     "named_company_contacts": 386,
     "company_contacts_with_email": 7,
     "gsa_contacts": 7,
     "generic_contacts": 0,
-    "sam_poc_names_found_this_run": 97,
+    "sam_poc_names_found_this_run": 0,
     "federal_award_contacts": 0
   },
   "disclosed_value_note": "Totals include disclosed amounts only."
