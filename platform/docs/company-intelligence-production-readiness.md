@@ -33,6 +33,8 @@ The Vercel project was explicitly identified as `west-tech/federal-ledger` with 
 
 Read-only production checks returned HTTP 200 for the landing page, search, GB contract search, EU contract search, pricing, and auth-session endpoint. `/movements` and `/indicators` returned 404, as expected because the feature has not been deployed. Pricing, billing, outbound email, and authentication behavior were not changed.
 
+The pushed feature branch produced a Ready Vercel preview deployment. Authenticated checks confirmed that `/movements` and `/indicators` render their route shells and explicit "Database not available" state. The preview has no branch-specific `DATABASE_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_SECRET`, or `INTERNAL_HEALTH_TOKEN`; consequently procurement `/search` returns HTTP 500 there. This preview proves build and route availability only, not database integration or production-like end-to-end behavior.
+
 The collection workflow has no scheduled trigger. It remains available only by explicit manual dispatch and must stay that way until the production gates in the operations runbook are met.
 
 ## 5. Bounded live-source results
@@ -101,7 +103,7 @@ Before production release:
 4. Apply migration `0012`, verify the migration ledger, and confirm existing procurement counts and representative records are unchanged.
 5. Run one bounded source at a time and record received, written, skipped, duplicate, failure, checkpoint, ambiguous, and unmatched totals.
 6. Review and approve or reject representative name candidates; do not convert the current report's candidates automatically.
-7. Deploy a preview with production-like non-secret configuration and verify company, movement, indicator, search, auth, and pricing flows.
+7. Supply an isolated preview database and production-like preview configuration, then verify company, movement, indicator, search, auth, and pricing flows. Do not point the preview at production merely to bypass this gate.
 8. Deploy production only after those checks pass; keep scheduling disabled during initial observation.
 9. Enable a conservative schedule only through a separately reviewed change.
 
