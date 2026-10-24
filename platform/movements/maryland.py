@@ -359,9 +359,24 @@ class MarylandCommerceAdapter:
         )
         county = _clean(county_match.group(1)) if county_match else None
         lowered = evidence_text.casefold()
-        if "headquarters" in lowered:
+        movement_claim = f"{title} {summary}"
+        headquarters_move = re.search(
+            r"\bnew\b.{0,30}\bheadquarters\b|"
+            r"\b(?:relocat\w*|mov\w*)\b.{0,50}\bheadquarters\b|"
+            r"\bheadquarters\b.{0,50}\b(?:relocat\w*|mov\w*)\b",
+            movement_claim,
+            re.I,
+        )
+        if headquarters_move:
             event_type, location_role = "headquarters_move", "headquarters"
-        elif "new facility" in lowered or "opening a new" in lowered or "new distribution center" in lowered:
+        elif re.search(r"\bexpand\w*\s+(?:its\s+|the\s+)?headquarters\b", movement_claim, re.I):
+            event_type, location_role = "facility_expansion", "expanded_facility"
+        elif re.search(
+            r"\bnew\s+(?:[a-z-]+\s+){0,4}(?:facility|plant|warehouse|distribution center)\b|"
+            r"\b(?:open\w*|build\w*|construct\w*)\b.{0,50}\bnew\b.{0,50}\b(?:facility|plant|warehouse|distribution center)\b",
+            movement_claim,
+            re.I,
+        ):
             event_type, location_role = "new_facility", "new_facility"
         elif "facility expansion" in lowered:
             event_type, location_role = "facility_expansion", "expanded_facility"

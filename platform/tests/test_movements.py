@@ -94,13 +94,35 @@ def test_commerce_parser_only_selects_expansion_releases_and_extracts_announced_
     )
     movement = MarylandCommerceAdapter().normalize(envelope)
     assert movement.observed_company_name == "Cloudforce"
-    assert movement.event["event_type"] == "headquarters_move"
+    assert movement.event["event_type"] == "facility_expansion"
+    assert movement.location["location_role"] == "expanded_facility"
     assert movement.event["event_status"] == "announced"
     assert movement.event["jobs_created"] == 250
     assert str(movement.event["capital_investment"]) == "12000000"
     assert movement.event["currency"] == "USD"
     assert movement.event["primary_county_fips"] == "24033"
     assert movement.event["evidence"]["numeric_claims_are_announced"] is True
+
+
+def test_company_background_headquarters_reference_does_not_become_a_headquarters_move():
+    envelope = MovementEnvelope(
+        source_system="maryland_commerce_press",
+        document_identifier="md-commerce-expansion",
+        source_url="https://commerce.maryland.gov/press-room/example-expansion",
+        publisher="Maryland Department of Commerce",
+        publication_date=date(2026, 9, 15),
+        observed_at=OBSERVED,
+        source_type="official_economic_development_announcement",
+        payload={
+            "title": "Governor Announces Example Foods Expansion with 140 New Jobs",
+            "summary": "The company, headquartered in Baltimore, will expand operations in Anne Arundel County.",
+            "body_excerpt": "Example Foods plans to create 140 new jobs through the announced expansion.",
+            "company_name": "Example Foods",
+        },
+    )
+    movement = MarylandCommerceAdapter().normalize(envelope)
+    assert movement.event["event_type"] == "expansion"
+    assert movement.location["location_role"] == "destination"
 
 
 def test_company_matching_auto_links_only_one_exact_normalized_name():

@@ -34,7 +34,7 @@ The bounded run produced:
 
 | Check | Result |
 |---|---|
-| Python test suite | 143 passed, 2 skipped |
+| Python test suite | 144 passed, 2 skipped |
 | Next.js/Vitest suite | 38 passed across 7 files |
 | TypeScript | `tsc --noEmit` passed |
 | Production build | Next.js 16.4.2 build passed; `/movements` and `/indicators` emitted as dynamic server-rendered routes |
