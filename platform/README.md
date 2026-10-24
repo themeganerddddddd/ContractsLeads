@@ -1,13 +1,15 @@
 # Federal Ledger platform
 
-`platform/` is an isolated, database-backed national contract-intelligence application built from the concepts proven by the Montgomery County tracker. The original `site/`, `data/`, `collectors/`, `pipeline/`, and workflows remain unchanged and deployable.
+`platform/` is an isolated, database-backed government procurement and company-intelligence application built from the concepts proven by the Montgomery County tracker. The original `site/`, `data/`, `collectors/`, `pipeline/`, and workflows remain unchanged and deployable.
 
-Phase 2 hardens the V1 product for a production beta without redesigning the interface. The current global foundation adds source-neutral procurement processes, append-only lifecycle events, conservative international entity identity, the official UK Find a Tender OCDS adapter, and explainable point-in-time intelligence with calibration gates.
+The global foundation includes source-neutral procurement processes, append-only lifecycle events, conservative international entity identity, official U.S./UK/EU procurement adapters, and explainable point-in-time intelligence with calibration gates. The company-intelligence extension adds a separate source-backed movement ledger, reviewable company relationships, geographic coverage, commercial permits, SEC disclosures, and descriptive early-indication assessments.
 
 The platform deliberately separates two questions throughout its schema, importer, query service, URLs, and UI:
 
 - **Where is the company based?** Company/recipient fields live on `companies.recipient_*`.
 - **Where is the work performed?** Award fields live on `awards.performance_*`.
+- **Where did a company event occur?** Movement geography lives on `company_events` and `company_event_locations`.
+- **Where does an independently verified facility operate?** Verified operating locations live on `company_locations`.
 
 The application never promotes a place of performance into a company address. Disclosed transaction obligations, current contract value, and potential contract value are distinct nullable fields.
 
@@ -43,7 +45,8 @@ Production deployment is intentionally split:
 platform/
   db/                 PostgreSQL migration, schema entry point, demo seed
   ingestion/          Nationwide transaction importer and CLI
-  intelligence/       Point-in-time features, backtests, predictions, momentum
+  intelligence/       Point-in-time procurement features, backtests, predictions, momentum
+  movements/          WARN, expansion, permits, SEC disclosures, and movement assessments
   scripts/            Migration, scale-data, and EXPLAIN ANALYZE utilities
   docs/               Production operations, backup, and restore runbook
   shared/             Industry taxonomy and plan entitlements
@@ -55,7 +58,7 @@ platform/
 
 ## Local setup
 
-Prerequisites: Docker Desktop, Python 3.11+, Node.js 20.9+.
+Prerequisites: Docker Desktop, Python 3.11+, Node.js 24.22.1.
 
 From the repository root:
 
@@ -103,7 +106,9 @@ python scripts/manage_db.py reset-demo
 
 `db/schema.sql` is a `psql` convenience entry point. `scripts/manage_db.py` is the cross-platform migration runner and records applied files in `schema_migrations`.
 
-The schema includes the original U.S. tables plus reviewed organizations, source-specific entity identifiers, buyers, procurement processes and suppliers, append-only releases and lifecycle events, CPV mappings, source coverage, versioned models, append-only predictions, momentum snapshots, and company watches. PostgreSQL trigram/full-text and composite geography/date/entity indexes support server-side search and profiles. Transaction-based annual views prevent an award's lifetime obligation from being repeated across years.
+The schema includes the original U.S. tables plus reviewed organizations, source-specific entity identifiers, buyers, procurement processes and suppliers, append-only releases and lifecycle events, CPV mappings, source coverage, versioned models, append-only predictions, momentum snapshots, and company watches. Migration `0012_company_movement_intelligence.sql` adds company events, append-only evidence revisions, reviewable company/event roles, verified operating locations, event locations, permit records and revisions, indicators, historical assessments, and geographic source coverage. It does not change or repurpose `procurement_events`.
+
+See [docs/company-movement-intelligence.md](docs/company-movement-intelligence.md) for the schema contract and coverage model, [docs/company-movement-validation.md](docs/company-movement-validation.md) for the bounded source and quality report, and [docs/company-movement-operations.md](docs/company-movement-operations.md) for deployment and collection commands.
 
 ## Ingestion
 
@@ -170,6 +175,20 @@ python -m intelligence momentum
 
 The UI and `/admin/models` withhold probabilities unless the out-of-time model passes minimum history, sample, discrimination, and Brier-score gates. Government Momentum is explicitly a 0–100 activity index, not a probability. See [docs/predictive-intelligence.md](docs/predictive-intelligence.md).
 
+### Company movements and early indicators
+
+Run bounded live validation before enabling schedules:
+
+```powershell
+python -m movements sync --source all --limit 10
+python -m movements permit-sync --since 2026-10-01 --limit 100
+python -m movements sec-sync --limit 25
+python -m movements assess --assessment-type growth
+python -m movements quality-report --output-dir reports
+```
+
+The SEC command only queries companies with a verified `SEC_CIK` or `CIK` row in `entity_identifiers`, and requires `SEC_USER_AGENT`. Movement collectors isolate source and record failures. Name-only matches remain pending review; only authoritative identifier matches generate company indicators automatically. Permit data never creates a company relationship when the source omits the occupant or other named party.
+
 ## Data quality and validation
 
 Generate the database-backed duplicate, geography, award/transaction, and industry audit:
@@ -206,6 +225,8 @@ Key routes:
 - `/process/[id]`
 - `/admin/models`
 - `/location/[state]/[county-fips]`
+- `/movements`
+- `/indicators`
 - `/agency/[slug]`
 - `/industry/[slug]`
 - `/pricing`
