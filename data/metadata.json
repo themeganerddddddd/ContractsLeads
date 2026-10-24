@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-10-23T15:46:28Z",
+  "last_updated": "2026-10-24T14:34:41Z",
   "sources_checked": [
     "War.gov",
     "USAspending",
@@ -24,30 +24,30 @@
       "rss_status": 200,
       "discovery_method": "rss",
       "announcements_discovered": 20,
-      "article_requests": 13,
+      "article_requests": 12,
       "article_http_successes": 0,
-      "browser_attempts": 13,
+      "browser_attempts": 12,
       "browser_successes": 0,
       "structured_fallback_status": 200,
-      "structured_fallback_awards": 24,
-      "unresolved_announcements": 8,
+      "structured_fallback_awards": 25,
+      "unresolved_announcements": 7,
       "status": "partial",
-      "records_retrieved": 24,
+      "records_retrieved": 25,
       "moco_matches": 1
     },
     "usaspending": {
       "status": "success",
-      "records_retrieved": 158,
-      "known_company_matches": 4,
-      "county_discovery_matches": 104,
-      "place_of_performance_matches": 50,
-      "outside_company_performance_matches": 50,
+      "records_retrieved": 192,
+      "known_company_matches": 5,
+      "county_discovery_matches": 117,
+      "place_of_performance_matches": 70,
+      "outside_company_performance_matches": 70,
       "place_of_performance_lookback_days": 7,
-      "new_entities_discovered": 70,
-      "moco_matches": 106
+      "new_entities_discovered": 75,
+      "moco_matches": 120
     },
     "nasa": {
-      "records_retrieved": 0,
+      "records_retrieved": 1,
       "moco_matches": 0
     },
     "diu": {
@@ -72,14 +72,14 @@
       "moco_matches": 0
     }
   },
-  "record_count": 12905,
+  "record_count": 12934,
   "market_counts": {
-    "moco_company": 436,
-    "outside_company_working_in_moco": 6254,
-    "moco_company_working_in_moco": 6215
+    "moco_company": 452,
+    "outside_company_working_in_moco": 6261,
+    "moco_company_working_in_moco": 6221
   },
   "contact_stats": {
-    "companies_examined": 3000,
+    "companies_examined": 3006,
     "company_contacts_found": 386,
     "named_company_contacts": 386,
     "company_contacts_with_email": 7,

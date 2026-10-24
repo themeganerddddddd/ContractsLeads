@@ -24860,6 +24860,48 @@
       "company_name": "ZEMITEK LLC",
       "company": null,
       "last_checked": null
+    },
+    "uei-d54rdjjc9ay3": {
+      "company_id": "uei-d54rdjjc9ay3",
+      "uei": "D54RDJJC9AY3",
+      "company_name": "OLIVIA AKERLEY",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-u3w9udck31w7": {
+      "company_id": "uei-u3w9udck31w7",
+      "uei": "U3W9UDCK31W7",
+      "company_name": "CAPITAL COLORS, LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-xj7kjadlwf68": {
+      "company_id": "uei-xj7kjadlwf68",
+      "uei": "XJ7KJADLWF68",
+      "company_name": "NEW CENTURY ADVISORS LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-he6sk5l289w4": {
+      "company_id": "uei-he6sk5l289w4",
+      "uei": "HE6SK5L289W4",
+      "company_name": "SAXMAN ONE, LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-yu6vee2eylr1": {
+      "company_id": "uei-yu6vee2eylr1",
+      "uei": "YU6VEE2EYLR1",
+      "company_name": "LYONS PUBLIC RELATIONS LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-pp4uru6n6m71": {
+      "company_id": "uei-pp4uru6n6m71",
+      "uei": "PP4URU6N6M71",
+      "company_name": "DOCUWARE CORPORATION",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -27859,7 +27901,13 @@
     "J1YNJH7DPT65": "uei-j1ynjh7dpt65",
     "UW75F72ALJX8": "uei-uw75f72aljx8",
     "DQ7YZMCK5D23": "uei-dq7yzmck5d23",
-    "MKFJCFSVQ9B8": "uei-mkfjcfsvq9b8"
+    "MKFJCFSVQ9B8": "uei-mkfjcfsvq9b8",
+    "D54RDJJC9AY3": "uei-d54rdjjc9ay3",
+    "U3W9UDCK31W7": "uei-u3w9udck31w7",
+    "XJ7KJADLWF68": "uei-xj7kjadlwf68",
+    "HE6SK5L289W4": "uei-he6sk5l289w4",
+    "YU6VEE2EYLR1": "uei-yu6vee2eylr1",
+    "PP4URU6N6M71": "uei-pp4uru6n6m71"
   },
-  "updated_at": "2026-10-23T15:46:28Z"
+  "updated_at": "2026-10-24T14:34:41Z"
 }
