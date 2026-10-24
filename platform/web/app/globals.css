@@ -976,6 +976,160 @@ a:focus-visible {
   }
 }
 
+.movement-query-row {
+  grid-template-columns: minmax(260px, 1fr) 220px auto;
+}
+.movement-filter-grid {
+  margin-top: 14px;
+}
+.movement-table small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.movement-table .primary-cell {
+  max-width: 420px;
+}
+.review-pill {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 3px 7px;
+  border: 1px solid #dfc58f;
+  border-radius: 10px;
+  color: #735d39;
+  background: #fffbf2;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.movement-expansion,
+.movement-new_facility,
+.movement-facility_expansion,
+.movement-hiring,
+.movement-investment {
+  background: #e3f3eb;
+  color: var(--green);
+}
+.movement-layoff,
+.movement-closure,
+.movement-furlough {
+  background: #fff0ef;
+  color: var(--danger);
+}
+.coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.coverage-card {
+  padding: 19px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+.coverage-card > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.coverage-card h3 {
+  margin: 13px 0 7px;
+  color: var(--navy);
+  font: 600 20px Georgia, serif;
+}
+.coverage-card p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.coverage-card dl {
+  margin: 14px 0;
+  font-size: 11px;
+}
+.coverage-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.coverage-card dt {
+  color: var(--muted);
+}
+.coverage-card dd {
+  margin: 0;
+  text-align: right;
+  text-transform: capitalize;
+}
+.status-partial,
+.status-unknown {
+  background: #fff1dd;
+  color: #805813;
+}
+
+@media (max-width: 800px) {
+  .movement-query-row,
+  .coverage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.permit-table small,
+.indicator-row small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.permit-table td:nth-child(3) {
+  min-width: 320px;
+  white-space: normal;
+}
+.indicator-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 14px;
+}
+.assessment-list {
+  display: grid;
+  gap: 10px;
+}
+.assessment-list article {
+  padding: 13px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+}
+.assessment-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.assessment-list strong {
+  display: block;
+  margin: 5px 0;
+  color: var(--navy);
+  font: 600 22px Georgia, serif;
+}
+.assessment-list p {
+  color: var(--muted);
+  font-size: 11px;
+}
+.indicator-row {
+  align-items: center;
+}
+
+@media (max-width: 800px) {
+  .indicator-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .query-row {
   grid-template-columns: 1fr 190px auto;
 }

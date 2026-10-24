@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { AwardTable } from "@/components/AwardTable";
 import { DataNote } from "@/components/DataNote";
+import { EarlyIndicatorsPanel } from "@/components/EarlyIndicatorsPanel";
 import { MetricCard } from "@/components/MetricCard";
+import { MovementTable } from "@/components/MovementTable";
 import { MomentumPanel } from "@/components/MomentumPanel";
 import { PredictionPanel } from "@/components/PredictionPanel";
 import { RankedList } from "@/components/RankedList";
@@ -37,11 +39,13 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
         <div className="entity-actions">{can(plan, "company_watches") ? <WatchCompanyButton companyId={company.id} /> : null}<DataNote updated={data.lastUpdated} demo={company.is_demo} source="official procurement sources" /></div>
       </div>
     </section>
-    <nav className="tabs"><a href="#overview">Overview</a><a href="#activity">Activity</a><a href="#intelligence">Predictive intelligence</a><a href="#global">Global business</a><a href="#contracts">Contracts</a><a href="#history">History</a></nav>
+    <nav className="tabs"><a href="#overview">Overview</a><a href="#movements">Movements</a><a href="#early-indicators">Early indicators</a><a href="#activity">Procurement activity</a><a href="#intelligence">Predictive intelligence</a><a href="#global">Global business</a><a href="#contracts">Contracts</a><a href="#history">History</a></nav>
     <section id="overview">
       <div className="metrics-grid"><MetricCard label="Disclosed U.S. activity" value={compactMoney(metrics.total_activity)} note="transaction obligations" /><MetricCard label="U.S. awards" value={Number(metrics.award_count).toLocaleString()} /><MetricCard label="Transactions" value={Number(metrics.transaction_count).toLocaleString()} /><MetricCard label="Latest award" value={dateLabel(metrics.latest_award)} /></div>
       <dl className="detail-grid"><div><dt>Recipient address</dt><dd>{reported([company.recipient_address, company.recipient_city, company.recipient_county, company.recipient_state, company.recipient_zip].filter(Boolean).join(", "))}</dd></div><div><dt>Recipient county FIPS</dt><dd>{reported(company.recipient_county_fips)}</dd></div><div><dt>Reviewed organization</dt><dd>{reported(company.organization_id)}</dd></div><div><dt>Parent company</dt><dd>{reported(company.parent_company_name)}</dd></div><div><dt>Ultimate parent UEI</dt><dd>{reported(company.ultimate_parent_uei)}</dd></div><div><dt>First / last seen</dt><dd>{dateLabel(company.first_seen)} — {dateLabel(company.last_seen)}</dd></div></dl>
     </section>
+    <section className="section" id="movements"><div className="section-header"><div><p className="eyebrow">Company intelligence</p><h2>Source-backed movements</h2><p>Official workforce and economic-development records matched to this legal entity. Name-only matches remain visibly pending review.</p></div><Link href={`/movements?q=${encodeURIComponent(company.canonical_name)}`}>Search all movement records →</Link></div><MovementTable rows={data.movements} /></section>
+    <section className="section" id="early-indicators"><div className="section-header"><div><p className="eyebrow">Auditable signals</p><h2>Early indications</h2><p>Descriptive scores require multiple independent evidence types and are never presented as calibrated probabilities.</p></div><Link href="/indicators">Browse covered permits →</Link></div><EarlyIndicatorsPanel data={data.earlyIndicators} /></section>
     <section className="section" id="activity"><div className="section-header"><div><p className="eyebrow">Lifecycle</p><h2>Government activity timeline</h2><p>Source-backed events across countries, newest first.</p></div></div><ActivityTimeline events={data.events} /></section>
     <section className="section" id="intelligence"><div className="section-header"><div><p className="eyebrow">Explainable and calibrated</p><h2>Predictive intelligence</h2><p>Probabilities are withheld when the model or entity history does not pass the documented gates.</p></div></div><div className="intelligence-layout"><PredictionPanel predictions={data.predictions} /><MomentumPanel momentum={data.momentum} /></div></section>
     <section className="section" id="global"><div className="section-header"><div><p className="eyebrow">Cross-border record</p><h2>Global government business</h2></div></div>
