@@ -45,6 +45,7 @@ def test_sec_normalization_links_by_cik_and_does_not_invent_funding_amount():
     assert movement.event["event_date"] == date(2026, 10, 18)
     assert movement.identifiers == ({"system": "SEC_CIK", "value": "0000123456", "country_code": "US"},)
     assert movement.source["commercial_use_status"] == "permitted"
+    assert movement.source["license_name"] == "SEC EDGAR public filing reuse policy"
     assert "not proof" in movement.event["summary"]
 
 

@@ -26,7 +26,7 @@ export default async function IndicatorsPage({ searchParams }: { searchParams: P
         <div className="results-toolbar"><div><h2>{result.total.toLocaleString()} matching permit indicators</h2><p>Database-filtered and paginated. No tenant or beneficiary is inferred from the project address.</p></div></div>
         <PermitTable rows={result.rows} />
         <Pagination page={result.page} pageSize={result.pageSize} total={result.total} params={raw} basePath="/indicators" />
-        <p className="notice">Current permit coverage: Montgomery County, Maryland commercial building permits. The official dataset is Public Domain and updated daily, but its published fields do not include verified occupant, owner, developer, applicant, contractor, or parcel identifiers. Those relationships remain null.</p>
+        <p className="notice">Current permit coverage: Montgomery County, Maryland commercial building permits. Use is subject to the County&apos;s Open Data Terms, including attribution requirements. The published fields do not include verified occupant, owner, developer, applicant, contractor, or parcel identifiers, so those relationships remain null.</p>
       </>
     );
   } catch (cause) {

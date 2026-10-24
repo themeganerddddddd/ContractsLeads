@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 MIGRATION = (
@@ -52,3 +53,29 @@ def test_psql_schema_entry_point_includes_all_migrations():
     schema = (Path(__file__).resolve().parents[1] / "db" / "schema.sql").read_text(encoding="utf-8")
     assert "0012_company_movement_intelligence.sql" in schema
     assert "0011_repair_us_event_dates.sql" in schema
+
+
+def test_movement_migration_does_not_mutate_or_delete_procurement_records():
+    assert not re.search(r"\b(?:DROP|TRUNCATE)\s+TABLE\b", MIGRATION, re.IGNORECASE)
+    assert not re.search(r"\bDELETE\s+FROM\s+(?:companies|awards|transactions|procurement_\w+)", MIGRATION, re.IGNORECASE)
+    assert not re.search(r"\bUPDATE\s+(?:companies|awards|transactions|procurement_\w+)\b", MIGRATION, re.IGNORECASE)
+    assert not re.search(r"\bALTER\s+TABLE\s+(?:companies|awards|transactions|procurement_\w+)\b", MIGRATION, re.IGNORECASE)
+
+
+def test_scheduled_movement_ingestion_remains_disabled_until_production_gate():
+    workflow = (
+        Path(__file__).resolve().parents[2]
+        / ".github"
+        / "workflows"
+        / "platform-company-movements.yml"
+    ).read_text(encoding="utf-8")
+    assert "workflow_dispatch:" in workflow
+    assert "schedule:" not in workflow
+
+
+def test_reuse_labels_do_not_overstate_public_domain_or_filing_rights():
+    assert "Montgomery County Open Data Terms of Use" in MIGRATION
+    assert '"attribution_required":true' in MIGRATION
+    assert "Public Domain" not in MIGRATION
+    assert '"filing_content_rights":"SEC states EDGAR public filing content is free to access and reuse"' in MIGRATION
+    assert "U.S. Government Work" not in MIGRATION

@@ -366,11 +366,11 @@ INSERT INTO data_sources (
      'https://commerce.maryland.gov/press-room',NULL,'as published','unknown',
      '{"publisher":"Maryland Department of Commerce","commercial_use_status":"unverified","scope":"official press releases; event extraction is conservative"}'::jsonb),
     ('montgomery_county_commercial_permits','Montgomery County Commercial Permits','US','US_MD_MOCO_PERMITS',
-     'https://data.montgomerycountymd.gov/d/i26v-w6bd','Public Domain','daily','unknown',
-     '{"publisher":"Montgomery County Department of Permitting Services","commercial_use_status":"permitted","dataset_id":"i26v-w6bd","scope":"commercial building permits issued since 2000"}'::jsonb),
+     'https://data.montgomerycountymd.gov/d/i26v-w6bd','Montgomery County Open Data Terms of Use','daily','unknown',
+     '{"publisher":"Montgomery County Department of Permitting Services","commercial_use_status":"permitted_with_conditions","dataset_id":"i26v-w6bd","scope":"commercial building permits issued since 2000","terms_url":"https://data.montgomerycountymd.gov/terms-of-use","attribution_required":true}'::jsonb),
     ('sec_edgar_submissions','SEC EDGAR Submissions API','US','US_SEC',
-     'https://data.sec.gov/submissions/','U.S. Government Work','real time','unknown',
-     '{"publisher":"U.S. Securities and Exchange Commission","commercial_use_status":"permitted","scope":"selected filings for companies with verified SEC CIK identifiers","requires_user_agent":true}'::jsonb)
+     'https://data.sec.gov/submissions/','SEC EDGAR public filing reuse policy','real time','unknown',
+     '{"publisher":"U.S. Securities and Exchange Commission","commercial_use_status":"permitted","scope":"selected filings for companies with verified SEC CIK identifiers","requires_user_agent":true,"reuse_policy_url":"https://www.sec.gov/about/webmaster-frequently-asked-questions","filing_content_rights":"SEC states EDGAR public filing content is free to access and reuse"}'::jsonb)
 ON CONFLICT (source_system) DO UPDATE SET
     name=EXCLUDED.name,
     source_market=EXCLUDED.source_market,
@@ -398,11 +398,11 @@ INSERT INTO geographic_source_coverage (
     ('montgomery_county_commercial_permits','permit','US','MD','2000-01-01','daily','active',
      'https://data.montgomerycountymd.gov/d/i26v-w6bd',
      'Public commercial building permit data. The source does not identify a verified occupant, applicant, contractor, developer, property owner, or parcel in the published fields; no company relationship is inferred from an address or description alone.',
-     '{"license_status":"public_domain","county_fips":"24031","company_matching":"disabled_without_named_party_evidence"}'::jsonb),
+     '{"license_status":"terms_of_use","terms_url":"https://data.montgomerycountymd.gov/terms-of-use","attribution_required":true,"county_fips":"24031","company_matching":"disabled_without_named_party_evidence"}'::jsonb),
     ('sec_edgar_submissions','regulatory_disclosure','US',NULL,NULL,'real time','partial',
      'https://www.sec.gov/search-filings/edgar-application-programming-interfaces',
      'Coverage is limited to existing companies with verified SEC CIK identifiers and selected filing forms or 8-K items. A filing is evidence of disclosure, not proof that a funded expansion or facility project occurred.',
-     '{"license_status":"us_government_work","company_scope":"verified_cik_only","requires_user_agent":true}'::jsonb)
+     '{"license_status":"permitted","reuse_policy_url":"https://www.sec.gov/about/webmaster-frequently-asked-questions","company_scope":"verified_cik_only","requires_user_agent":true}'::jsonb)
 ON CONFLICT (source_system,event_type,country_code,state_code,county_fips) DO UPDATE SET
     update_frequency=EXCLUDED.update_frequency,
     coverage_status=EXCLUDED.coverage_status,

@@ -182,7 +182,7 @@ class SecSubmissionsAdapter:
                 "is_primary": True,
                 "evidence_excerpt": f"{form} {items}".strip(),
                 "raw_payload": payload,
-                "license_name": "U.S. Government Work",
+                "license_name": "SEC EDGAR public filing reuse policy",
                 "commercial_use_status": "permitted",
             },
             observed_company_name=company_name or None,

@@ -62,6 +62,8 @@ export type CoverageRow = {
   name: string;
   last_success_at?: string | null;
   quality_status: string;
+  license_name?: string | null;
+  commercial_use_status?: string | null;
 };
 
 type MovementMetrics = {
@@ -270,7 +272,8 @@ export async function getMovementCoverage() {
   return query<CoverageRow>(
     `SELECT g.source_system,g.event_type,g.country_code,g.state_code,g.county_fips,
      g.coverage_start::text,g.coverage_end::text,g.update_frequency,g.coverage_status,
-     g.official_url,g.known_limitations,g.metadata,d.name,d.last_success_at::text,d.quality_status
+     g.official_url,g.known_limitations,g.metadata,d.name,d.last_success_at::text,d.quality_status,
+     d.license_name,d.metadata->>'commercial_use_status' AS commercial_use_status
      FROM geographic_source_coverage g JOIN data_sources d ON d.source_system=g.source_system
      ORDER BY g.country_code,g.state_code,g.event_type,d.name`,
   );

@@ -137,6 +137,7 @@ class MovementRepository:
             return []
         rows = self.connection.execute(
             """SELECT id::text,canonical_name,legal_name,uei,cage_code,
+               parent_company_id::text,organization_id::text,legal_entity_country,
                greatest(similarity(canonical_name,%s),similarity(legal_name,%s)) AS name_similarity
                FROM companies
                WHERE NOT is_benchmark AND (
@@ -149,6 +150,16 @@ class MovementRepository:
         return [dict(row) for row in rows]
 
     def company_by_identifier(self, system: str, value: str, country_code: str | None = None) -> dict[str, Any] | None:
+        normalized_system = system.upper()
+        if normalized_system in {"UEI", "CAGE", "CAGE_CODE"}:
+            column = "uei" if normalized_system == "UEI" else "cage_code"
+            rows = self.connection.execute(
+                f"""SELECT id::text,canonical_name,legal_name,uei,cage_code
+                    FROM companies WHERE upper({column})=upper(%s) AND NOT is_benchmark LIMIT 2""",
+                (value,),
+            ).fetchall()
+            if len(rows) == 1:
+                return dict(rows[0])
         rows = self.connection.execute(
             """SELECT c.id::text,c.canonical_name,c.legal_name,c.uei,c.cage_code
                FROM entity_identifiers ei JOIN companies c ON c.id=ei.company_id
@@ -258,7 +269,8 @@ class MovementRepository:
                 (
                     event_id, source["source_record_fingerprint"], source["source_system"],
                     source["document_identifier"], source["content_hash"], source["original_url"], source["publisher"],
-                    source.get("publication_date"), source["collected_at"], source["source_type"], source["record_status"],
+                    source.get("publication_date"), source["collected_at"], source["source_type"],
+                    "linked" if match.status == "matched" else match.status,
                     source.get("is_primary", True), source.get("evidence_excerpt"),
                     json.dumps(source.get("raw_payload") or {}, default=str), source.get("license_name"),
                     source.get("commercial_use_status", "unverified"),
@@ -296,7 +308,14 @@ class MovementRepository:
                          matching_confidence=EXCLUDED.matching_confidence,matching_evidence=EXCLUDED.matching_evidence""",
                     (
                         event_id, match.company["id"], movement.observed_company_name, match.method, match.confidence,
-                        json.dumps({"rule": match.method, "requires_review": not identifier_verified}), review_status,
+                        json.dumps({
+                            "rule": match.method,
+                            "requires_review": not identifier_verified,
+                            "candidate_legal_name": match.company.get("legal_name"),
+                            "candidate_uei": match.company.get("uei"),
+                            "candidate_cage_code": match.company.get("cage_code"),
+                            "source_url": source.get("original_url"),
+                        }), review_status,
                     ),
                 )
                 self._persist_review(
@@ -356,7 +375,9 @@ class MovementRepository:
     ) -> None:
         evidence = {
             "candidate_name": candidate.get("canonical_name") if candidate else None,
+            "candidate_legal_name": candidate.get("legal_name") if candidate else None,
             "candidate_uei": candidate.get("uei") if candidate else None,
+            "candidate_cage_code": candidate.get("cage_code") if candidate else None,
             "automatic_link": bool(match.company),
         }
         if candidate:

@@ -11,8 +11,8 @@ This report records a bounded release validation against live official sources a
 | Maryland Department of Labor WARN / ESA / Other Dislocations Log | Maryland | 2 | 2 | 0 | 2 unmatched | 0 | Success | License not stated; `unverified` commercial-use status | Current log mixes federal WARN, Maryland ESA, and other dislocations. Reported employees are affected workers, not completed layoffs. |
 | Virginia Works WARN Notices | Virginia | 2 | 2 | 0 | 2 unmatched | 0 | Success | License not stated; `unverified` commercial-use status | Company-column addresses are retained as raw evidence, not treated as affected worksites or headquarters. County remains null when the table gives only a locality. |
 | Maryland Department of Commerce Press Room | Maryland | 2 | 2 | 0 | 2 unmatched | 0 | Success | License not stated; `unverified` commercial-use status | Only explicit expansion/facility/investment releases are eligible. Jobs and investment are announced commitments, not completed outcomes. |
-| Montgomery County Commercial Permits (`i26v-w6bd`) | Montgomery County, Maryland | 100 | 6 relevant permits | 0 | Not applicable; no named parties in source fields | 0 | Success; 94 low-relevance records skipped | Portal metadata states Public Domain | The published dataset does not identify verified occupants or company roles. No company indicator was created from an address or description alone. |
-| SEC EDGAR Submissions API | U.S. public issuers with an existing verified CIK | 0 | 0 | 0 | 0 | 0 | Adapter and persistence tests passed; isolated validation database had no CIK targets | U.S. Government Work; identifying `SEC_USER_AGENT` required for live requests | Not production-verified in this release. Coverage excludes unlinked public issuers and private companies. A filing is a disclosure, not proof of an expansion or funding outcome. |
+| Montgomery County Commercial Permits (`i26v-w6bd`) | Montgomery County, Maryland | 100 | 6 relevant permits | 0 | Not applicable; no named parties in source fields | 0 | Success; 94 low-relevance records skipped | Montgomery County Open Data Terms apply; attribution and the County disclaimer are required | The published dataset does not identify verified occupants or company roles. No company indicator was created from an address or description alone. |
+| SEC EDGAR Submissions API | U.S. public issuers with an existing verified CIK | 0 | 0 | 0 | 0 | 0 | Adapter and persistence tests passed; isolated validation database had no CIK targets | SEC states EDGAR public filing content is free to access and reuse. An identifying `SEC_USER_AGENT` and fair-access pacing are required for live requests. | Not production-verified in this release. Coverage excludes unlinked public issuers and private companies. A filing is a disclosure, not proof of an expansion or funding outcome. |
 
 The live source pages used by this release are the Maryland WARN log, Virginia Works WARN table, Maryland Commerce press room, Montgomery County permit dataset, and SEC EDGAR Submissions API. The database stores the exact official source URL for every event or permit version.
 
@@ -58,14 +58,16 @@ The pre-change production build was blocked by the framework's vulnerable-versio
 
 - Applying migration 0012 to the production database.
 - Running the collectors against the production company inventory.
-- SEC collection with production CIK mappings and the production `SEC_USER_AGENT` secret.
+- SEC collection with production CIK mappings and a production `SEC_USER_AGENT` identifying the organization/application and a real contact.
 - Production `/movements` and `/indicators` behavior after deployment.
 
 ### Blocked pending release approval or credentials
 
 - Production migration, initial bounded ingestion, and workflow enablement require the production direct database secret and deployment approval.
 - SEC live collection requires an identifying user-agent secret.
-- Sale or redistribution of Maryland and Virginia source-derived records should wait for a licensing review because the source pages do not state reuse terms.
+- Sale or redistribution of Maryland WARN, Virginia WARN, or Maryland Commerce source-derived records should wait for a licensing review because public access alone is not a commercial redistribution license.
+- SEC EDGAR public filing content is reusable under the SEC's stated policy, subject to fair-access collection requirements.
+- Montgomery County permit-derived products must retain the County-required attribution/disclaimer and comply with the portal Terms of Use.
 
 ### Planned, not implemented
 

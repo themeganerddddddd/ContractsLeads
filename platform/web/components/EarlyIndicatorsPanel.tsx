@@ -5,7 +5,7 @@ export function EarlyIndicatorsPanel({ data }: { data: EarlyIndicatorData }) {
   return (
     <div className="indicator-layout">
       <div className="panel">
-        <h3>Descriptive indication assessments</h3>
+        <h3>Multi-source indication scores</h3>
         {data.assessments.length ? (
           <div className="assessment-list">
             {data.assessments.map((assessment) => (
@@ -20,7 +20,7 @@ export function EarlyIndicatorsPanel({ data }: { data: EarlyIndicatorData }) {
         ) : <p>No movement assessment has been generated for this company.</p>}
       </div>
       <div className="panel">
-        <h3>Underlying indicators</h3>
+        <h3>Individual source-backed indicators</h3>
         {data.indicators.length ? (
           <ul className="plain-list">
             {data.indicators.map((indicator) => (

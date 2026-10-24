@@ -16,11 +16,15 @@ from .sec import SecSubmissionsAdapter
 from .scoring import build_movement_assessment
 from .service import MovementIngestionService, PermitIngestionService
 from .virginia import VirginiaWarnAdapter
+from .validation import build_snapshot_match_report, write_snapshot_match_report
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Collect official company movement evidence")
-    parser.add_argument("command", choices=("sync", "permit-sync", "sec-sync", "assess", "quality-report"))
+    parser.add_argument(
+        "command",
+        choices=("sync", "permit-sync", "sec-sync", "assess", "quality-report", "snapshot-match-report"),
+    )
     parser.add_argument(
         "--source",
         choices=("all", "maryland-warn", "virginia-warn", "maryland-commerce"),
@@ -38,15 +42,45 @@ def main() -> int:
     )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    choices = {
+        "maryland-warn": [MarylandWarnAdapter()],
+        "virginia-warn": [VirginiaWarnAdapter()],
+        "maryland-commerce": [MarylandCommerceAdapter()],
+        "all": [MarylandWarnAdapter(), VirginiaWarnAdapter(), MarylandCommerceAdapter()],
+    }
+    if args.command == "snapshot-match-report":
+        contracts_path = Path(__file__).resolve().parents[2] / "data" / "contracts.json"
+        contract_records = json.loads(contracts_path.read_text(encoding="utf-8"))
+        movements = []
+        source_runs = []
+        for adapter in choices[args.source]:
+            stats = {"source_system": adapter.source_system, "received": 0, "normalized": 0, "failed": 0}
+            errors = []
+            try:
+                for envelope in adapter.fetch(limit=args.limit):
+                    stats["received"] += 1
+                    try:
+                        movements.append(adapter.normalize(envelope))
+                        stats["normalized"] += 1
+                    except Exception as exc:
+                        stats["failed"] += 1
+                        if len(errors) < 10:
+                            errors.append(f"{type(exc).__name__}: {exc}")
+                stats["status"] = "partial" if stats["failed"] else "success"
+            except Exception as exc:
+                stats["status"] = "failed"
+                stats["failed"] += 1
+                errors.append(f"{type(exc).__name__}: {exc}")
+            stats["errors"] = errors
+            source_runs.append(stats)
+        report = build_snapshot_match_report(contract_records, movements, source_runs=source_runs)
+        paths = write_snapshot_match_report(report, args.output_dir)
+        result = {"status": "success", "reports": [str(path) for path in paths], "summary": report["summary"]}
+        print(json.dumps(result, indent=2, default=str))
+        return 0
     settings = Settings.from_env()
     repository = MovementRepository(settings.database_url)
     try:
-        choices = {
-            "maryland-warn": [MarylandWarnAdapter()],
-            "virginia-warn": [VirginiaWarnAdapter()],
-            "maryland-commerce": [MarylandCommerceAdapter()],
-            "all": [MarylandWarnAdapter(), VirginiaWarnAdapter(), MarylandCommerceAdapter()],
-        }
         if args.command == "permit-sync":
             result = PermitIngestionService(repository).sync(
                 MontgomeryCountyPermitAdapter(), since=args.since, limit=args.limit

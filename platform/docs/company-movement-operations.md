@@ -61,7 +61,17 @@ Interpret duplicate rate from source revisions sharing one event; content-hash u
 
 ## Scheduling and capacity
 
-The new workflow uses a concurrency group separate from procurement ingestion. Migration is one prerequisite job; Maryland WARN, Virginia WARN, Maryland Commerce, permits, and SEC then run with source-level failure isolation. Assessments run even if one collector fails, using only evidence successfully committed.
+The workflow is intentionally manual-only: it has `workflow_dispatch` and no `schedule` trigger. Do not restore a cron trigger until all of the following evidence has been recorded:
+
+- a production backup or restorable snapshot identifier and timestamp;
+- a production direct PostgreSQL connection in `PLATFORM_DATABASE_DIRECT_URL`;
+- successful production application of migration `0012` with its migration-ledger row verified;
+- bounded collector counts, failures, checkpoints, and review-queue totals;
+- review acceptance of representative matches, ambiguous candidates, and unmatched records;
+- successful production checks of `/movements`, `/indicators`, procurement search, authentication, and pricing; and
+- a compliant `SEC_USER_AGENT` before SEC collection is enabled.
+
+When scheduling is approved, the workflow's concurrency group remains separate from procurement ingestion. Migration is one prerequisite job; Maryland WARN, Virginia WARN, Maryland Commerce, permits, and SEC then run with source-level failure isolation. Assessments run even if one collector fails, using only evidence successfully committed.
 
 Start with bounded workflow dispatches. The permit collector persists only relevant commercial records and append-only revisions. SEC collection is limited to verified CIKs already present in the database. These controls avoid a nationwide backfill and do not require new infrastructure spend.
 
@@ -72,3 +82,5 @@ Review `company_match_reviews` before approving name-only associations. Do not a
 ## Rollback
 
 Application rollback is a normal Vercel deployment rollback. The additive tables may remain in place because older code does not reference them. Do not drop the new tables to roll back the web release; doing so would destroy collected source history.
+
+If a bounded production run reveals a quality problem, leave the schedule disabled, stop new collection, and retain all already collected records and source revisions. Roll back only the application deployment. Correct the collector or matching rules, rerun the bounded source, and document how the previously collected records were handled; never truncate procurement or movement history as a rollback shortcut.
