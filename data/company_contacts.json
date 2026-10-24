@@ -24769,6 +24769,97 @@
         "verified_date": null
       },
       "last_checked": "2026-10-11"
+    },
+    "uei-dzm1m6jbhpk3": {
+      "company_id": "uei-dzm1m6jbhpk3",
+      "uei": "DZM1M6JBHPK3",
+      "company_name": "MIND OVER MACHINES, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-vb6dsm6sgxj5": {
+      "company_id": "uei-vb6dsm6sgxj5",
+      "uei": "VB6DSM6SGXJ5",
+      "company_name": "NIELSEN CONSUMER LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-qqfrhs1ub7d3": {
+      "company_id": "uei-qqfrhs1ub7d3",
+      "uei": "QQFRHS1UB7D3",
+      "company_name": "ATLAS RESEARCH LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-h33xv7n1qdx3": {
+      "company_id": "uei-h33xv7n1qdx3",
+      "uei": "H33XV7N1QDX3",
+      "company_name": "ADNET SYSTEMS INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-lpx8mdpg73z4": {
+      "company_id": "uei-lpx8mdpg73z4",
+      "uei": "LPX8MDPG73Z4",
+      "company_name": "LONGHORN VACCINES AND DIAGNOSTICS, LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-c3zujlfrdcn5": {
+      "company_id": "uei-c3zujlfrdcn5",
+      "uei": "C3ZUJLFRDCN5",
+      "company_name": "BEDAY LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-lb3ta6juye15": {
+      "company_id": "uei-lb3ta6juye15",
+      "uei": "LB3TA6JUYE15",
+      "company_name": "BAKER & HILL LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-ynncak6evfe5": {
+      "company_id": "uei-ynncak6evfe5",
+      "uei": "YNNCAK6EVFE5",
+      "company_name": "KNOWCEAN CONSULTING INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-rxl7nbkmcsa6": {
+      "company_id": "uei-rxl7nbkmcsa6",
+      "uei": "RXL7NBKMCSA6",
+      "company_name": "WEMED SERVICES INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-j1ynjh7dpt65": {
+      "company_id": "uei-j1ynjh7dpt65",
+      "uei": "J1YNJH7DPT65",
+      "company_name": "GROUNDSWELL CONSULTING GROUP LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-uw75f72aljx8": {
+      "company_id": "uei-uw75f72aljx8",
+      "uei": "UW75F72ALJX8",
+      "company_name": "JOHN SHORB LANDSCAPING INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-dq7yzmck5d23": {
+      "company_id": "uei-dq7yzmck5d23",
+      "uei": "DQ7YZMCK5D23",
+      "company_name": "ICF MACRO INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-mkfjcfsvq9b8": {
+      "company_id": "uei-mkfjcfsvq9b8",
+      "uei": "MKFJCFSVQ9B8",
+      "company_name": "ZEMITEK LLC",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -27755,7 +27846,20 @@
     "CEFCD41CLDJ8": "uei-cefcd41cldj8",
     "DDM3FFXKRDG3": "uei-ddm3ffxkrdg3",
     "JT99J2JTALQ7": "uei-jt99j2jtalq7",
-    "ETJ6SLX4K5W6": "uei-etj6slx4k5w6"
+    "ETJ6SLX4K5W6": "uei-etj6slx4k5w6",
+    "DZM1M6JBHPK3": "uei-dzm1m6jbhpk3",
+    "VB6DSM6SGXJ5": "uei-vb6dsm6sgxj5",
+    "QQFRHS1UB7D3": "uei-qqfrhs1ub7d3",
+    "H33XV7N1QDX3": "uei-h33xv7n1qdx3",
+    "LPX8MDPG73Z4": "uei-lpx8mdpg73z4",
+    "C3ZUJLFRDCN5": "uei-c3zujlfrdcn5",
+    "LB3TA6JUYE15": "uei-lb3ta6juye15",
+    "YNNCAK6EVFE5": "uei-ynncak6evfe5",
+    "RXL7NBKMCSA6": "uei-rxl7nbkmcsa6",
+    "J1YNJH7DPT65": "uei-j1ynjh7dpt65",
+    "UW75F72ALJX8": "uei-uw75f72aljx8",
+    "DQ7YZMCK5D23": "uei-dq7yzmck5d23",
+    "MKFJCFSVQ9B8": "uei-mkfjcfsvq9b8"
   },
-  "updated_at": "2026-10-11T16:40:19Z"
+  "updated_at": "2026-10-23T15:46:28Z"
 }
