@@ -15,6 +15,7 @@ from .reporting import MovementQualityReporter
 from .sec import SecSubmissionsAdapter
 from .scoring import build_movement_assessment
 from .service import MovementIngestionService, PermitIngestionService
+from .tracking import CompanyTrackingService
 from .virginia import VirginiaWarnAdapter
 from .validation import build_snapshot_match_report, write_snapshot_match_report
 
@@ -23,7 +24,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Collect official company movement evidence")
     parser.add_argument(
         "command",
-        choices=("sync", "permit-sync", "sec-sync", "assess", "quality-report", "snapshot-match-report"),
+        choices=(
+            "sync", "permit-sync", "sec-sync", "assess", "quality-report", "snapshot-match-report",
+            "track-company", "update-tracking", "monitor-tracked", "review-match",
+        ),
     )
     parser.add_argument(
         "--source",
@@ -34,6 +38,27 @@ def main() -> int:
     parser.add_argument("--since", type=date.fromisoformat, help="Permit application date lower bound (YYYY-MM-DD)")
     parser.add_argument("--as-of", type=date.fromisoformat, help="Assessment observation cutoff (YYYY-MM-DD)")
     parser.add_argument("--company-id", help="Assess one company instead of all companies with indicators")
+    parser.add_argument("--review-id", help="Match-review UUID for review-match")
+    parser.add_argument("--actor", default="cli", help="Auditable actor name for tracking/review changes")
+    parser.add_argument("--notes", help="Analyst notes retained with the tracking or review action")
+    parser.add_argument(
+        "--tracking-status", choices=("active", "paused", "review_required", "archived"),
+        help="New platform tracking status",
+    )
+    parser.add_argument(
+        "--tracking-reason",
+        choices=(
+            "manually_added", "procurement_activity", "movement_signal", "permit_signal", "sec_signal",
+            "saved_search_match", "analyst_review", "other",
+        ),
+        default="manually_added",
+    )
+    parser.add_argument("--priority", choices=("high", "normal", "low"), help="Tracking priority")
+    parser.add_argument("--decision", choices=("approved", "rejected", "pending"), help="Match-review decision")
+    parser.add_argument("--monitor-procurement", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--monitor-movements", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--monitor-permits", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--monitor-sec", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--output-dir", type=Path, default=Path("reports"), help="Quality report output directory")
     parser.add_argument(
         "--assessment-type",
@@ -81,7 +106,64 @@ def main() -> int:
     settings = Settings.from_env()
     repository = MovementRepository(settings.database_url)
     try:
-        if args.command == "permit-sync":
+        tracking = CompanyTrackingService(repository.connection)
+        if args.command == "track-company":
+            if not args.company_id:
+                parser.error("track-company requires --company-id")
+            result = {
+                "status": "success",
+                "target": tracking.add_target(
+                    args.company_id,
+                    reason=args.tracking_reason,
+                    priority=args.priority or "normal",
+                    actor=args.actor,
+                    notes=args.notes,
+                    monitor_procurement=args.monitor_procurement if args.monitor_procurement is not None else True,
+                    monitor_movements=args.monitor_movements if args.monitor_movements is not None else True,
+                    monitor_permits=args.monitor_permits if args.monitor_permits is not None else True,
+                    monitor_sec=args.monitor_sec if args.monitor_sec is not None else True,
+                ),
+            }
+        elif args.command == "update-tracking":
+            if not args.company_id:
+                parser.error("update-tracking requires --company-id")
+            flags = {
+                key: value for key, value in {
+                    "monitor_procurement": args.monitor_procurement,
+                    "monitor_movements": args.monitor_movements,
+                    "monitor_permits": args.monitor_permits,
+                    "monitor_sec": args.monitor_sec,
+                }.items() if value is not None
+            }
+            result = {
+                "status": "success",
+                "target": tracking.update_target(
+                    args.company_id,
+                    actor=args.actor,
+                    status=args.tracking_status,
+                    priority=args.priority,
+                    notes=args.notes,
+                    source_flags=flags,
+                ),
+            }
+        elif args.command == "monitor-tracked":
+            discoveries = tracking.materialize_discoveries(limit=args.limit or 1000)
+            result = tracking.evaluate_active_targets(limit=args.limit)
+            result["discoveries"] = discoveries
+            saved_searches = tracking.evaluate_saved_searches(limit=args.limit or 1000)
+            result["saved_searches"] = saved_searches
+            if saved_searches["status"] == "partial":
+                result["status"] = "partial"
+        elif args.command == "review-match":
+            if not args.review_id or not args.decision:
+                parser.error("review-match requires --review-id and --decision")
+            result = {
+                "status": "success",
+                "review": tracking.review_match(
+                    args.review_id, decision=args.decision, actor=args.actor, notes=args.notes,
+                ),
+            }
+        elif args.command == "permit-sync":
             result = PermitIngestionService(repository).sync(
                 MontgomeryCountyPermitAdapter(), since=args.since, limit=args.limit
             )

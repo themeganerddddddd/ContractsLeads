@@ -116,3 +116,23 @@ jobs:
           name: company-movement-quality
           path: platform/reports/company-movement-quality.*
           if-no-files-found: error
+
+  tracked-company-evaluation:
+    needs: [migrate, confirmed-movements, commercial-permits, sec-disclosures, assessments]
+    if: ${{ always() && needs.migrate.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      RECORD_LIMIT: ${{ inputs.limit }}
+      ALERT_EMAIL_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Evaluate platform monitor targets and persist deduplicated alerts
+        working-directory: platform
+        run: |
+          args=(monitor-tracked)
+          if [ -n "$RECORD_LIMIT" ]; then args+=(--limit "$RECORD_LIMIT"); fi
+          python -m movements "${args[@]}"

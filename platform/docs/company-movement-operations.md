@@ -79,6 +79,38 @@ Start with bounded workflow dispatches. The permit collector persists only relev
 
 Review `company_match_reviews` before approving name-only associations. Do not approve a permit relationship unless the official record or another independently verified source identifies the role. Never convert `company_events` or permit sites into a headquarters record without independent evidence.
 
+## Company tracking operations
+
+Platform monitor targets are stored in `company_monitor_targets`. They are not user `company_watches`, and they must always reference an existing canonical `companies.id`.
+
+```powershell
+cd platform
+
+# Add or reactivate one exact legal entity after reviewing its identifiers.
+python -m movements track-company --company-id <uuid> --tracking-reason analyst_review --priority high --actor "Analyst name"
+
+# Pause or resume without deleting monitoring history.
+python -m movements update-tracking --company-id <uuid> --tracking-status paused --actor "Analyst name"
+python -m movements update-tracking --company-id <uuid> --tracking-status active --actor "Analyst name"
+
+# Disable a source family for one target when it is not applicable.
+python -m movements update-tracking --company-id <uuid> --no-monitor-sec --actor "Analyst name"
+
+# Approve or reject a candidate relationship with an audit record.
+python -m movements review-match --review-id <uuid> --decision approved --actor "Analyst name"
+
+# Evaluate already-ingested source records, refresh source state, create discoveries,
+# and persist deduplicated platform plus opted-in private saved-search/region alerts.
+# This command does not recollect USAspending per company.
+python -m movements monitor-tracked --limit 100
+```
+
+The internal `/admin/company-match-reviews` workspace provides the same exact-entity selection and audited lifecycle controls behind `INTERNAL_HEALTH_TOKEN`. Public visitors can browse `/tracked-companies`, `/discovered-companies`, `/alerts`, company timelines, source evidence, and coverage without personal OAuth.
+
+`ALERT_EMAIL_ENABLED` defaults to `false`. Monitoring always persists in-app `alert_events`; this release contains no email provider and does not mark an alert delivered.
+
+The manual company-intelligence workflow runs `monitor-tracked` only after source jobs and assessments. It remains dispatch-only. After the production gate is approved, the same evaluation command should be added after the existing U.S./UK/EU ingestion jobs rather than adding per-company source crawls.
+
 ## Rollback
 
 Application rollback is a normal Vercel deployment rollback. The additive tables may remain in place because older code does not reference them. Do not drop the new tables to roll back the web release; doing so would destroy collected source history.

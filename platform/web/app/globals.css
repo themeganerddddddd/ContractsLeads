@@ -47,6 +47,17 @@ input,
 select {
   font: inherit;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .site-header {
   background: var(--navy);
   color: #fff;
@@ -247,6 +258,11 @@ select {
   background: #fff;
   color: var(--navy);
   border-color: #aeb9c8;
+}
+.button.secondary[aria-pressed="true"] {
+  background: #dceaf8;
+  border-color: var(--blue2);
+  box-shadow: inset 0 0 0 1px var(--blue2);
 }
 .section {
   padding: 34px 0;
@@ -1309,10 +1325,153 @@ a:focus-visible {
   background: #e3f3eb;
   color: var(--green);
 }
+.status-partial,
+.status-pending,
+.status-ambiguous,
+.status-review_required,
+.status-unsupported,
+.status-not_applicable {
+  background: #fff1dd;
+  color: #805813;
+}
+.status-error,
 .status-rejected,
 .status-insufficient_history {
   background: #fff1dd;
   color: #805813;
+}
+
+.tracked-company-list {
+  display: grid;
+  gap: 16px;
+}
+.tracked-company-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.tracked-company-card header,
+.tracked-company-card footer,
+.tracking-identifiers {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.tracked-company-card h2 {
+  margin: 2px 0;
+  color: var(--navy);
+  font: 600 25px Georgia, serif;
+}
+.tracked-company-card header p {
+  margin: 3px 0;
+  color: var(--muted);
+}
+.signal-count {
+  min-width: 120px;
+  text-align: right;
+}
+.signal-count strong {
+  display: block;
+  color: var(--navy);
+  font: 600 30px Georgia, serif;
+}
+.signal-count span,
+.tracking-identifiers span,
+.tracked-company-card footer {
+  color: var(--muted);
+  font-size: 11px;
+}
+.tracking-identifiers {
+  justify-content: start;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 12px 0;
+}
+.tracked-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.tracked-signal-grid div {
+  min-width: 0;
+  padding: 11px;
+  background: var(--soft);
+}
+.tracked-signal-grid strong,
+.tracked-signal-grid span,
+.tracked-signal-grid small {
+  display: block;
+}
+.tracked-signal-grid strong {
+  color: var(--navy);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.tracked-signal-grid span {
+  margin: 5px 0;
+  font-weight: 700;
+}
+.tracked-signal-grid small {
+  color: var(--muted);
+}
+.tracked-company-card footer {
+  margin-top: 13px;
+  align-items: center;
+  justify-content: start;
+}
+.tracked-company-card footer a {
+  margin-left: auto;
+}
+.timeline-category {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+.event-category-workforce,
+.event-category-corporate {
+  background: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.event-category-facility {
+  background: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+}
+.data-table td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.admin-tracking-controls {
+  grid-template-columns: 1fr 1fr 2fr auto;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .tracked-signal-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .admin-tracking-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .tracked-signal-grid,
+  .admin-tracking-controls {
+    grid-template-columns: 1fr;
+  }
+  .signal-count {
+    text-align: left;
+  }
+  .tracked-company-card footer a {
+    margin-left: 0;
+  }
 }
 .model-list pre {
   white-space: pre-wrap;

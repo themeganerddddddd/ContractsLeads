@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 const links = [
-  ["Search", "/search"], ["Movements", "/movements"], ["Companies", "/companies"], ["Contracts", "/contracts"],
-  ["Locations", "/locations"], ["Indicators", "/indicators"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Pricing", "/pricing"]
+  ["Search", "/search"], ["Tracking", "/tracked-companies"], ["Movements", "/movements"], ["Companies", "/companies"], ["Contracts", "/contracts"],
+  ["Locations", "/locations"], ["Indicators", "/indicators"], ["Alerts", "/alerts"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Pricing", "/pricing"]
 ] as const;
 
 export function Header() {

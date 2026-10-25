@@ -108,3 +108,50 @@ Before production release:
 9. Enable a conservative schedule only through a separately reviewed change.
 
 If credentials or backup evidence remain unavailable, the safe stopping point is the tested feature branch and this report. No production migration or release should be attempted by inference.
+
+## Company Tracking Product
+
+The earlier movement implementation produced candidate links but did not create a Federal Ledger-owned monitoring registry. Migration `0013_company_tracking_product.sql` adds platform monitor targets, independent per-source state, discovered-company evidence, deduplicated alerts, and audit history while leaving personal `company_watches` unchanged.
+
+### Current validation inventory
+
+No production or local validation database was written during this corrective phase. The production migration gate remains closed, and the local Docker/PostgreSQL engine is unavailable. Consequently the truthful database-backed counts are:
+
+| Measure | Current verified count |
+|---|---:|
+| Production monitor targets | Not migrated / not queryable |
+| Active targets | Not migrated / not queryable |
+| Paused targets | Not migrated / not queryable |
+| Tracked companies with procurement activity | Not migrated / not queryable |
+| Tracked companies with movement activity | Not migrated / not queryable |
+| Tracked companies with permit relationships | Not migrated / not queryable |
+| Tracked companies with verified-CIK SEC eligibility | Not migrated / not queryable |
+| New tracked-company signals | Not run against a migrated database |
+| Deduplicated alerts generated | Not run against a migrated database |
+
+The feature does not seed or auto-track the eight earlier validation candidates. Peraton, Charles River Laboratories, Hendall, TekSynap, Federal Express, CLYM Environmental Services, Kay and Associates, and KBR Wyle remain discovered/pending candidates until reviewed. BAE Systems remains ambiguous across legal entities/UEIs.
+
+The latest bounded snapshot match evidence remains: 0 authoritative identifier matches, 0 analyst-approved production relationships, 10 pending exact-name events, 54 ambiguous events, and 143 unmatched events. Approved and rejected production counts are both 0 because no production review action was taken.
+
+### Implemented tracking behavior
+
+- Exact `company_id` selection; idempotent add/reactivate; active, paused, review-required, and archived states; high/normal/low priority; source-family switches; append-only audit records.
+- Immediate evaluation of already-ingested U.S., UK, and EU/TED procurement events without per-company recollection.
+- Source-oriented evaluation of approved movement, permit, and SEC relationships; SEC is marked identifier-required when no verified CIK exists.
+- Discovery records for procurement, movement, permit, SEC, ambiguous, pending, unmatched, and rejected evidence.
+- Deduplicated `alert_events` generation for awards, modifications, other procurement events, movements, reviewed permits, SEC filings, and opted-in authenticated saved-search/region matches. User-owned alert rows stay out of the public alert feed. Saved-search/region evaluation has not been run against a migrated validation or production database. Email delivery remains off.
+- Public `/tracked-companies`, `/discovered-companies`, `/alerts`, and unified company timelines; internal-token `/admin/company-match-reviews` management.
+
+### Exact coverage
+
+- U.S. procurement: nationwide records linked to the legal entity.
+- UK Find a Tender: UK records where the legal entity link is reliable.
+- EU/TED: EU/TED records where the legal entity link is reliable.
+- Workforce: Maryland and Virginia WARN sources only.
+- State expansion announcements: Maryland only.
+- Commercial permits: Montgomery County, Maryland only, and never linked by address alone.
+- SEC EDGAR: selected filings for companies with verified CIKs; live collection still requires `SEC_USER_AGENT`.
+
+### Remaining end-to-end gate
+
+The code is not declared production-complete until a migrated validation database proves that one reviewed real company can be added, appears publicly with its identifiers and existing procurement history, receives a deduplicated update from a subsequent source event, displays approved movement evidence and explicit unsupported coverage, and retains official URLs in its timeline. The missing restorable production backup, direct production database credential, valid SEC user agent, and isolated preview database remain the actual blockers.

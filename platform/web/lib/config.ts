@@ -89,6 +89,10 @@ export function authEnabled(env: RuntimeEnvironment = process.env): boolean {
   return env.AUTH_ENABLED === "true";
 }
 
+export function alertEmailEnabled(env: RuntimeEnvironment = process.env): boolean {
+  return env.ALERT_EMAIL_ENABLED === "true";
+}
+
 export function developmentPlan(
   env: RuntimeEnvironment = process.env,
 ): string | undefined {
