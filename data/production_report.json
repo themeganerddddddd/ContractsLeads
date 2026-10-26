@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-25T14:57:55Z",
+  "generated_at": "2026-10-26T17:24:32Z",
   "contact_enrichment": {
     "companies_examined": 3008,
     "company_contacts_found": 386,
@@ -11,7 +11,7 @@
     "federal_award_contacts": 0
   },
   "bootstrap": {
-    "previous_archive_records": 12934,
+    "previous_archive_records": 12953,
     "required_moco_record_floor": 470,
     "moco_company_records": 6685,
     "moco_record_floor_passed": true,
