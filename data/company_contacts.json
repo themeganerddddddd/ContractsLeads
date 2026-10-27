@@ -24902,6 +24902,20 @@
       "company_name": "DOCUWARE CORPORATION",
       "company": null,
       "last_checked": null
+    },
+    "uei-cwh2gm13a2v6": {
+      "company_id": "uei-cwh2gm13a2v6",
+      "uei": "CWH2GM13A2V6",
+      "company_name": "SIRTEX MEDICAL INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-p62pt7kdp437": {
+      "company_id": "uei-p62pt7kdp437",
+      "uei": "P62PT7KDP437",
+      "company_name": "HID GLOBAL CORP",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -27907,7 +27921,9 @@
     "XJ7KJADLWF68": "uei-xj7kjadlwf68",
     "HE6SK5L289W4": "uei-he6sk5l289w4",
     "YU6VEE2EYLR1": "uei-yu6vee2eylr1",
-    "PP4URU6N6M71": "uei-pp4uru6n6m71"
+    "PP4URU6N6M71": "uei-pp4uru6n6m71",
+    "CWH2GM13A2V6": "uei-cwh2gm13a2v6",
+    "P62PT7KDP437": "uei-p62pt7kdp437"
   },
-  "updated_at": "2026-10-24T14:34:41Z"
+  "updated_at": "2026-10-27T16:41:12Z"
 }
