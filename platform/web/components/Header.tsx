@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const links = [
-  ["Search", "/search"], ["Tracking", "/tracked-companies"], ["Movements", "/movements"], ["Formation", "/business-formation"], ["Companies", "/companies"], ["Contracts", "/contracts"],
+  ["Business Change", "/business-change"], ["Search", "/search"], ["Tracking", "/tracked-companies"], ["Movements", "/movements"], ["Formation", "/business-formation"], ["Companies", "/companies"], ["Contracts", "/contracts"],
   ["Locations", "/locations"], ["Indicators", "/indicators"], ["Alerts", "/alerts"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Pricing", "/pricing"]
 ] as const;
 
@@ -11,7 +11,7 @@ export function Header() {
       <div className="nav-shell">
         <Link className="brand" href="/" aria-label="Federal Ledger home">
           <span className="brand-mark" aria-hidden="true">FL</span>
-          <span><strong>Federal Ledger</strong><small>Government procurement intelligence</small></span>
+          <span><strong>Federal Ledger</strong><small>Business change and government intelligence</small></span>
         </Link>
         <nav aria-label="Primary navigation">
           {links.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}

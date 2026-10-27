@@ -21,6 +21,7 @@ export default async function HomePage() {
         <form action="/search"><input type="hidden" name="mode" value="contracts" /><label><span>Work performed in <small className="pro-chip">Pro search</small></span><div><input name="performance_county" aria-label="Performance county FIPS" placeholder="County FIPS, e.g. 24031" /><button className="button primary">Search</button></div></label></form>
       </div></div>
     </section>
+    <section className="business-change-home"><div><p className="eyebrow">Location-based business intelligence</p><h2>Business Change Radar</h2><p>What businesses are opening, closing, growing, shrinking, forming, or moving in this place?</p></div><form action="/business-change" method="get"><input type="hidden" name="tab" value="opening" /><input type="hidden" name="period" value="90" /><label htmlFor="market-state">Start with a state</label><div><input id="market-state" name="state" maxLength={2} placeholder="MD" aria-describedby="market-help" /><button className="button primary" type="submit">Explore market</button></div><small id="market-help">Add county, city, ZIP, industry, and source filters on the results page.</small></form><Link href="/data-coverage">Review coverage before interpreting counts →</Link></section>
     {!data ? <DatabaseNotice message={error} /> : <>
       <div className="metrics-grid">
         <MetricCard label="U.S. companies" value={Number(data.metrics?.companies || 0).toLocaleString()} note="awarded legal entities" />

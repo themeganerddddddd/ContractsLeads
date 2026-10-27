@@ -133,3 +133,13 @@ python scripts/generate_scale_data.py clean
 ```
 
 Every generated row is both `is_demo=true` and `is_benchmark=true`; public queries exclude benchmark rows. The generator writes no large fixture files. `benchmark_queries.py` saves real `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` plans and a small Markdown timing table. Results describe only the database, hardware, row counts, and moment recorded in the report.
+
+## Location-based business change (preview only)
+
+The location-intelligence migration and DC license collector are additive but must not be run against production until the preview validation in `docs/location-business-change.md` passes.
+
+```powershell
+python -m movements license-sync --source dc-basic-business-licenses --limit 25
+```
+
+The adapter requests only an allowlist of non-personal license fields, suppresses residential premises, creates unresolved establishment candidates, and emits license signals rather than opening outcomes. Increase the limit only after reviewing bounded output and database capacity.

@@ -9,6 +9,7 @@ from typing import Any
 from .matching import match_company_name
 from .models import CompanyMatch, MovementSourceAdapter
 from .permits import MontgomeryCountyPermitAdapter
+from .dc import DcBasicBusinessLicenseAdapter
 
 
 LOGGER = logging.getLogger("federal_ledger.movements")
@@ -148,6 +149,61 @@ class PermitIngestionService:
             status = "failed"
             errors.append(f"{type(exc).__name__}: {exc}")
             _log("permit_source_failed", source_system=adapter.source_system, error_type=type(exc).__name__)
+        stats["status"] = status
+        self.repository.finish_source_sync(
+            adapter.source_system,
+            checkpoint_key,
+            status,
+            stats,
+            checkpoint_value=last_checkpoint,
+            error_summary="\n".join(errors) or None,
+        )
+        return stats
+
+
+class LicenseIngestionService:
+    def __init__(self, repository):
+        self.repository = repository
+
+    def sync(self, adapter: DcBasicBusinessLicenseAdapter, *, limit: int | None = None) -> dict[str, Any]:
+        checkpoint_key = "current"
+        stats: dict[str, Any] = {
+            "source_system": adapter.source_system,
+            "received": 0,
+            "written": 0,
+            "inserted": 0,
+            "updated": 0,
+            "establishments": 0,
+            "signals": 0,
+            "privacy_filtered": 0,
+            "failed": 0,
+        }
+        errors: list[str] = []
+        last_checkpoint: str | None = None
+        self.repository.start_source_sync(adapter.source_system, checkpoint_key)
+        try:
+            for raw in adapter.fetch(limit=limit):
+                stats["received"] += 1
+                last_checkpoint = adapter.checkpoint(raw) or last_checkpoint
+                try:
+                    license_record = adapter.normalize(raw)
+                    if not license_record["premise_is_public_business_location"]:
+                        stats["privacy_filtered"] += 1
+                    result = self.repository.upsert_business_license(license_record)
+                    stats["written"] += 1
+                    stats["inserted" if result["inserted"] else "updated"] += 1
+                    stats["establishments"] += int(result["establishment_id"] is not None)
+                    stats["signals"] += int(result["signal_written"])
+                except Exception as exc:
+                    stats["failed"] += 1
+                    if len(errors) < 20:
+                        errors.append(f"{type(exc).__name__}: {exc}")
+                    _log("business_license_record_failed", source_system=adapter.source_system, error_type=type(exc).__name__)
+            status = "partial" if stats["failed"] else "success"
+        except Exception as exc:
+            status = "failed"
+            errors.append(f"{type(exc).__name__}: {exc}")
+            _log("business_license_source_failed", source_system=adapter.source_system, error_type=type(exc).__name__)
         stats["status"] = status
         self.repository.finish_source_sync(
             adapter.source_system,

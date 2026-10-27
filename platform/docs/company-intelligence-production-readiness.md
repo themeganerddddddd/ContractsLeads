@@ -192,3 +192,9 @@ The v2 architecture is additive in migration `0014_company_change_intelligence.s
 | Geography-industry formation cells | Not run against a migrated database |
 
 The bounded candidate report still provides only review evidence: CLYM Environmental Services has official Maryland Commerce evidence consistent with an expansion/new-facility candidate, while Peraton has official WARN evidence consistent with contraction/workforce indications. Neither is promoted to a verified canonical outcome because those name relationships remain pending. No verified relocation with both origin and destination is available.
+
+## Location-intelligence extension — 2026-10-27
+
+The additive `0015_location_business_change.sql` migration, DC business-license adapter, location-first routes, establishment profiles, source-coverage matrix, and deterministic `business-change-indication-v1` rules are implemented on the feature branch.
+
+Production status: **not migrated and not deployed**. New-table record counts, establishment counts, indication counts, lead-time metrics, and calibrated predictions are therefore not production-queryable. A fresh/preview PostgreSQL migration, bounded DC license run, route test, and privacy review are required before release. See `docs/location-business-change.md`.

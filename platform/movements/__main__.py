@@ -10,6 +10,7 @@ from ingestion.config import Settings
 
 from .maryland import MarylandCommerceAdapter, MarylandWarnAdapter
 from .permits import MontgomeryCountyPermitAdapter
+from .dc import DcBasicBusinessLicenseAdapter
 from .repository import MovementRepository
 from .reporting import MovementQualityReporter
 from .sec import SecSubmissionsAdapter
@@ -17,7 +18,7 @@ from .scoring import build_movement_assessment
 from .change_intelligence import MODEL_VERSION as CHANGE_MODEL_VERSION, build_change_assessment
 from .formation import MODEL_VERSION as FORMATION_MODEL_VERSION, build_formation_snapshot
 from .outcomes import event_outcome, registration_outcome, validate_outcomes
-from .service import MovementIngestionService, PermitIngestionService
+from .service import LicenseIngestionService, MovementIngestionService, PermitIngestionService
 from .tracking import CompanyTrackingService
 from .virginia import VirginiaWarnAdapter
 from .validation import build_snapshot_match_report, write_snapshot_match_report
@@ -28,14 +29,14 @@ def main() -> int:
     parser.add_argument(
         "command",
         choices=(
-            "sync", "permit-sync", "sec-sync", "assess", "assess-v1", "outcomes-build", "outcomes-validate",
+            "sync", "permit-sync", "license-sync", "sec-sync", "assess", "assess-v1", "outcomes-build", "outcomes-validate",
             "formation-build", "quality-report", "snapshot-match-report",
             "track-company", "update-tracking", "monitor-tracked", "review-match",
         ),
     )
     parser.add_argument(
         "--source",
-        choices=("all", "maryland-warn", "virginia-warn", "maryland-commerce"),
+        choices=("all", "maryland-warn", "virginia-warn", "maryland-commerce", "dc-basic-business-licenses"),
         default="all",
     )
     parser.add_argument("--limit", type=int, help="Bounded record count per source for validation")
@@ -77,6 +78,8 @@ def main() -> int:
         "maryland-commerce": [MarylandCommerceAdapter()],
         "all": [MarylandWarnAdapter(), VirginiaWarnAdapter(), MarylandCommerceAdapter()],
     }
+    if args.source == "dc-basic-business-licenses" and args.command not in {"license-sync"}:
+        parser.error("--source dc-basic-business-licenses is supported by license-sync")
     if args.command == "snapshot-match-report":
         contracts_path = Path(__file__).resolve().parents[2] / "data" / "contracts.json"
         contract_records = json.loads(contracts_path.read_text(encoding="utf-8"))
@@ -170,6 +173,12 @@ def main() -> int:
         elif args.command == "permit-sync":
             result = PermitIngestionService(repository).sync(
                 MontgomeryCountyPermitAdapter(), since=args.since, limit=args.limit
+            )
+        elif args.command == "license-sync":
+            if args.source not in {"all", "dc-basic-business-licenses"}:
+                parser.error("license-sync supports --source dc-basic-business-licenses")
+            result = LicenseIngestionService(repository).sync(
+                DcBasicBusinessLicenseAdapter(), limit=args.limit
             )
         elif args.command == "sec-sync":
             result = MovementIngestionService(repository).sync_all(

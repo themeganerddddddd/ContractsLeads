@@ -133,6 +133,171 @@ class MovementRepository:
             self.connection.rollback()
             raise
 
+    def upsert_business_license(self, license_record: dict[str, Any]) -> dict[str, Any]:
+        """Persist a privacy-filtered license, optional establishment candidate, and signal."""
+        try:
+            establishment_id: str | None = None
+            establishment = license_record.get("establishment")
+            if establishment:
+                row = self.connection.execute(
+                    """INSERT INTO business_establishments (
+                         establishment_fingerprint,company_id,establishment_name,establishment_type,address_line,
+                         city,county,county_fips,state_code,postal_code,country_code,latitude,longitude,
+                         location_precision,is_public_business_location,location_status,verified_headquarters,
+                         source_system,source_url,verification_status,match_status,confidence,evidence,
+                         first_observed_at,last_observed_at
+                       ) VALUES (
+                         %(establishment_fingerprint)s,NULL,%(establishment_name)s,%(establishment_type)s,
+                         %(address_line)s,%(city)s,%(county)s,%(county_fips)s,%(state_code)s,%(postal_code)s,
+                         %(country_code)s,%(latitude)s,%(longitude)s,%(location_precision)s,
+                         %(is_public_business_location)s,%(location_status)s,%(verified_headquarters)s,
+                         %(source_system)s,%(source_url)s,%(verification_status)s,%(match_status)s,%(confidence)s,
+                         %(evidence)s::jsonb,%(first_observed_at)s,%(last_observed_at)s
+                       ) ON CONFLICT (establishment_fingerprint) DO UPDATE SET
+                         establishment_name=EXCLUDED.establishment_name,
+                         establishment_type=EXCLUDED.establishment_type,
+                         address_line=EXCLUDED.address_line,city=EXCLUDED.city,county=EXCLUDED.county,
+                         county_fips=EXCLUDED.county_fips,state_code=EXCLUDED.state_code,
+                         postal_code=EXCLUDED.postal_code,latitude=EXCLUDED.latitude,longitude=EXCLUDED.longitude,
+                         location_precision=EXCLUDED.location_precision,source_url=EXCLUDED.source_url,
+                         evidence=business_establishments.evidence || EXCLUDED.evidence,
+                         last_observed_at=greatest(business_establishments.last_observed_at,EXCLUDED.last_observed_at),
+                         updated_at=now() RETURNING id::text""",
+                    {**establishment, "evidence": json.dumps(establishment.get("evidence") or {}, default=str)},
+                ).fetchone()
+                establishment_id = row["id"]
+                address_payload = {
+                    key: establishment.get(key) for key in (
+                        "address_line", "city", "county", "county_fips", "state_code", "postal_code",
+                        "country_code", "latitude", "longitude", "location_precision",
+                    )
+                }
+                address_fingerprint = hashlib.sha256(
+                    json.dumps({"establishment_id": establishment_id, **address_payload}, sort_keys=True, default=str).encode()
+                ).hexdigest()
+                self.connection.execute(
+                    """INSERT INTO establishment_address_history (
+                         address_fingerprint,establishment_id,address_line,city,county,county_fips,state_code,
+                         postal_code,country_code,latitude,longitude,location_precision,is_public_business_location,
+                         first_observed_at,last_observed_at,source_system,source_url,evidence
+                       ) VALUES (
+                         %(address_fingerprint)s,%(establishment_id)s,%(address_line)s,%(city)s,%(county)s,
+                         %(county_fips)s,%(state_code)s,%(postal_code)s,%(country_code)s,%(latitude)s,%(longitude)s,
+                         %(location_precision)s,true,%(first_observed_at)s,%(last_observed_at)s,%(source_system)s,
+                         %(source_url)s,%(evidence)s::jsonb
+                       ) ON CONFLICT (address_fingerprint) DO UPDATE SET
+                         last_observed_at=greatest(establishment_address_history.last_observed_at,EXCLUDED.last_observed_at),
+                         source_url=EXCLUDED.source_url,evidence=establishment_address_history.evidence || EXCLUDED.evidence""",
+                    {
+                        **address_payload,
+                        "address_fingerprint": address_fingerprint,
+                        "establishment_id": establishment_id,
+                        "first_observed_at": establishment["first_observed_at"],
+                        "last_observed_at": establishment["last_observed_at"],
+                        "source_system": establishment["source_system"],
+                        "source_url": establishment["source_url"],
+                        "evidence": json.dumps(establishment.get("evidence") or {}, default=str),
+                    },
+                )
+
+            license_params = {
+                **license_record,
+                "establishment_id": establishment_id,
+                "resolution_evidence": json.dumps(license_record.get("resolution_evidence") or {}, default=str),
+                "raw_payload": json.dumps(license_record.get("raw_payload") or {}, default=str),
+            }
+            license_row = self.connection.execute(
+                """INSERT INTO business_licenses (
+                     license_fingerprint,source_system,source_license_id,company_id,establishment_id,legal_name,
+                     trade_name,entity_type,license_type,business_activity,category,license_status,status_date,
+                     initial_issue_date,start_date,end_date,premise_address,city,county,county_fips,state_code,
+                     postal_code,country_code,latitude,longitude,location_precision,premise_is_public_business_location,
+                     source_url,observed_at,first_observed_at,last_observed_at,resolution_status,resolution_evidence,raw_payload
+                   ) VALUES (
+                     %(license_fingerprint)s,%(source_system)s,%(source_license_id)s,NULL,%(establishment_id)s,
+                     %(legal_name)s,%(trade_name)s,%(entity_type)s,%(license_type)s,%(business_activity)s,%(category)s,
+                     %(license_status)s,%(status_date)s,%(initial_issue_date)s,%(start_date)s,%(end_date)s,
+                     %(premise_address)s,%(city)s,%(county)s,%(county_fips)s,%(state_code)s,%(postal_code)s,
+                     %(country_code)s,%(latitude)s,%(longitude)s,%(location_precision)s,
+                     %(premise_is_public_business_location)s,%(source_url)s,%(observed_at)s,%(first_observed_at)s,
+                     %(last_observed_at)s,%(resolution_status)s,%(resolution_evidence)s::jsonb,%(raw_payload)s::jsonb
+                   ) ON CONFLICT (source_system,source_license_id) DO UPDATE SET
+                     establishment_id=COALESCE(business_licenses.establishment_id,EXCLUDED.establishment_id),
+                     legal_name=EXCLUDED.legal_name,trade_name=EXCLUDED.trade_name,entity_type=EXCLUDED.entity_type,
+                     license_type=EXCLUDED.license_type,business_activity=EXCLUDED.business_activity,
+                     category=EXCLUDED.category,license_status=EXCLUDED.license_status,status_date=EXCLUDED.status_date,
+                     initial_issue_date=EXCLUDED.initial_issue_date,start_date=EXCLUDED.start_date,end_date=EXCLUDED.end_date,
+                     premise_address=EXCLUDED.premise_address,city=EXCLUDED.city,county=EXCLUDED.county,
+                     county_fips=EXCLUDED.county_fips,state_code=EXCLUDED.state_code,postal_code=EXCLUDED.postal_code,
+                     latitude=EXCLUDED.latitude,longitude=EXCLUDED.longitude,location_precision=EXCLUDED.location_precision,
+                     premise_is_public_business_location=EXCLUDED.premise_is_public_business_location,
+                     source_url=EXCLUDED.source_url,observed_at=EXCLUDED.observed_at,
+                     last_observed_at=greatest(business_licenses.last_observed_at,EXCLUDED.last_observed_at),
+                     raw_payload=EXCLUDED.raw_payload,updated_at=now()
+                   RETURNING id::text,(xmax=0) AS inserted""",
+                license_params,
+            ).fetchone()
+            self.connection.execute(
+                """INSERT INTO business_license_versions (
+                     business_license_id,source_record_fingerprint,content_hash,source_url,collected_at,raw_payload
+                   ) VALUES (%s,%s,%s,%s,%s,%s::jsonb)
+                   ON CONFLICT (source_record_fingerprint) DO NOTHING""",
+                (
+                    license_row["id"], license_record["source_record_fingerprint"], license_record["content_hash"],
+                    license_record["source_url"], license_record["last_observed_at"],
+                    json.dumps(license_record.get("raw_payload") or {}, default=str),
+                ),
+            )
+
+            signal = license_record.get("signal")
+            if signal and establishment_id:
+                self.connection.execute(
+                    """INSERT INTO business_change_signals (
+                         signal_fingerprint,company_id,establishment_id,signal_family,signal_type,direction,
+                         observed_at,effective_date,country_code,state_code,county_fips,city,postal_code,
+                         latitude,longitude,location_precision,strength,reliability,confidence,source_system,
+                         source_url,source_event_type,source_event_id,evidence
+                       ) VALUES (
+                         %(signal_fingerprint)s,NULL,%(establishment_id)s,%(signal_family)s,%(signal_type)s,
+                         %(direction)s,%(observed_at)s,%(effective_date)s,%(country_code)s,%(state_code)s,
+                         %(county_fips)s,%(city)s,%(postal_code)s,%(latitude)s,%(longitude)s,%(location_precision)s,
+                         %(strength)s,%(reliability)s,%(confidence)s,%(source_system)s,%(source_url)s,
+                         %(source_event_type)s,%(source_event_id)s,%(evidence)s::jsonb
+                       ) ON CONFLICT (signal_fingerprint) DO NOTHING""",
+                    {
+                        **signal,
+                        "establishment_id": establishment_id,
+                        "evidence": json.dumps(signal.get("evidence") or {}, default=str),
+                    },
+                )
+            self.connection.commit()
+            return {
+                "id": license_row["id"],
+                "inserted": bool(license_row["inserted"]),
+                "establishment_id": establishment_id,
+                "signal_written": bool(signal and establishment_id),
+            }
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def persist_business_change_assessment(self, assessment: dict[str, Any]) -> bool:
+        row = self.connection.execute(
+            """INSERT INTO business_change_assessments (
+                 assessment_fingerprint,unit_type,company_id,establishment_id,country_code,state_code,county_fips,
+                 city,postal_code,assessment_type,as_of_date,score,band,evidence_quality,data_sufficiency,
+                 model_version,components,explanation
+               ) VALUES (
+                 %(assessment_fingerprint)s,%(unit_type)s,%(company_id)s,%(establishment_id)s,%(country_code)s,
+                 %(state_code)s,%(county_fips)s,%(city)s,%(postal_code)s,%(assessment_type)s,%(as_of_date)s,
+                 %(score)s,%(band)s,%(evidence_quality)s,%(data_sufficiency)s,%(model_version)s,
+                 %(components)s::jsonb,%(explanation)s
+               ) ON CONFLICT (assessment_fingerprint) DO NOTHING RETURNING id""",
+            {**assessment, "components": json.dumps(assessment.get("components") or {}, default=str)},
+        ).fetchone()
+        self.connection.commit()
+        return bool(row)
+
     def company_candidates(self, observed_name: str | None, *, limit: int = 20) -> list[dict[str, Any]]:
         if not observed_name:
             return []
