@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { dateLabel, reported } from "@/lib/format";
+import { indicationLabel } from "@/lib/change-intelligence";
 
 export function TrackedCompanyCard({ row }: { row: any }) {
   const location = [row.recipient_city, row.recipient_state, row.recipient_country].filter(Boolean).join(", ");
@@ -18,6 +19,9 @@ export function TrackedCompanyCard({ row }: { row: any }) {
       <div className="tracking-identifiers">
         <span>UEI {reported(row.uei)}</span><span>CAGE {reported(row.cage_code)}</span><span>CIK {reported(row.cik)}</span>
         <span>Reason {row.tracking_reason.replaceAll("_", " ")}</span>
+      </div>
+      <div className="indication-summary" aria-label="Company change indications">
+        {(["expansion", "relocation", "growth", "contraction"] as const).map((type) => <div key={type}><span>{type}</span><strong>{indicationLabel(row[`${type}_score`], row[`${type}_sufficiency`])}</strong></div>)}
       </div>
       <div className="tracked-signal-grid">
         <div><strong>Contracts</strong><span>{Number(row.award_count || 0).toLocaleString()} U.S. awards</span><small>{row.latest_contract_title || "No procurement event observed"}{row.latest_contract_event ? ` · ${dateLabel(row.latest_contract_event)}` : ""}{row.latest_contract_market ? ` · ${row.latest_contract_market}` : ""}</small></div>

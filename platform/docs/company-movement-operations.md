@@ -27,6 +27,9 @@ python -m movements sync --source maryland-commerce --limit 10
 python -m movements permit-sync --since 2026-10-01 --limit 100
 python -m movements sec-sync --limit 25
 python -m movements assess --assessment-type growth
+python -m movements outcomes-build
+python -m movements outcomes-validate
+python -m movements formation-build --as-of 2026-10-01
 ```
 
 Each source records `running`, `success`, `partial`, or `failed` state in `source_checkpoints`. One source or record failure does not roll back successful independent sources. Permit collection uses a 14-day overlap because the public dataset exposes application date rather than a row-level modification timestamp.
@@ -116,3 +119,7 @@ The manual company-intelligence workflow runs `monitor-tracked` only after sourc
 Application rollback is a normal Vercel deployment rollback. The additive tables may remain in place because older code does not reference them. Do not drop the new tables to roll back the web release; doing so would destroy collected source history.
 
 If a bounded production run reveals a quality problem, leave the schedule disabled, stop new collection, and retain all already collected records and source revisions. Roll back only the application deployment. Correct the collector or matching rules, rerun the bounded source, and document how the previously collected records were handled; never truncate procurement or movement history as a rollback shortcut.
+
+## Company-change v2 release boundary
+
+Migration `0014_company_change_intelligence.sql` is additive to the tracking release. It expands allowed assessment/model/alert vocabularies without updating existing rows, then adds outcome, registration, normalized signal, formation, point-in-time feature, prediction, and coverage tables. It does not require a calibrated model before tracked companies can ship. Keep v2 commands manual-only until the same backup, direct-credential, migration-ledger, bounded-source, and representative-record checks above are complete.

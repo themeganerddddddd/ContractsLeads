@@ -12,3 +12,4 @@
 \ir migrations/0011_repair_us_event_dates.sql
 \ir migrations/0012_company_movement_intelligence.sql
 \ir migrations/0013_company_tracking_product.sql
+\ir migrations/0014_company_change_intelligence.sql

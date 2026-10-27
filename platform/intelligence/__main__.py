@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from .repository import IntelligenceRepository
 from .service import IntelligenceService
+from .change_service import ChangeIntelligenceService, MODEL_TYPES, COMPANY_HORIZONS, FORMATION_HORIZONS
 
 
 def database_url() -> str:
@@ -35,6 +36,12 @@ def main() -> int:
     predict.add_argument("--horizons", default="30,60,90")
     momentum = subparsers.add_parser("momentum")
     momentum.add_argument("--as-of", type=date.fromisoformat, default=date.today())
+    change = subparsers.add_parser("change-backtest")
+    change.add_argument("--type", choices=sorted(MODEL_TYPES), required=True)
+    change.add_argument("--training-end", type=date.fromisoformat)
+    change.add_argument("--validation-end", type=date.fromisoformat)
+    change.add_argument("--test-end", type=date.fromisoformat)
+    change.add_argument("--horizon", type=int, required=True)
     args = parser.parse_args()
 
     repository = IntelligenceRepository(database_url())
@@ -57,8 +64,19 @@ def main() -> int:
             if not horizons or any(horizon not in {30, 60, 90} for horizon in horizons):
                 raise ValueError("horizons must be a comma-separated subset of 30,60,90")
             result = service.predict(args.type, args.as_of, horizons)
-        else:
+        elif args.command == "momentum":
             result = service.momentum(args.as_of)
+        else:
+            allowed = FORMATION_HORIZONS if args.type == "business_formation" else COMPANY_HORIZONS
+            if args.horizon not in allowed:
+                raise ValueError(f"unsupported horizon for {args.type}: expected one of {sorted(allowed)}")
+            test_end = args.test_end or date.today()
+            validation_end = args.validation_end or (test_end - timedelta(days=180))
+            training_end = args.training_end or (validation_end - timedelta(days=180))
+            result = ChangeIntelligenceService(repository).backtest(
+                args.type, training_end=training_end, validation_end=validation_end,
+                test_end=test_end, horizon=args.horizon,
+            )
         print(json.dumps(result, indent=2, default=str))
         return 0
     finally:

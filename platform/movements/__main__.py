@@ -14,6 +14,9 @@ from .repository import MovementRepository
 from .reporting import MovementQualityReporter
 from .sec import SecSubmissionsAdapter
 from .scoring import build_movement_assessment
+from .change_intelligence import MODEL_VERSION as CHANGE_MODEL_VERSION, build_change_assessment
+from .formation import MODEL_VERSION as FORMATION_MODEL_VERSION, build_formation_snapshot
+from .outcomes import event_outcome, registration_outcome, validate_outcomes
 from .service import MovementIngestionService, PermitIngestionService
 from .tracking import CompanyTrackingService
 from .virginia import VirginiaWarnAdapter
@@ -25,7 +28,8 @@ def main() -> int:
     parser.add_argument(
         "command",
         choices=(
-            "sync", "permit-sync", "sec-sync", "assess", "quality-report", "snapshot-match-report",
+            "sync", "permit-sync", "sec-sync", "assess", "assess-v1", "outcomes-build", "outcomes-validate",
+            "formation-build", "quality-report", "snapshot-match-report",
             "track-company", "update-tracking", "monitor-tracked", "review-match",
         ),
     )
@@ -62,7 +66,7 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default=Path("reports"), help="Quality report output directory")
     parser.add_argument(
         "--assessment-type",
-        choices=("growth", "contraction", "relocation", "market_entry", "activity"),
+        choices=("expansion", "relocation", "growth", "contraction", "market_entry", "closure_distress", "activity"),
         default="growth",
     )
     args = parser.parse_args()
@@ -171,26 +175,71 @@ def main() -> int:
             result = MovementIngestionService(repository).sync_all(
                 [SecSubmissionsAdapter(repository.sec_targets())], limit=args.limit
             )
-        elif args.command == "assess":
+        elif args.command in {"assess", "assess-v1"}:
             as_of = args.as_of or date.today()
-            company_ids = [args.company_id] if args.company_id else repository.indicator_company_ids()
+            if args.command == "assess-v1" and args.assessment_type not in {"growth", "contraction", "relocation", "market_entry", "activity"}:
+                parser.error("assess-v1 supports only the original v1 assessment types")
+            company_ids = [args.company_id] if args.company_id else (
+                repository.indicator_company_ids() if args.command == "assess-v1" else repository.change_company_ids()
+            )
             written = 0
             sufficient = 0
+            alerts = 0
             for company_id in company_ids:
-                assessment = build_movement_assessment(
-                    company_id,
-                    repository.movement_indicators_for_company(company_id, as_of),
-                    as_of_date=as_of,
-                    assessment_type=args.assessment_type,
+                previous_score = repository.latest_change_score(company_id, args.assessment_type) if args.command == "assess" else None
+                builder = build_movement_assessment if args.command == "assess-v1" else build_change_assessment
+                signals = (
+                    repository.movement_indicators_for_company(company_id, as_of)
+                    if args.command == "assess-v1" else repository.change_signals_for_company(company_id, as_of)
                 )
+                assessment = builder(company_id, signals, as_of_date=as_of, assessment_type=args.assessment_type)
                 written += int(repository.persist_movement_assessment(assessment))
                 sufficient += int(assessment["data_sufficiency"] == "sufficient")
+                if args.command == "assess":
+                    alerts += repository.persist_indication_alert(assessment, previous_score)
             result = {
                 "status": "success",
                 "companies_assessed": len(company_ids),
                 "assessments_written": written,
                 "sufficient": sufficient,
-                "model_version": "movement-indication-v1",
+                "alerts_written": alerts,
+                "model_version": "movement-indication-v1" if args.command == "assess-v1" else CHANGE_MODEL_VERSION,
+            }
+        elif args.command == "outcomes-build":
+            candidates = [event_outcome(row) for row in repository.outcome_candidates()]
+            candidates.extend(registration_outcome(row) for row in repository.registration_candidates())
+            qualifying = [row for row in candidates if row]
+            written = sum(int(repository.persist_outcome(row)) for row in qualifying)
+            counts: dict[str, int] = {}
+            for row in qualifying:
+                counts[row["outcome_type"]] = counts.get(row["outcome_type"], 0) + 1
+            result = {
+                "status": "success", "qualifying_outcomes": len(qualifying),
+                "outcomes_written": written, "counts": counts,
+            }
+        elif args.command == "outcomes-validate":
+            validation = validate_outcomes(repository.all_outcomes())
+            result = {"status": "success" if validation["valid"] else "failed", **validation}
+        elif args.command == "formation-build":
+            as_of = (args.as_of or date.today()).replace(day=1)
+            cells = repository.formation_cells(as_of)
+            written = 0
+            sufficient = 0
+            for cell in cells:
+                snapshot = build_formation_snapshot(
+                    as_of_month=as_of,
+                    country_code=cell["country_code"],
+                    state_code=cell.get("state_code"),
+                    county_fips=cell.get("county_fips"),
+                    industry_code=cell["industry_code"],
+                    industry_label=cell.get("industry_label"),
+                    observations={**cell, "coverage": {"business_registration": "available"}},
+                )
+                written += int(repository.persist_formation_snapshot(snapshot))
+                sufficient += int(snapshot["data_sufficiency"] == "sufficient")
+            result = {
+                "status": "success", "as_of_month": as_of, "cells_evaluated": len(cells),
+                "snapshots_written": written, "sufficient": sufficient, "model_version": FORMATION_MODEL_VERSION,
             }
         elif args.command == "quality-report":
             report = MovementQualityReporter(repository.connection).build()

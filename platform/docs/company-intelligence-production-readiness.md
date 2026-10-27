@@ -155,3 +155,40 @@ The latest bounded snapshot match evidence remains: 0 authoritative identifier m
 ### Remaining end-to-end gate
 
 The code is not declared production-complete until a migrated validation database proves that one reviewed real company can be added, appears publicly with its identifiers and existing procurement history, receives a deduplicated update from a subsequent source event, displays approved movement evidence and explicit unsupported coverage, and retains official URLs in its timeline. The missing restorable production backup, direct production database credential, valid SEC user agent, and isolated preview database remain the actual blockers.
+
+## Company-change v2 readiness — 2026-10-27
+
+The v2 architecture is additive in migration `0014_company_change_intelligence.sql`. It has not been applied to production or a validation database, and no collection, label backfill, scoring run, or backtest was executed against production. Database-backed counts must therefore remain **not migrated / not queryable**, not zero.
+
+| Product | Implementation | Validation / coverage status |
+|---|---|---|
+| Observed movement intelligence | Implemented | Existing bounded source validation only |
+| Tracked-company monitoring | Implemented | Production migration/end-to-end gate remains closed |
+| Expansion indication | Implemented as `company-change-indication-v2` | Awaiting migrated point-in-time run |
+| Relocation indication | Implemented; origin/destination claim gated | Awaiting qualifying relocation evidence; no example fabricated |
+| Growth indication | Implemented | Awaiting migrated point-in-time run |
+| Contraction indication | Implemented | Awaiting migrated point-in-time run |
+| Business formation activity | Implemented | Registration adapter interface only; official nationwide data unsupported |
+| Calibrated expansion prediction | Disabled | Insufficient labeled history; no chronological backtest rows yet |
+| Calibrated relocation prediction | Disabled | Insufficient labeled origin/destination outcomes |
+| Calibrated growth prediction | Disabled | Insufficient labeled history |
+| Calibrated contraction prediction | Disabled | Insufficient labeled history |
+| Calibrated formation prediction | Disabled | No official registration time series configured |
+
+### Verified database inventory
+
+| Measure | Verified count |
+|---|---:|
+| Expansion outcomes in `company_outcomes` | Not migrated / not queryable |
+| Relocation outcomes | Not migrated / not queryable |
+| Market-entry outcomes | Not migrated / not queryable |
+| Closure outcomes | Not migrated / not queryable |
+| Contraction outcomes | Not migrated / not queryable |
+| Formation outcomes | Not migrated / not queryable |
+| Companies with v2 expansion indications | Not run against a migrated database |
+| Companies with v2 relocation indications | Not run against a migrated database |
+| Companies with v2 growth indications | Not run against a migrated database |
+| Companies with v2 contraction indications | Not run against a migrated database |
+| Geography-industry formation cells | Not run against a migrated database |
+
+The bounded candidate report still provides only review evidence: CLYM Environmental Services has official Maryland Commerce evidence consistent with an expansion/new-facility candidate, while Peraton has official WARN evidence consistent with contraction/workforce indications. Neither is promoted to a verified canonical outcome because those name relationships remain pending. No verified relocation with both origin and destination is available.

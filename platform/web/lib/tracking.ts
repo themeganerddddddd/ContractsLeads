@@ -96,7 +96,10 @@ export async function getTrackedCompanies(input: TrackingInput) {
      permit.title AS latest_permit_title,permit.latest_at AS latest_permit,permit.source_system AS latest_permit_source,
      sec.title AS latest_sec_title,sec.latest_at AS latest_sec,
      checks.last_checked_at,signals.last_signal_at::text AS last_signal_at,signals.signal_count_7d,signals.signal_count_30d,
-     signals.movement_count_30d,alerts.new_alerts,count(*) OVER()::text AS total
+     signals.movement_count_30d,alerts.new_alerts,
+     indications.expansion_score,indications.expansion_sufficiency,indications.relocation_score,indications.relocation_sufficiency,
+     indications.growth_score,indications.growth_sufficiency,indications.contraction_score,indications.contraction_sufficiency,
+     count(*) OVER()::text AS total
      FROM company_monitor_targets t JOIN companies c ON c.id=t.company_id
      LEFT JOIN industries i ON i.id=c.primary_industry_id
      LEFT JOIN LATERAL (
@@ -155,6 +158,20 @@ export async function getTrackedCompanies(input: TrackingInput) {
      LEFT JOIN LATERAL (
        SELECT count(*)::int AS new_alerts FROM alert_events WHERE monitor_target_id=t.id AND seen_at IS NULL
      ) alerts ON true
+     LEFT JOIN LATERAL (
+       SELECT
+       (max(score) FILTER (WHERE assessment_type='expansion'))::text AS expansion_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='expansion') AS expansion_sufficiency,
+       (max(score) FILTER (WHERE assessment_type='relocation'))::text AS relocation_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='relocation') AS relocation_sufficiency,
+       (max(score) FILTER (WHERE assessment_type='growth'))::text AS growth_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='growth') AS growth_sufficiency,
+       (max(score) FILTER (WHERE assessment_type='contraction'))::text AS contraction_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='contraction') AS contraction_sufficiency
+       FROM (SELECT DISTINCT ON (assessment_type) assessment_type,score,data_sufficiency
+             FROM movement_assessments WHERE company_id=c.id AND model_version='company-change-indication-v2'
+             ORDER BY assessment_type,as_of_date DESC,generated_at DESC) current_assessments
+     ) indications ON true
      WHERE ${clauses.join(" AND ")}
      ORDER BY ${sortSql[input.sort]} LIMIT 100`,
     values,
@@ -252,9 +269,25 @@ export async function getDiscoveredCompanies() {
     `SELECT d.id::text,d.discovery_reason,d.source_system,d.source_type,d.source_id,d.source_url,
      d.event_date::text,d.match_status,d.discovery_status,d.observed_company_name,d.evidence,
      c.id::text AS company_id,c.slug,c.canonical_name,c.legal_name,c.uei,c.cage_code,c.recipient_city,c.recipient_state,
-     t.tracking_status
+     t.tracking_status,indications.expansion_score,indications.expansion_sufficiency,
+     indications.relocation_score,indications.relocation_sufficiency,indications.growth_score,
+     indications.growth_sufficiency,indications.contraction_score,indications.contraction_sufficiency
      FROM company_discoveries d LEFT JOIN companies c ON c.id=d.company_id
      LEFT JOIN company_monitor_targets t ON t.company_id=d.company_id
+     LEFT JOIN LATERAL (
+       SELECT
+       (max(score) FILTER (WHERE assessment_type='expansion'))::text AS expansion_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='expansion') AS expansion_sufficiency,
+       (max(score) FILTER (WHERE assessment_type='relocation'))::text AS relocation_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='relocation') AS relocation_sufficiency,
+       (max(score) FILTER (WHERE assessment_type='growth'))::text AS growth_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='growth') AS growth_sufficiency,
+       (max(score) FILTER (WHERE assessment_type='contraction'))::text AS contraction_score,
+       max(data_sufficiency) FILTER (WHERE assessment_type='contraction') AS contraction_sufficiency
+       FROM (SELECT DISTINCT ON (assessment_type) assessment_type,score,data_sufficiency
+             FROM movement_assessments WHERE company_id=c.id AND model_version='company-change-indication-v2'
+             ORDER BY assessment_type,as_of_date DESC,generated_at DESC) current_assessments
+     ) indications ON true
      WHERE d.discovery_status <> 'dismissed'
      ORDER BY d.event_date DESC NULLS LAST,d.created_at DESC LIMIT 250`,
   );

@@ -303,6 +303,20 @@ class CompanyTrackingService:
                ORDER BY r.created_at DESC LIMIT %s""",
             (limit,),
         ).fetchall()
+        indications = self.connection.execute(
+            """SELECT ma.id::text AS source_id,ma.company_id::text,c.canonical_name,
+               ma.assessment_type AS event_type,ma.components->'items'->0->>'source_system' AS source_system,
+               ma.components->'items'->0->>'source_url' AS source_url,ma.as_of_date AS event_date,
+               initcap(replace(ma.assessment_type,'_',' ')) || ' indication' AS title,
+               'approved'::text AS match_status,'company-change-indication-v2'::text AS matching_method,
+               1.0::numeric AS matching_confidence,ma.components AS evidence
+               FROM movement_assessments ma JOIN companies c ON c.id=ma.company_id
+               WHERE ma.model_version='company-change-indication-v2' AND ma.score>=70
+                 AND ma.assessment_type IN ('expansion','relocation','growth','contraction')
+                 AND ma.components->'items'->0->>'source_url' IS NOT NULL
+               ORDER BY ma.as_of_date DESC,ma.generated_at DESC LIMIT %s""",
+            (limit,),
+        ).fetchall()
         inserted = 0
         for row in procurement:
             reason = "new_award" if row["event_type"] in {"award_announced", "contract_signed"} else "contract_change"
@@ -335,9 +349,16 @@ class CompanyTrackingService:
                 source_type="company_event",
                 match_status=row["match_status"],
             )
+        for row in indications:
+            inserted += self._upsert_discovery(
+                row,
+                reason=f"{row['event_type']}_indication",
+                source_type="movement_assessment",
+                match_status="approved",
+            )
         self.connection.commit()
         return {
-            "records_considered": len(procurement) + len(movement) + len(permits) + len(unresolved),
+            "records_considered": len(procurement) + len(movement) + len(permits) + len(unresolved) + len(indications),
             "discoveries_inserted": inserted,
         }
 

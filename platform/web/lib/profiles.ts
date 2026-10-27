@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { getCompanyMovements } from "@/lib/movements";
 import { getCompanyEarlyIndicators } from "@/lib/indicators";
 import { getCompanyIntelligenceTimeline, getCompanyTracking } from "@/lib/tracking";
+import { getCompanyChangeIntelligence } from "@/lib/change-intelligence";
 
 export async function getDataFreshness(): Promise<string | null> {
   const rows = await query<{ updated: string | null }>(
@@ -68,7 +69,7 @@ export async function getCompanyProfile(slug: string) {
   );
   const company = rows[0];
   if (!company) return null;
-  const [metrics, awards, agencies, locations, annual, industries, events, predictions, momentum, identifiers, globalMetrics, movements, earlyIndicators, tracking, intelligenceTimeline] = await Promise.all([
+  const [metrics, awards, agencies, locations, annual, industries, events, predictions, momentum, identifiers, globalMetrics, movements, earlyIndicators, tracking, intelligenceTimeline, changeIntelligence] = await Promise.all([
     query<any>(
       `SELECT sum(COALESCE(a.total_obligated,0))::text AS total_activity,count(DISTINCT a.id)::text AS award_count,
        count(t.id)::text AS transaction_count,count(DISTINCT a.awarding_agency)::text AS agency_count,
@@ -135,11 +136,12 @@ export async function getCompanyProfile(slug: string) {
     getCompanyEarlyIndicators(company.id),
     getCompanyTracking(company.id),
     getCompanyIntelligenceTimeline(company.id),
+    getCompanyChangeIntelligence(company.id),
   ]);
   return {
     company, metrics: metrics[0], awards, agencies, locations, annual, industries, events: events || [], predictions: predictions || [],
     momentum: momentum?.[0] || null, identifiers: identifiers || [], globalMetrics: globalMetrics || [], movements: movements || [], earlyIndicators,
-    tracking, intelligenceTimeline, lastUpdated: await getDataFreshness()
+    tracking, intelligenceTimeline, changeIntelligence, lastUpdated: await getDataFreshness()
   };
 }
 

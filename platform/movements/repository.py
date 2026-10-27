@@ -9,6 +9,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from .models import CompanyMatch, NormalizedMovement
+from .change_intelligence import material_indication_change
 
 
 class MovementRepository:
@@ -186,8 +187,21 @@ class MovementRepository:
             """SELECT id::text,indicator_fingerprint,company_id::text,event_id::text,permit_id::text,
                source_system,as_of_date::text,observed_at,indicator_type,direction,value::text,country_code,
                state_code,county_fips,city,strength::text,reliability::text,confidence::text,
-               associated_event_ids,evidence
-               FROM movement_indicators WHERE company_id=%s AND observed_at < (%s::date + interval '1 day')
+               associated_event_ids,evidence,source.original_url AS source_url,source.publisher,
+               event_locations.origin,event_locations.destination
+               FROM movement_indicators mi LEFT JOIN LATERAL (
+                 SELECT original_url,publisher FROM company_event_sources
+                 WHERE event_id=mi.event_id ORDER BY is_primary DESC,collected_at DESC LIMIT 1
+               ) source ON true
+               LEFT JOIN LATERAL (
+                 SELECT
+                   (jsonb_agg(jsonb_build_object('country_code',country_code,'state_code',state_code,'county_fips',county_fips,'city',city))
+                     FILTER (WHERE location_role='origin'))->0 AS origin,
+                   (jsonb_agg(jsonb_build_object('country_code',country_code,'state_code',state_code,'county_fips',county_fips,'city',city))
+                     FILTER (WHERE location_role IN ('destination','headquarters')))->0 AS destination
+                 FROM company_event_locations WHERE event_id=mi.event_id
+               ) event_locations ON true
+               WHERE mi.company_id=%s AND mi.observed_at < (%s::date + interval '1 day')
                ORDER BY observed_at""",
             (company_id, as_of_date),
         ).fetchall()
@@ -200,6 +214,48 @@ class MovementRepository:
                 "SELECT DISTINCT company_id::text FROM movement_indicators ORDER BY company_id::text"
             ).fetchall()
         ]
+
+    def change_company_ids(self) -> list[str]:
+        rows = self.connection.execute(
+            """SELECT company_id::text FROM movement_indicators
+               UNION SELECT company_id::text FROM procurement_events WHERE company_id IS NOT NULL
+               ORDER BY 1"""
+        ).fetchall()
+        return [row["company_id"] for row in rows]
+
+    def change_signals_for_company(self, company_id: str, as_of_date: date) -> list[dict[str, Any]]:
+        signals = self.movement_indicators_for_company(company_id, as_of_date)
+        for signal in signals:
+            signal["source_family"] = signal.get("source_system")
+        rows = self.connection.execute(
+            """SELECT id::text,event_type AS indicator_type,event_at AS observed_at,source_system,source_url,
+               CASE WHEN event_type IN ('value_decreased') THEN 'negative' ELSE 'positive' END AS direction,
+               source_country AS country_code,0.55::text AS strength,0.95::text AS reliability,
+               0.90::text AS confidence
+               FROM procurement_events
+               WHERE company_id=%s AND event_at < (%s::date + interval '1 day')
+                 AND event_type IN ('award_announced','value_increased','value_decreased')
+               ORDER BY event_at""",
+            (company_id, as_of_date),
+        ).fetchall()
+        for row in rows:
+            item = dict(row)
+            item.update({
+                "evidence_key": f"procurement:{item['id']}",
+                "source_family": "federal_procurement",
+                "associated_event_ids": [],
+            })
+            signals.append(item)
+        return signals
+
+    def latest_change_score(self, company_id: str, assessment_type: str) -> float | None:
+        row = self.connection.execute(
+            """SELECT score FROM movement_assessments
+               WHERE company_id=%s AND assessment_type=%s AND model_version='company-change-indication-v2'
+               ORDER BY as_of_date DESC,generated_at DESC LIMIT 1""",
+            (company_id, assessment_type),
+        ).fetchone()
+        return float(row["score"]) if row and row["score"] is not None else None
 
     def persist_movement_assessment(self, assessment: dict[str, Any]) -> bool:
         row = self.connection.execute(
@@ -220,6 +276,167 @@ class MovementRepository:
         ).fetchone()
         self.connection.commit()
         return bool(row)
+
+    def persist_indication_alert(self, assessment: dict[str, Any], previous_score: float | None) -> int:
+        current_score = assessment.get("score")
+        if not material_indication_change(previous_score, current_score):
+            return 0
+        source_item = next(
+            (item for item in assessment["components"].get("items", []) if item.get("source_url")), None
+        )
+        if not source_item:
+            return 0
+        targets = self.connection.execute(
+            """SELECT id::text FROM company_monitor_targets
+               WHERE company_id=%s AND tracking_status='active'""",
+            (assessment["company_id"],),
+        ).fetchall()
+        inserted = 0
+        for target in targets:
+            row = self.connection.execute(
+                """INSERT INTO alert_events (
+                     dedupe_key,company_id,monitor_target_id,alert_type,title,summary,event_date,market,
+                     source_type,source_id,source_system,source_url,match_status
+                   ) VALUES (%s,%s,%s,'indication_strengthened',%s,%s,%s,%s,'movement_assessment',%s,%s,%s,'approved')
+                   ON CONFLICT (dedupe_key) DO NOTHING RETURNING id""",
+                (
+                    f"change:{assessment['assessment_fingerprint']}:{target['id']}", assessment["company_id"], target["id"],
+                    f"{assessment['assessment_type'].replace('_', ' ').title()} indication strengthened",
+                    f"Descriptive score moved from {previous_score:.1f} to {float(current_score):.1f}; this is not a probability.",
+                    assessment["as_of_date"], assessment.get("country_code"), assessment["assessment_fingerprint"],
+                    source_item["source_system"], source_item["source_url"],
+                ),
+            ).fetchone()
+            inserted += int(bool(row))
+        self.connection.commit()
+        return inserted
+
+    def outcome_candidates(self) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            """SELECT e.id::text AS event_id,ec.company_id::text,e.event_type,e.verification_status,
+               ec.review_status,e.announced_date,e.event_date,e.effective_start_date,e.title,
+               e.jobs_created,e.jobs_affected,e.capital_investment,e.currency,e.source_country,
+               e.primary_state,e.primary_county_fips,e.primary_city,e.first_observed_at,e.source_system,
+               source.original_url AS source_url,
+               COALESCE(loc.locations,'[]'::jsonb) AS locations
+               FROM company_events e
+               JOIN company_event_companies ec ON ec.event_id=e.id AND ec.relationship_type='subject'
+               JOIN LATERAL (
+                 SELECT ces.original_url FROM company_event_sources ces
+                 WHERE ces.event_id=e.id ORDER BY ces.is_primary DESC,ces.collected_at LIMIT 1
+               ) source ON true
+               LEFT JOIN LATERAL (
+                 SELECT jsonb_agg(jsonb_build_object(
+                   'location_role',l.location_role,'country_code',l.country_code,'state_code',l.state_code,
+                   'county_fips',l.county_fips,'city',l.city
+                 )) AS locations FROM company_event_locations l WHERE l.event_id=e.id
+               ) loc ON true
+               WHERE e.verification_status IN ('source_verified','corroborated')
+                 AND ec.review_status IN ('auto_verified','approved')
+               ORDER BY e.first_observed_at"""
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def registration_candidates(self) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            """SELECT id::text,source_system,official_identifier,legal_name,formation_date,registration_date,
+               country_code,state_code,county_fips,city,source_url,company_id::text,resolution_status,
+               first_observed_at FROM business_registrations
+               WHERE resolution_status<>'rejected' ORDER BY first_observed_at"""
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def persist_outcome(self, outcome: dict[str, Any]) -> bool:
+        columns = (
+            "outcome_fingerprint", "company_id", "definition_version", "outcome_type", "outcome_date",
+            "announcement_date", "country_code", "state_code", "county_fips", "city", "origin_country",
+            "origin_state", "origin_county_fips", "origin_city", "destination_country", "destination_state",
+            "destination_county_fips", "destination_city", "jobs_created", "jobs_lost", "capital_investment",
+            "currency", "square_feet", "source_system", "source_url", "source_event_id", "registration_id",
+            "verification_status", "evidence", "first_observed_at",
+        )
+        values = [json.dumps(outcome[name], default=str) if name == "evidence" else outcome.get(name) for name in columns]
+        placeholders = ["%s::jsonb" if name == "evidence" else "%s" for name in columns]
+        row = self.connection.execute(
+            f"INSERT INTO company_outcomes ({','.join(columns)}) VALUES ({','.join(placeholders)}) "
+            "ON CONFLICT (outcome_fingerprint) DO NOTHING RETURNING id::text",
+            values,
+        ).fetchone()
+        if row and outcome.get("company_id") and outcome["outcome_type"] in {"expansion", "relocation", "closure"}:
+            alert_type = {
+                "expansion": "confirmed_expansion", "relocation": "confirmed_relocation", "closure": "confirmed_closure",
+            }[outcome["outcome_type"]]
+            targets = self.connection.execute(
+                "SELECT id::text FROM company_monitor_targets WHERE company_id=%s AND tracking_status='active'",
+                (outcome["company_id"],),
+            ).fetchall()
+            for target in targets:
+                self.connection.execute(
+                    """INSERT INTO alert_events (
+                         dedupe_key,company_id,monitor_target_id,alert_type,title,summary,event_date,market,
+                         source_type,source_id,source_system,source_url,match_status
+                       ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'company_outcome',%s,%s,%s,'approved')
+                       ON CONFLICT (dedupe_key) DO NOTHING""",
+                    (
+                        f"outcome:{outcome['outcome_fingerprint']}:{target['id']}", outcome["company_id"], target["id"],
+                        alert_type, f"Confirmed {outcome['outcome_type'].replace('_', ' ')}",
+                        "A source-backed outcome passed the versioned outcome definition.", outcome["outcome_date"],
+                        outcome.get("country_code"), outcome["outcome_fingerprint"], outcome["source_system"], outcome["source_url"],
+                    ),
+                )
+        self.connection.commit()
+        return bool(row)
+
+    def all_outcomes(self) -> list[dict[str, Any]]:
+        return [dict(row) for row in self.connection.execute("SELECT * FROM company_outcomes ORDER BY outcome_date").fetchall()]
+
+    def persist_formation_snapshot(self, snapshot: dict[str, Any]) -> bool:
+        columns = (
+            "snapshot_fingerprint", "as_of_month", "country_code", "state_code", "county_fips", "industry_code",
+            "industry_label", "new_registrations", "active_registrations", "closures_dissolutions",
+            "commercial_permits", "new_construction_permits", "tenant_improvement_permits", "job_posting_volume",
+            "sbir_sttr_awards", "nih_grants", "federal_awards", "state_incentives", "employment", "average_wage",
+            "establishment_count", "formation_score", "activity_level", "data_sufficiency", "model_version",
+            "components", "coverage",
+        )
+        values = [json.dumps(snapshot[name], default=str) if name in {"components", "coverage"} else snapshot.get(name) for name in columns]
+        placeholders = ["%s::jsonb" if name in {"components", "coverage"} else "%s" for name in columns]
+        row = self.connection.execute(
+            f"INSERT INTO formation_activity_snapshots ({','.join(columns)}) VALUES ({','.join(placeholders)}) "
+            "ON CONFLICT (snapshot_fingerprint) DO NOTHING RETURNING id",
+            values,
+        ).fetchone()
+        self.connection.commit()
+        return bool(row)
+
+    def formation_cells(self, as_of_month: date) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            """WITH monthly AS (
+                 SELECT date_trunc('month',COALESCE(formation_date,registration_date))::date AS month,
+                        country_code,state_code,county_fips,COALESCE(industry_code,'UNCLASSIFIED') AS industry_code,
+                        max(industry_label) AS industry_label,count(*)::int AS registrations
+                 FROM business_registrations
+                 WHERE COALESCE(formation_date,registration_date) <= (%s::date + interval '1 month - 1 day')
+                   AND observed_at < (%s::date + interval '1 month') AND resolution_status<>'rejected'
+                 GROUP BY 1,2,3,4,5
+               )
+               SELECT current.country_code,current.state_code,current.county_fips,current.industry_code,current.industry_label,
+                      current.registrations AS new_registrations,previous.registrations AS previous_year_registrations,
+                      rolling.average_registrations AS rolling_average_registrations
+               FROM monthly current
+               LEFT JOIN monthly previous ON previous.country_code=current.country_code
+                 AND previous.state_code IS NOT DISTINCT FROM current.state_code
+                 AND previous.county_fips IS NOT DISTINCT FROM current.county_fips
+                 AND previous.industry_code=current.industry_code AND previous.month=current.month-interval '1 year'
+               LEFT JOIN LATERAL (
+                 SELECT avg(m.registrations)::numeric AS average_registrations FROM monthly m
+                 WHERE m.country_code=current.country_code AND m.state_code IS NOT DISTINCT FROM current.state_code
+                   AND m.county_fips IS NOT DISTINCT FROM current.county_fips AND m.industry_code=current.industry_code
+                   AND m.month<current.month AND m.month>=current.month-interval '12 months'
+               ) rolling ON true WHERE current.month=%s ORDER BY 1,2,3,4""",
+            (as_of_month, as_of_month, as_of_month),
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     def persist(self, movement: NormalizedMovement, match: CompanyMatch) -> dict[str, Any]:
         event = movement.event
