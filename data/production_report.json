@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-26T17:24:32Z",
+  "generated_at": "2026-10-27T16:41:12Z",
   "contact_enrichment": {
     "companies_examined": 3008,
     "company_contacts_found": 386,
@@ -13,7 +13,7 @@
   "bootstrap": {
     "previous_archive_records": 12953,
     "required_moco_record_floor": 470,
-    "moco_company_records": 6685,
+    "moco_company_records": 6688,
     "moco_record_floor_passed": true,
     "outside_company_working_in_moco_records": 6268,
     "work_records_earliest_date": "2026-01-30",

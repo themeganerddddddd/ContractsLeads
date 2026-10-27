@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-10-26T17:24:32Z",
+  "last_updated": "2026-10-27T16:41:12Z",
   "sources_checked": [
     "War.gov",
     "USAspending",
@@ -24,30 +24,30 @@
       "rss_status": 200,
       "discovery_method": "rss",
       "announcements_discovered": 20,
-      "article_requests": 12,
+      "article_requests": 11,
       "article_http_successes": 0,
-      "browser_attempts": 12,
+      "browser_attempts": 11,
       "browser_successes": 0,
       "structured_fallback_status": 200,
       "structured_fallback_awards": 25,
       "unresolved_announcements": 7,
       "status": "partial",
       "records_retrieved": 25,
-      "moco_matches": 1
+      "moco_matches": 2
     },
     "usaspending": {
       "status": "success",
-      "records_retrieved": 234,
-      "known_company_matches": 7,
-      "county_discovery_matches": 135,
-      "place_of_performance_matches": 92,
-      "outside_company_performance_matches": 92,
+      "records_retrieved": 201,
+      "known_company_matches": 5,
+      "county_discovery_matches": 114,
+      "place_of_performance_matches": 82,
+      "outside_company_performance_matches": 81,
       "place_of_performance_lookback_days": 7,
-      "new_entities_discovered": 83,
-      "moco_matches": 140
+      "new_entities_discovered": 73,
+      "moco_matches": 118
     },
     "nasa": {
-      "records_retrieved": 1,
+      "records_retrieved": 0,
       "moco_matches": 0
     },
     "diu": {
@@ -72,10 +72,10 @@
       "moco_matches": 0
     }
   },
-  "record_count": 12953,
+  "record_count": 12956,
   "market_counts": {
-    "moco_company": 458,
-    "moco_company_working_in_moco": 6227,
+    "moco_company": 459,
+    "moco_company_working_in_moco": 6229,
     "outside_company_working_in_moco": 6268
   },
   "contact_stats": {
