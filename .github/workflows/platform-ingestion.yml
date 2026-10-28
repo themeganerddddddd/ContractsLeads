@@ -4,6 +4,23 @@ on:
   schedule:
     - cron: "42 10 * * *"
   workflow_dispatch:
+    inputs:
+      operation:
+        description: "Production operation"
+        required: true
+        type: choice
+        default: procurement-sync
+        options:
+          - procurement-sync
+          - company-intelligence-gate
+      limit:
+        description: "Bounded record limit per company-intelligence source"
+        required: false
+        default: "25"
+      permit_since:
+        description: "Montgomery County permit lower bound (YYYY-MM-DD)"
+        required: false
+        default: "2026-10-01"
 
 permissions:
   contents: read
@@ -14,6 +31,7 @@ concurrency:
 
 jobs:
   ingest:
+    if: ${{ github.event_name == 'schedule' || inputs.operation == 'procurement-sync' }}
     runs-on: ubuntu-latest
     env:
       PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
@@ -31,3 +49,82 @@ jobs:
       - run: python platform/scripts/manage_db.py migrate
       - working-directory: platform
         run: python -m ingestion sync
+
+  company-intelligence-gate:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.operation == 'company-intelligence-gate' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      RECORD_LIMIT: ${{ inputs.limit }}
+      PERMIT_SINCE: ${{ inputs.permit_since }}
+      ALERT_EMAIL_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require production database secret
+        run: test -n "$PLATFORM_DATABASE_DIRECT_URL" || { echo "PLATFORM_DATABASE_DIRECT_URL is required"; exit 2; }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Capture canonical pre-migration counts
+        run: python platform/scripts/production_company_intelligence_gate.py snapshot --output "$RUNNER_TEMP/company-intelligence-before.json"
+      - name: Apply additive migrations
+        run: python platform/scripts/manage_db.py migrate
+      - name: Verify migrations preserved canonical counts
+        run: python platform/scripts/production_company_intelligence_gate.py verify --before "$RUNNER_TEMP/company-intelligence-before.json"
+      - name: Run bounded current collectors independently
+        working-directory: platform
+        shell: bash
+        run: |
+          failures="$RUNNER_TEMP/company-intelligence-failures.txt"
+          : > "$failures"
+          run_stage() {
+            local name="$1"
+            shift
+            echo "::group::$name"
+            if "$@"; then
+              echo "$name completed"
+            else
+              status=$?
+              echo "$name failed with status $status"
+              echo "$name:$status" >> "$failures"
+            fi
+            echo "::endgroup::"
+          }
+
+          run_stage maryland-warn python -m movements sync --source maryland-warn --limit "$RECORD_LIMIT"
+          run_stage virginia-warn python -m movements sync --source virginia-warn --limit "$RECORD_LIMIT"
+          run_stage maryland-commerce python -m movements sync --source maryland-commerce --limit "$RECORD_LIMIT"
+          run_stage montgomery-county-permits python -m movements permit-sync --since "$PERMIT_SINCE" --limit "$RECORD_LIMIT"
+          run_stage dc-basic-business-licenses python -m movements license-sync --source dc-basic-business-licenses --limit "$RECORD_LIMIT"
+          run_stage expansion-assessments python -m movements assess --assessment-type expansion
+          run_stage growth-assessments python -m movements assess --assessment-type growth
+          run_stage relocation-assessments python -m movements assess --assessment-type relocation
+          run_stage contraction-assessments python -m movements assess --assessment-type contraction
+          run_stage closure-distress-assessments python -m movements assess --assessment-type closure_distress
+          run_stage observed-outcomes python -m movements outcomes-build
+          run_stage company-discoveries python -m movements materialize-discoveries --limit 1000
+      - name: Capture post-ingestion category counts
+        if: ${{ always() }}
+        run: python platform/scripts/production_company_intelligence_gate.py report --output "$RUNNER_TEMP/company-intelligence-after.json"
+      - name: Re-verify canonical counts after bounded ingestion
+        if: ${{ always() }}
+        run: python platform/scripts/production_company_intelligence_gate.py verify --before "$RUNNER_TEMP/company-intelligence-before.json"
+      - name: Upload production gate evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-intelligence-production-gate
+          path: |
+            ${{ runner.temp }}/company-intelligence-before.json
+            ${{ runner.temp }}/company-intelligence-after.json
+            ${{ runner.temp }}/company-intelligence-failures.txt
+          if-no-files-found: error
+      - name: Fail if any independent stage failed
+        if: ${{ always() }}
+        run: |
+          if [ -s "$RUNNER_TEMP/company-intelligence-failures.txt" ]; then
+            echo "One or more independent stages failed:"
+            cat "$RUNNER_TEMP/company-intelligence-failures.txt"
+            exit 2
+          fi

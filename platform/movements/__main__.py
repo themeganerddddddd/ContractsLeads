@@ -31,7 +31,7 @@ def main() -> int:
         choices=(
             "sync", "permit-sync", "license-sync", "sec-sync", "assess", "assess-v1", "outcomes-build", "outcomes-validate",
             "formation-build", "quality-report", "snapshot-match-report",
-            "track-company", "update-tracking", "monitor-tracked", "review-match",
+            "track-company", "update-tracking", "monitor-tracked", "materialize-discoveries", "review-match",
         ),
     )
     parser.add_argument(
@@ -161,6 +161,11 @@ def main() -> int:
             result["saved_searches"] = saved_searches
             if saved_searches["status"] == "partial":
                 result["status"] = "partial"
+        elif args.command == "materialize-discoveries":
+            result = {
+                "status": "success",
+                "discoveries": tracking.materialize_discoveries(limit=args.limit or 1000),
+            }
         elif args.command == "review-match":
             if not args.review_id or not args.decision:
                 parser.error("review-match requires --review-id and --decision")
