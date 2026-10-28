@@ -12,7 +12,7 @@ describe("profile aggregate SQL", () => {
   it("calculates home totals independently of the limited lists", async () => {
     mockedQuery
       .mockResolvedValueOnce([{ companies: "100", awards: "200", activity: "300", states: "4" }] as never)
-      .mockResolvedValueOnce([] as never).mockResolvedValueOnce([] as never).mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([] as never).mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never).mockResolvedValueOnce([{ updated: "2026-10-12" }] as never);
     const result = await getHomeOverview();
     expect(result.metrics.awards).toBe("200");

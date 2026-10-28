@@ -5,13 +5,14 @@ export function Footer() {
     <footer className="site-footer">
       <div>
         <strong>Federal Ledger</strong>
-        <p>Government procurement intelligence derived from official U.S., UK, and EU sources. Disclosed values are not economic-impact estimates.</p>
+        <p>Location-first business change intelligence backed by retained official-source evidence. Government procurement remains a distinct context layer.</p>
       </div>
       <div className="footer-links">
+        <Link href="/business-change">Business Radar</Link>
+        <Link href="/companies">Companies</Link>
+        <Link href="/search">Procurement</Link>
+        <Link href="/data-coverage">Data Coverage</Link>
         <Link href="/pricing">Plans</Link>
-        <a href="https://www.usaspending.gov/" rel="noreferrer" target="_blank">USAspending.gov ↗</a>
-        <a href="https://www.find-tender.service.gov.uk/" rel="noreferrer" target="_blank">Find a Tender ↗</a>
-        <a href="https://ted.europa.eu/" rel="noreferrer" target="_blank">TED ↗</a>
       </div>
     </footer>
   );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  alertEmailEnabled,
   authEnabled,
   developmentMockEnabled,
   developmentPlan,
@@ -115,6 +116,11 @@ describe("production configuration", () => {
     expect(
       developmentPlan({ NODE_ENV: "production", DEV_PLAN: "pro" }),
     ).toBeUndefined();
+  });
+  it("keeps outbound alert email off unless explicitly enabled", () => {
+    expect(alertEmailEnabled({})).toBe(false);
+    expect(alertEmailEnabled({ ALERT_EMAIL_ENABLED: "false" })).toBe(false);
+    expect(alertEmailEnabled({ ALERT_EMAIL_ENABLED: "true" })).toBe(true);
   });
 });
 

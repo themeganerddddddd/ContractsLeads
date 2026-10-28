@@ -1,0 +1,138 @@
+name: Update company movements and indicators
+
+on:
+  # Daily scheduling stays disabled until the production migration, bounded
+  # ingestion, matching review, and public-route validation are complete.
+  # Restore the schedule only after the production-readiness gate is approved.
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Optional bounded record limit per source"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-company-intelligence
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require production database secret
+        run: test -n "$PLATFORM_DATABASE_DIRECT_URL" || { echo "PLATFORM_DATABASE_DIRECT_URL is required"; exit 2; }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - run: python platform/scripts/manage_db.py migrate
+
+  confirmed-movements:
+    needs: migrate
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      RECORD_LIMIT: ${{ inputs.limit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Collect official WARN and expansion announcements
+        working-directory: platform
+        run: |
+          args=(sync --source all)
+          if [ -n "$RECORD_LIMIT" ]; then args+=(--limit "$RECORD_LIMIT"); fi
+          python -m movements "${args[@]}"
+
+  commercial-permits:
+    needs: migrate
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      RECORD_LIMIT: ${{ inputs.limit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Collect commercially relevant Montgomery County permits
+        working-directory: platform
+        run: |
+          args=(permit-sync)
+          if [ -n "$RECORD_LIMIT" ]; then args+=(--limit "$RECORD_LIMIT"); fi
+          python -m movements "${args[@]}"
+
+  sec-disclosures:
+    needs: migrate
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      RECORD_LIMIT: ${{ inputs.limit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Require an SEC-compliant identifying user agent
+        run: test -n "$SEC_USER_AGENT" || { echo "SEC_USER_AGENT is required for SEC access"; exit 2; }
+      - name: Collect selected filings for verified CIKs
+        working-directory: platform
+        run: |
+          args=(sec-sync)
+          if [ -n "$RECORD_LIMIT" ]; then args+=(--limit "$RECORD_LIMIT"); fi
+          python -m movements "${args[@]}"
+
+  assessments:
+    needs: [migrate, confirmed-movements, commercial-permits, sec-disclosures]
+    if: ${{ always() && needs.migrate.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Persist auditable descriptive assessments
+        working-directory: platform
+        run: |
+          status=0
+          python -m movements assess --assessment-type growth || status=1
+          python -m movements assess --assessment-type contraction || status=1
+          python -m movements assess --assessment-type relocation || status=1
+          python -m movements assess --assessment-type market_entry || status=1
+          exit "$status"
+      - name: Generate movement quality report
+        working-directory: platform
+        run: python -m movements quality-report --output-dir reports
+      - uses: actions/upload-artifact@v4
+        with:
+          name: company-movement-quality
+          path: platform/reports/company-movement-quality.*
+          if-no-files-found: error
+
+  tracked-company-evaluation:
+    needs: [migrate, confirmed-movements, commercial-permits, sec-disclosures, assessments]
+    if: ${{ always() && needs.migrate.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM_DATABASE_DIRECT_URL: ${{ secrets.PLATFORM_DATABASE_DIRECT_URL }}
+      RECORD_LIMIT: ${{ inputs.limit }}
+      ALERT_EMAIL_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: python -m pip install -r platform/requirements.txt
+      - name: Evaluate platform monitor targets and persist deduplicated alerts
+        working-directory: platform
+        run: |
+          args=(monitor-tracked)
+          if [ -n "$RECORD_LIMIT" ]; then args+=(--limit "$RECORD_LIMIT"); fi
+          python -m movements "${args[@]}"

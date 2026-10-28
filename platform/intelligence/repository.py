@@ -137,3 +137,46 @@ class IntelligenceRepository:
         ).fetchone()
         self.connection.commit()
         return bool(row)
+
+    def change_feature_rows(self, model_type: str, through: date) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            """SELECT company_id::text,country_code,state_code,county_fips,industry_code,as_of_date,
+               feature_values,feature_observation_cutoff FROM company_change_feature_snapshots
+               WHERE model_type=%s AND as_of_date<=%s ORDER BY as_of_date""",
+            (model_type, through),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def persist_change_feature_snapshot(self, snapshot: dict[str, Any]) -> bool:
+        row = self.connection.execute(
+            """INSERT INTO company_change_feature_snapshots (
+                 snapshot_fingerprint,model_type,as_of_date,company_id,country_code,state_code,county_fips,
+                 industry_code,feature_values,feature_observation_cutoff,source_observation_times
+               ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s::jsonb)
+               ON CONFLICT (snapshot_fingerprint) DO NOTHING RETURNING id""",
+            (
+                snapshot["snapshot_fingerprint"], snapshot["model_type"], snapshot["as_of_date"],
+                snapshot.get("company_id"), snapshot.get("country_code"), snapshot.get("state_code"),
+                snapshot.get("county_fips"), snapshot.get("industry_code"), json.dumps(snapshot["feature_values"]),
+                snapshot["feature_observation_cutoff"], json.dumps(snapshot.get("source_observation_times") or {}),
+            ),
+        ).fetchone()
+        self.connection.commit()
+        return bool(row)
+
+    def change_outcome_rows(self, model_type: str, through: date) -> list[dict[str, Any]]:
+        allowed = {
+            "company_expansion": ("expansion", "new_facility", "market_entry"),
+            "company_relocation": ("relocation",),
+            "company_growth": ("growth", "expansion", "new_facility", "market_entry"),
+            "company_contraction": ("contraction", "closure"),
+            "business_formation": ("formation",),
+        }[model_type]
+        rows = self.connection.execute(
+            """SELECT o.company_id::text,o.outcome_type,o.outcome_date,o.country_code,o.state_code,o.county_fips,
+               COALESCE(br.industry_code,'UNCLASSIFIED') AS industry_code,o.first_observed_at
+               FROM company_outcomes o LEFT JOIN business_registrations br ON br.id=o.registration_id
+               WHERE o.outcome_type=ANY(%s) AND o.outcome_date<=%s ORDER BY o.outcome_date""",
+            (list(allowed), through),
+        ).fetchall()
+        return [dict(row) for row in rows]

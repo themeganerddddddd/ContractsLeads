@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function Pagination({ page, pageSize, total, params }: { page: number; pageSize: number; total: number; params: Record<string, string | string[] | undefined> }) {
+export function Pagination({ page, pageSize, total, params, basePath = "/search" }: { page: number; pageSize: number; total: number; params: Record<string, string | string[] | undefined>; basePath?: string }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   if (pages <= 1) return null;
   const href = (target: number) => {
@@ -10,7 +10,7 @@ export function Pagination({ page, pageSize, total, params }: { page: number; pa
       if (scalar && key !== "page") query.set(key, scalar);
     });
     query.set("page", String(target));
-    return `/search?${query}`;
+    return `${basePath}?${query}`;
   };
   return <nav className="pagination" aria-label="Search pages">
     {page > 1 ? <Link href={href(page - 1)}>← Previous</Link> : <span />}
