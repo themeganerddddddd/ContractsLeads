@@ -15,9 +15,10 @@ def test_production_gate_tracks_exact_canonical_tables_and_pending_migrations():
         "procurement_events",
     )
     assert REQUIRED_MIGRATIONS == (
+        "0011a_storage_headroom.sql",
         "0012_company_movement_intelligence.sql",
         "0013_company_tracking_product.sql",
-        "0014_company_intelligence_v2.sql",
+        "0014_company_change_intelligence.sql",
         "0015_location_business_change.sql",
     )
 
@@ -39,6 +40,7 @@ def test_manual_gate_uses_secret_without_printing_it_and_runs_bounded_sources_in
     assert "materialize-discoveries --limit 1000" in workflow
     assert "cat \"$RUNNER_TEMP/company-intelligence-failures.txt\"" in workflow
     assert "echo \"$PLATFORM_DATABASE_DIRECT_URL\"" not in workflow
+    assert 'DATABASE_CAPACITY_BYTES: "536870912"' in workflow
 
 
 def test_materialization_has_a_non_alerting_cli_entry_point():

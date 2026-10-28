@@ -29,9 +29,10 @@ INTELLIGENCE_TABLES = (
 )
 
 REQUIRED_MIGRATIONS = (
+    "0011a_storage_headroom.sql",
     "0012_company_movement_intelligence.sql",
     "0013_company_tracking_product.sql",
-    "0014_company_intelligence_v2.sql",
+    "0014_company_change_intelligence.sql",
     "0015_location_business_change.sql",
 )
 
@@ -43,11 +44,17 @@ def database_url() -> str:
     return value
 
 
-def table_counts(connection: psycopg.Connection, names: tuple[str, ...]) -> dict[str, int]:
-    return {
-        name: int(connection.execute(sql.SQL("SELECT count(*) FROM {}").format(sql.Identifier(name))).fetchone()[0])
-        for name in names
-    }
+def table_counts(connection: psycopg.Connection, names: tuple[str, ...]) -> tuple[dict[str, int], list[str]]:
+    counts: dict[str, int] = {}
+    missing: list[str] = []
+    for name in names:
+        if connection.execute("SELECT to_regclass(%s)", (name,)).fetchone()[0] is None:
+            missing.append(name)
+            continue
+        counts[name] = int(
+            connection.execute(sql.SQL("SELECT count(*) FROM {}").format(sql.Identifier(name))).fetchone()[0]
+        )
+    return counts, missing
 
 
 def grouped_counts(connection: psycopg.Connection, query: str) -> list[dict[str, object]]:
@@ -58,33 +65,46 @@ def grouped_counts(connection: psycopg.Connection, query: str) -> list[dict[str,
 
 def snapshot(connection: psycopg.Connection, *, include_intelligence: bool) -> dict[str, object]:
     applied = [row[0] for row in connection.execute("SELECT name FROM schema_migrations ORDER BY name")]
+    canonical_counts, missing_canonical = table_counts(connection, CANONICAL_TABLES)
     result: dict[str, object] = {
-        "canonical_counts": table_counts(connection, CANONICAL_TABLES),
+        "database_identity": {
+            "database_name": connection.execute("SELECT current_database()").fetchone()[0],
+            "branch_id": connection.execute("SELECT current_setting('neon.branch_id', true)").fetchone()[0],
+            "project_id": connection.execute("SELECT current_setting('neon.project_id', true)").fetchone()[0],
+        },
+        "canonical_counts": canonical_counts,
+        "missing_canonical_tables": missing_canonical,
         "database_size_bytes": int(connection.execute("SELECT pg_database_size(current_database())").fetchone()[0]),
         "applied_migrations": applied,
     }
     if include_intelligence:
-        result["intelligence_counts"] = table_counts(connection, INTELLIGENCE_TABLES)
-        result["source_counts"] = grouped_counts(
-            connection,
-            """SELECT source_system,count(*)::bigint AS records
-               FROM company_events GROUP BY source_system
-               UNION ALL SELECT source_system,count(*)::bigint FROM development_permits GROUP BY source_system
-               UNION ALL SELECT source_system,count(*)::bigint FROM business_licenses GROUP BY source_system
-               ORDER BY source_system""",
-        )
-        result["business_change_categories"] = grouped_counts(
-            connection,
-            """SELECT 'signal' AS layer,signal_type AS category,count(*)::bigint AS records
-               FROM business_change_signals GROUP BY signal_type
-               UNION ALL SELECT 'assessment',assessment_type || ':' || band,count(*)::bigint
-               FROM business_change_assessments GROUP BY assessment_type,band
-               UNION ALL SELECT 'outcome',outcome_type,count(*)::bigint
-               FROM business_change_outcomes GROUP BY outcome_type
-               UNION ALL SELECT 'discovery',discovery_reason,count(*)::bigint
-               FROM company_discoveries GROUP BY discovery_reason
-               ORDER BY layer,category""",
-        )
+        intelligence_counts, missing_intelligence = table_counts(connection, INTELLIGENCE_TABLES)
+        result["intelligence_counts"] = intelligence_counts
+        result["missing_intelligence_tables"] = missing_intelligence
+        if not missing_intelligence:
+            result["source_counts"] = grouped_counts(
+                connection,
+                """SELECT source_system,count(*)::bigint AS records
+                   FROM company_events GROUP BY source_system
+                   UNION ALL SELECT source_system,count(*)::bigint FROM development_permits GROUP BY source_system
+                   UNION ALL SELECT source_system,count(*)::bigint FROM business_licenses GROUP BY source_system
+                   ORDER BY source_system""",
+            )
+            result["business_change_categories"] = grouped_counts(
+                connection,
+                """SELECT 'signal' AS layer,signal_type AS category,count(*)::bigint AS records
+                   FROM business_change_signals GROUP BY signal_type
+                   UNION ALL SELECT 'assessment',assessment_type || ':' || band,count(*)::bigint
+                   FROM business_change_assessments GROUP BY assessment_type,band
+                   UNION ALL SELECT 'outcome',outcome_type,count(*)::bigint
+                   FROM business_change_outcomes GROUP BY outcome_type
+                   UNION ALL SELECT 'discovery',discovery_reason,count(*)::bigint
+                   FROM company_discoveries GROUP BY discovery_reason
+                   ORDER BY layer,category""",
+            )
+        else:
+            result["source_counts"] = []
+            result["business_change_categories"] = []
     return result
 
 
@@ -96,17 +116,22 @@ def write_snapshot(path: Path, result: dict[str, object]) -> None:
 
 def verify(connection: psycopg.Connection, before_path: Path) -> None:
     before = json.loads(before_path.read_text(encoding="utf-8"))["canonical_counts"]
-    after = table_counts(connection, CANONICAL_TABLES)
+    after, missing_canonical = table_counts(connection, CANONICAL_TABLES)
     changes = {
         name: {"before": before[name], "after": after[name]}
         for name in CANONICAL_TABLES
-        if int(before[name]) != after[name]
+        if name in after and int(before[name]) != after[name]
     }
     applied = {row[0] for row in connection.execute("SELECT name FROM schema_migrations")}
     missing = [name for name in REQUIRED_MIGRATIONS if name not in applied]
-    result = {"canonical_counts": after, "unexpected_changes": changes, "missing_required_migrations": missing}
+    result = {
+        "canonical_counts": after,
+        "missing_canonical_tables": missing_canonical,
+        "unexpected_changes": changes,
+        "missing_required_migrations": missing,
+    }
     print(json.dumps(result, indent=2))
-    if changes or missing:
+    if missing_canonical or changes or missing:
         raise SystemExit(2)
 
 

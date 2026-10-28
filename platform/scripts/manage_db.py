@@ -28,10 +28,17 @@ def migrate() -> None:
         for path in sorted(migration_dir.glob("*.sql")):
             if path.name in applied:
                 continue
-            connection.execute(path.read_text(encoding="utf-8"))
-            connection.execute("INSERT INTO schema_migrations (name) VALUES (%s)", (path.name,))
+            try:
+                connection.execute(path.read_text(encoding="utf-8"))
+                connection.execute("INSERT INTO schema_migrations (name) VALUES (%s)", (path.name,))
+                # Commit each migration independently. This preserves migration
+                # atomicity while allowing capacity-recovery migrations to
+                # release storage before the next additive migration starts.
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
             print(f"Applied {path.name}")
-        connection.commit()
 
 
 def seed() -> None:
