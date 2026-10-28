@@ -38,6 +38,8 @@ def test_manual_gate_uses_secret_without_printing_it_and_runs_bounded_sources_in
         "dc-basic-business-licenses",
     ):
         assert f"run_stage {source}" in workflow
+    for assessment in ("expansion", "growth", "relocation", "contraction", "closure_distress"):
+        assert f"--assessment-type {assessment} --limit \"$RECORD_LIMIT\"" in workflow
     assert "materialize-discoveries --limit 1000" in workflow
     assert "cat \"$RUNNER_TEMP/company-intelligence-failures.txt\"" in workflow
     assert "echo \"$PLATFORM_DATABASE_DIRECT_URL\"" not in workflow
@@ -57,3 +59,11 @@ def test_materialization_has_a_non_alerting_cli_entry_point():
 def test_platform_runtime_dependencies_include_html_source_parser():
     requirements = (ROOT / "platform" / "requirements.txt").read_text(encoding="utf-8")
     assert "beautifulsoup4==4.12.3" in requirements
+
+
+def test_assessment_cli_honors_the_validation_limit():
+    source = (ROOT / "platform" / "movements" / "__main__.py").read_text(encoding="utf-8")
+    assessment_branch = source.split('elif args.command in {"assess", "assess-v1"}:', 1)[1].split(
+        'elif args.command == "outcomes-build":', 1
+    )[0]
+    assert "company_ids = company_ids[: args.limit]" in assessment_branch

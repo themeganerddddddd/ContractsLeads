@@ -196,6 +196,8 @@ def main() -> int:
             company_ids = [args.company_id] if args.company_id else (
                 repository.indicator_company_ids() if args.command == "assess-v1" else repository.change_company_ids()
             )
+            if args.limit is not None:
+                company_ids = company_ids[: args.limit]
             written = 0
             sufficient = 0
             alerts = 0

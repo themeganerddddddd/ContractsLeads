@@ -97,11 +97,11 @@ jobs:
           run_stage maryland-commerce python -m movements sync --source maryland-commerce --limit "$RECORD_LIMIT"
           run_stage montgomery-county-permits python -m movements permit-sync --since "$PERMIT_SINCE" --limit "$RECORD_LIMIT"
           run_stage dc-basic-business-licenses python -m movements license-sync --source dc-basic-business-licenses --limit "$RECORD_LIMIT"
-          run_stage expansion-assessments python -m movements assess --assessment-type expansion
-          run_stage growth-assessments python -m movements assess --assessment-type growth
-          run_stage relocation-assessments python -m movements assess --assessment-type relocation
-          run_stage contraction-assessments python -m movements assess --assessment-type contraction
-          run_stage closure-distress-assessments python -m movements assess --assessment-type closure_distress
+          run_stage expansion-assessments python -m movements assess --assessment-type expansion --limit "$RECORD_LIMIT"
+          run_stage growth-assessments python -m movements assess --assessment-type growth --limit "$RECORD_LIMIT"
+          run_stage relocation-assessments python -m movements assess --assessment-type relocation --limit "$RECORD_LIMIT"
+          run_stage contraction-assessments python -m movements assess --assessment-type contraction --limit "$RECORD_LIMIT"
+          run_stage closure-distress-assessments python -m movements assess --assessment-type closure_distress --limit "$RECORD_LIMIT"
           run_stage observed-outcomes python -m movements outcomes-build
           run_stage company-discoveries python -m movements materialize-discoveries --limit 1000
       - name: Capture post-ingestion category counts
