@@ -7,11 +7,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
   title: {
-    default: "Federal Ledger — Contract Intelligence",
+    default: "Federal Ledger — Business Change Intelligence",
     template: "%s | Federal Ledger",
   },
   description:
-    "Search federal contract activity by company, industry, agency, recipient location, and place of performance.",
+    "Find source-backed signals of businesses opening, growing, moving, closing, shrinking, and forming in a market.",
   robots: { index: true, follow: true },
 };
 

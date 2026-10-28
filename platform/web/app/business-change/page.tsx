@@ -103,19 +103,15 @@ export default async function BusinessChangePage({ searchParams }: { searchParam
 
       <form className="search-panel" action="/business-change" method="get">
         <input type="hidden" name="tab" value={input.tab} />
-        <div className="advanced-grid business-change-filters">
+        <div className="business-change-primary-filters">
           <label>State<input name="state" defaultValue={input.state || ""} maxLength={2} placeholder="MD" /></label>
-          <label>County / FIPS<input name="county" defaultValue={input.county || ""} placeholder="Montgomery or 24031" /></label>
+          <label>County<input name="county" defaultValue={input.county || ""} placeholder="Montgomery County" /></label>
           <label>City<input name="city" defaultValue={input.city || ""} placeholder="Rockville" /></label>
-          <label>ZIP<input name="postal_code" defaultValue={input.postalCode || ""} inputMode="numeric" /></label>
           <label>Industry<input name="industry" defaultValue={input.industry || ""} placeholder="Biotechnology" /></label>
           <label>Period<select name="period" defaultValue={input.period}><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option><option value="365">12 months</option><option value="custom">Custom dates</option></select></label>
-          <label>From<input type="date" name="date_from" defaultValue={input.dateFrom || ""} /></label>
-          <label>To<input type="date" name="date_to" defaultValue={input.dateTo || ""} /></label>
-          <label>Confidence<select name="confidence" defaultValue={input.confidence || ""}><option value="">All evidence levels</option><option value="confirmed">Confirmed</option><option value="strong">Strong indication</option><option value="moderate">Moderate indication</option><option value="early">Early / observed</option></select></label>
-          <label>Source family<select name="source_family" defaultValue={input.sourceFamily || ""}><option value="">All source families</option><option value="registration">Registration</option><option value="licenses">Licenses</option><option value="facilities_permits">Facilities / permits</option><option value="workforce">Workforce</option><option value="property">Property</option><option value="corporate_capital">Corporate / capital</option><option value="economic_development">Economic development</option><option value="government_business">Government business</option></select></label>
           <button className="button primary" type="submit">Search this market</button>
         </div>
+        <details className="advanced-filters business-change-advanced"><summary>Advanced filters</summary><div className="advanced-grid"><label>ZIP<input name="postal_code" defaultValue={input.postalCode || ""} inputMode="numeric" /></label><label>From<input type="date" name="date_from" defaultValue={input.dateFrom || ""} /></label><label>To<input type="date" name="date_to" defaultValue={input.dateTo || ""} /></label><label>Confidence<select name="confidence" defaultValue={input.confidence || ""}><option value="">All evidence levels</option><option value="confirmed">Confirmed</option><option value="strong">Strong indication</option><option value="moderate">Moderate indication</option><option value="early">Early / observed</option></select></label><label>Source family<select name="source_family" defaultValue={input.sourceFamily || ""}><option value="">All source families</option><option value="registration">Registration</option><option value="licenses">Licenses</option><option value="facilities_permits">Facilities / permits</option><option value="workforce">Workforce</option><option value="property">Property</option><option value="corporate_capital">Corporate / capital</option><option value="economic_development">Economic development</option><option value="government_business">Government business</option></select></label></div></details>
       </form>
 
       <nav className="change-tabs" aria-label="Business change categories">

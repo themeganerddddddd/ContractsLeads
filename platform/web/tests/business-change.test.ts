@@ -86,15 +86,32 @@ describe("location-first business change", () => {
     expect(page).toContain("target=\"_blank\"");
     expect(page).toContain("location_precision === \"exact_address\"");
     expect(page).toContain("County- and city-level evidence is intentionally not shown as a street-level pin");
+    expect(page).toContain("business-change-primary-filters");
+    expect(page).toContain("Advanced filters");
   });
 
   it("adds establishment intelligence to company and establishment profiles", () => {
     const company = readFileSync(resolve(root, "app/company/[slug]/page.tsx"), "utf8");
     const establishment = readFileSync(resolve(root, "app/establishment/[id]/page.tsx"), "utf8");
-    expect(company).toContain("Locations and business change");
+    expect(company).toContain("Locations &amp; Change");
     expect(company).toContain("Company ≠ establishment");
+    expect(company).toContain("No supported establishment data");
+    expect(company.match(/<a href="#/g)).toHaveLength(5);
     expect(establishment).toContain("Physical business location");
     expect(establishment).toContain("Outcome ≠ indication ≠ signal");
     expect(establishment).toContain("Address history");
+  });
+
+  it("keeps the homepage location-first and procurement as a secondary layer", () => {
+    const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
+    const header = readFileSync(resolve(root, "components/Header.tsx"), "utf8");
+    expect(page).toContain("See how businesses are changing in any market");
+    expect(page).toContain('name="county"');
+    expect(page).toContain('name="city"');
+    expect(page).toContain("Government Business Layer");
+    expect(page).not.toContain("Largest recent awards");
+    expect(header).toContain("Business change intelligence");
+    expect(header).toContain("primaryLinks");
+    expect(header).toContain("moreLinks");
   });
 });

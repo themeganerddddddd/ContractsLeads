@@ -18,7 +18,7 @@ export async function getDataFreshness(): Promise<string | null> {
 }
 
 export async function getHomeOverview() {
-  const [metrics, recent, largest, companies, industries] = await Promise.all([
+  const [metrics, recent, companies, industries] = await Promise.all([
     query<{ companies: string; awards: string; activity: string; states: string }>(
       `SELECT count(DISTINCT c.id)::text AS companies,count(DISTINCT a.id)::text AS awards,
        COALESCE(sum(a.total_obligated),0)::text AS activity,
@@ -31,12 +31,6 @@ export async function getHomeOverview() {
        FROM awards a JOIN companies c ON c.id=a.recipient_company_id WHERE NOT a.is_benchmark ORDER BY a.award_date DESC NULLS LAST LIMIT 6`
     ),
     query<any>(
-      `SELECT a.id::text,a.title,a.award_date::text,a.total_obligated::text,a.current_value::text,a.potential_value::text,
-       c.canonical_name,c.slug AS company_slug,a.awarding_agency,a.performance_state,a.is_demo
-       FROM awards a JOIN companies c ON c.id=a.recipient_company_id
-       WHERE NOT a.is_benchmark ORDER BY COALESCE(a.potential_value,a.current_value,a.total_obligated) DESC NULLS LAST LIMIT 6`
-    ),
-    query<any>(
       `SELECT c.slug,c.canonical_name,c.recipient_city,c.recipient_state,count(DISTINCT a.id)::text AS award_count,
        sum(COALESCE(a.total_obligated,0))::text AS activity
        FROM companies c JOIN awards a ON a.recipient_company_id=c.id WHERE NOT a.is_benchmark GROUP BY c.id ORDER BY activity DESC LIMIT 6`
@@ -46,7 +40,7 @@ export async function getHomeOverview() {
        FROM industries i JOIN awards a ON a.primary_industry_id=i.id WHERE NOT a.is_benchmark GROUP BY i.id ORDER BY activity DESC LIMIT 6`
     )
   ]);
-  return { metrics: metrics[0], recent, largest, companies, industries, lastUpdated: await getDataFreshness() };
+  return { metrics: metrics[0], recent, companies, industries, lastUpdated: await getDataFreshness() };
 }
 
 export async function getFilterOptions() {
