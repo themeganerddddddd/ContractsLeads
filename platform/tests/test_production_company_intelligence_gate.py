@@ -20,6 +20,7 @@ def test_production_gate_tracks_exact_canonical_tables_and_pending_migrations():
         "0013_company_tracking_product.sql",
         "0014_company_change_intelligence.sql",
         "0015_location_business_change.sql",
+        "0015a_storage_headroom.sql",
     )
 
 
