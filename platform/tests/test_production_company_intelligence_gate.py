@@ -51,3 +51,8 @@ def test_materialization_has_a_non_alerting_cli_entry_point():
     assert "tracking.materialize_discoveries" in branch
     assert "evaluate_active_targets" not in branch
     assert "evaluate_saved_searches" not in branch
+
+
+def test_platform_runtime_dependencies_include_html_source_parser():
+    requirements = (ROOT / "platform" / "requirements.txt").read_text(encoding="utf-8")
+    assert "beautifulsoup4==4.12.3" in requirements
