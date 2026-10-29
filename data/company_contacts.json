@@ -24916,6 +24916,83 @@
       "company_name": "HID GLOBAL CORP",
       "company": null,
       "last_checked": null
+    },
+    "uei-rm64ej3cj7z5": {
+      "company_id": "uei-rm64ej3cj7z5",
+      "uei": "RM64EJ3CJ7Z5",
+      "company_name": "ALLIANT ENTERPRISES, LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-fqcged5fhjg3": {
+      "company_id": "uei-fqcged5fhjg3",
+      "uei": "FQCGED5FHJG3",
+      "company_name": "DRU ENTERPRISES INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-wjgjty322nk4": {
+      "company_id": "uei-wjgjty322nk4",
+      "uei": "WJGJTY322NK4",
+      "company_name": "APPLIED STATISTICS & MANAGEMENT INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-ehvwqc5ljrv9": {
+      "company_id": "uei-ehvwqc5ljrv9",
+      "uei": "EHVWQC5LJRV9",
+      "company_name": "PTG INTERNATIONAL, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-ntgalu6xecj5": {
+      "company_id": "uei-ntgalu6xecj5",
+      "uei": "NTGALU6XECJ5",
+      "company_name": "YOKOGAWA CORPORATION OF AMERICA",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-vz7aq6ulc3b8": {
+      "company_id": "uei-vz7aq6ulc3b8",
+      "uei": "VZ7AQ6ULC3B8",
+      "company_name": "LUMIA ONE, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-dekldsvt5934": {
+      "company_id": "uei-dekldsvt5934",
+      "uei": "DEKLDSVT5934",
+      "company_name": "EMP CONSULTANTS, LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-rs3wlfn3tdh6": {
+      "company_id": "uei-rs3wlfn3tdh6",
+      "uei": "RS3WLFN3TDH6",
+      "company_name": "THE CENTER FOR ORGANIZATIONAL EXCELLENCE, INCORPORATED",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-rgggdcw4ll65": {
+      "company_id": "uei-rgggdcw4ll65",
+      "uei": "RGGGDCW4LL65",
+      "company_name": "FOCALPOINT CONSULTING GROUP LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-rcmavbed3ur5": {
+      "company_id": "uei-rcmavbed3ur5",
+      "uei": "RCMAVBED3UR5",
+      "company_name": "INFOSTRUCTURES, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-skfcsm2yxc91": {
+      "company_id": "uei-skfcsm2yxc91",
+      "uei": "SKFCSM2YXC91",
+      "company_name": "IDENTIFICATION TECHNOLOGY PARTNERS INC",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -27923,7 +28000,18 @@
     "YU6VEE2EYLR1": "uei-yu6vee2eylr1",
     "PP4URU6N6M71": "uei-pp4uru6n6m71",
     "CWH2GM13A2V6": "uei-cwh2gm13a2v6",
-    "P62PT7KDP437": "uei-p62pt7kdp437"
+    "P62PT7KDP437": "uei-p62pt7kdp437",
+    "RM64EJ3CJ7Z5": "uei-rm64ej3cj7z5",
+    "FQCGED5FHJG3": "uei-fqcged5fhjg3",
+    "WJGJTY322NK4": "uei-wjgjty322nk4",
+    "EHVWQC5LJRV9": "uei-ehvwqc5ljrv9",
+    "NTGALU6XECJ5": "uei-ntgalu6xecj5",
+    "VZ7AQ6ULC3B8": "uei-vz7aq6ulc3b8",
+    "DEKLDSVT5934": "uei-dekldsvt5934",
+    "RS3WLFN3TDH6": "uei-rs3wlfn3tdh6",
+    "RGGGDCW4LL65": "uei-rgggdcw4ll65",
+    "RCMAVBED3UR5": "uei-rcmavbed3ur5",
+    "SKFCSM2YXC91": "uei-skfcsm2yxc91"
   },
-  "updated_at": "2026-10-28T17:11:15Z"
+  "updated_at": "2026-10-29T17:27:09Z"
 }
