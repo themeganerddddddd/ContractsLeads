@@ -760,6 +760,9 @@ a:focus-visible {
   height: var(--height);
   min-height: 3px;
 }
+.chart-bar.negative {
+  background: #9b6a70;
+}
 .chart-bar span {
   position: absolute;
   bottom: -20px;
@@ -1220,6 +1223,16 @@ a:focus-visible {
   display: flex;
   gap: 13px;
   flex-wrap: wrap;
+}
+.material-adjustment {
+  font-size: 11px;
+  font-weight: 800;
+}
+.material-adjustment-increase {
+  color: #1f684b;
+}
+.material-adjustment-decrease {
+  color: #9b3e42;
 }
 .intelligence-layout {
   display: grid;

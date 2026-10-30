@@ -4,6 +4,7 @@ from datetime import date, datetime, timezone
 
 from movements.change_intelligence import MODEL_VERSION, build_change_assessment, material_indication_change
 from movements.outcomes import event_outcome
+from movements.repository import MovementRepository
 
 
 AS_OF = date(2026, 10, 27)
@@ -109,3 +110,39 @@ def test_alert_threshold_ignores_one_point_changes():
     assert material_indication_change(50, 65)
     assert not material_indication_change(50, 51)
     assert not material_indication_change(70, 60)
+
+
+def test_tiny_procurement_value_changes_do_not_score_as_growth_or_contraction_signals():
+    class Result:
+        def fetchall(self):
+            return [
+                {
+                    "id": "award", "indicator_type": "award_announced", "observed_at": datetime(2026, 10, 1, tzinfo=timezone.utc),
+                    "source_system": "usaspending", "source_url": "https://www.usaspending.gov/award/A/",
+                    "direction": "positive", "country_code": "US", "strength": "0.55", "reliability": "0.95",
+                    "confidence": "0.90", "currency": "USD", "adjustment_delta": None, "reference_award_value": "10000000",
+                },
+                {
+                    "id": "tiny", "indicator_type": "value_increased", "observed_at": datetime(2026, 10, 2, tzinfo=timezone.utc),
+                    "source_system": "usaspending", "source_url": "https://www.usaspending.gov/award/A/",
+                    "direction": "positive", "country_code": "US", "strength": "0.55", "reliability": "0.95",
+                    "confidence": "0.90", "currency": "USD", "adjustment_delta": "10000", "reference_award_value": "10000000",
+                },
+                {
+                    "id": "material", "indicator_type": "value_decreased", "observed_at": datetime(2026, 10, 3, tzinfo=timezone.utc),
+                    "source_system": "usaspending", "source_url": "https://www.usaspending.gov/award/A/",
+                    "direction": "negative", "country_code": "US", "strength": "0.55", "reliability": "0.95",
+                    "confidence": "0.90", "currency": "USD", "adjustment_delta": "-600000", "reference_award_value": "10000000",
+                },
+            ]
+
+    class Connection:
+        def execute(self, _sql, _values):
+            return Result()
+
+    repository = MovementRepository.__new__(MovementRepository)
+    repository.connection = Connection()
+    repository.movement_indicators_for_company = lambda _company_id, _as_of_date: []
+    signals = repository.change_signals_for_company("company-1", AS_OF)
+    assert [row["indicator_type"] for row in signals] == ["award_announced", "value_decreased"]
+    assert signals[-1]["materiality_status"] == "material"

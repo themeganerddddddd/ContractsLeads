@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any, Iterable
+
+from procurement_materiality import evaluate_award_adjustment
 
 
 PROCUREMENT_SOURCES = ("usaspending", "uk_find_a_tender", "eu_ted")
@@ -25,6 +28,74 @@ def procurement_alert_type(event_type: str) -> str:
     }:
         return "contract_modified"
     return "procurement_event"
+
+
+def _compact_native_amount(value: Any, currency: str | None) -> str:
+    amount = abs(Decimal(str(value)))
+    prefix = "$" if str(currency or "").upper() == "USD" else f"{currency or 'Native'} "
+    if amount >= Decimal("1000000"):
+        return f"{prefix}{amount / Decimal('1000000'):.1f}M"
+    if amount >= Decimal("1000"):
+        return f"{prefix}{amount / Decimal('1000'):.1f}K"
+    return f"{prefix}{amount:,.2f}"
+
+
+def collapse_procurement_alert_events(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse correlated lifecycle rows for alerts while preserving source events."""
+    correlated_types = {"contract_modified", "value_increased", "value_decreased", "option_exercised"}
+    groups: dict[str, list[dict[str, Any]]] = {}
+    presented: list[dict[str, Any]] = []
+    for source_row in rows:
+        row = dict(source_row)
+        if row.get("event_type") in correlated_types and row.get("raw_source_id") and row.get("award_id"):
+            key = f"{row['source_system']}|{row['raw_source_id']}|{row['award_id']}"
+            groups.setdefault(key, []).append(row)
+        else:
+            presented.append(row)
+
+    for group in groups.values():
+        option = next((row for row in group if row["event_type"] == "option_exercised"), None)
+        modification = next((row for row in group if row["event_type"] == "contract_modified"), None)
+        base = dict(option or modification or group[0])
+        adjustment_row = next((row for row in group if row.get("adjustment_delta") is not None), base)
+        adjustment = adjustment_row.get("adjustment_delta")
+        evaluation = evaluate_award_adjustment(
+            adjustment,
+            adjustment_row.get("reference_award_value"),
+            adjustment_row.get("currency"),
+        ) if adjustment is not None else None
+        direction = None
+        if adjustment is not None and Decimal(str(adjustment)) != 0:
+            direction = "increased" if Decimal(str(adjustment)) > 0 else "decreased"
+        percent = evaluation.percent if evaluation else None
+        percent_text = format(percent, ".1f").rstrip("0").rstrip(".") if percent is not None else None
+        context = f" · {percent_text}% of award value" if percent_text is not None else ""
+
+        if option:
+            base["event_type"] = "option_exercised"
+            base["title"] = "Option exercised"
+            base["summary"] = (
+                f"Award value {direction} by {_compact_native_amount(adjustment, adjustment_row.get('currency'))}{context}"
+                if evaluation and evaluation.status == "material" and direction else
+                "Option exercise recorded; no immaterial adjustment amount is promoted."
+            )
+        elif evaluation and evaluation.status == "material" and direction:
+            base["event_type"] = "value_increased" if direction == "increased" else "value_decreased"
+            base["title"] = f"Award {direction} by {_compact_native_amount(adjustment, adjustment_row.get('currency'))}"
+            base["summary"] = f"Material contract modification{context}."
+        else:
+            base["event_type"] = "contract_modified"
+            base["title"] = "Award adjusted"
+            base["summary"] = (
+                "Minor contract modification. Exact source values remain available in contract detail."
+                if evaluation and evaluation.status == "immaterial" else
+                "Contract modification. Exact source values remain available in contract detail."
+            )
+        base["materiality_status"] = evaluation.status if evaluation else None
+        base["materiality_percent"] = percent
+        base["correlated_event_count"] = len(group)
+        presented.append(base)
+    return sorted(presented, key=lambda row: (row.get("event_date") or "", row.get("id") or ""))
 
 
 def monitor_alert_key(target_id: str, source_type: str, source_id: str) -> str:
@@ -613,14 +684,36 @@ class CompanyTrackingService:
         return str(row["status"]) if row else None
 
     def _procurement_events(self, company_id: str, source_system: str, since: datetime | None) -> list[dict[str, Any]]:
-        return [dict(row) for row in self.connection.execute(
-            """SELECT id::text,event_type,event_at::date AS event_date,title,description AS summary,
-               source_system,source_country AS market,source_url,'auto_verified' AS match_status
-               FROM procurement_events WHERE company_id=%s AND source_system=%s
-                 AND created_at > COALESCE(%s,now() - interval '30 days')
-               ORDER BY event_at""",
+        rows = [dict(row) for row in self.connection.execute(
+            """WITH transaction_values AS (
+                 SELECT t.*,
+                        lag(t.current_total_value) OVER (
+                          PARTITION BY t.award_id ORDER BY t.action_date NULLS LAST,t.created_at,t.id
+                        ) AS prior_current_total_value
+                 FROM transactions t WHERE NOT t.is_benchmark
+               )
+               SELECT e.id::text,e.event_type,e.event_at::date AS event_date,e.title,e.description AS summary,
+               e.source_system,e.source_country AS market,e.source_url,'auto_verified' AS match_status,
+               e.raw_source_id,e.award_id::text,e.currency,
+               CASE WHEN e.event_type IN ('contract_modified','value_increased','value_decreased','option_exercised')
+                    THEN COALESCE(e.value_delta_native,tx.obligation) END AS adjustment_delta,
+               COALESCE(
+                 NULLIF(abs(tx.prior_current_total_value),0),
+                 NULLIF(abs(tx.current_total_value),0),
+                 NULLIF(abs(a.current_value),0),
+                 NULLIF(abs(a.potential_value),0),
+                 NULLIF(abs(a.total_obligated),0)
+               ) AS reference_award_value,
+               COALESCE(e.evidence->>'modification_number',tx.modification_number) AS modification_number
+               FROM procurement_events e
+               LEFT JOIN transaction_values tx ON tx.source_transaction_id=e.raw_source_id AND tx.award_id=e.award_id
+               LEFT JOIN awards a ON a.id=e.award_id
+               WHERE e.company_id=%s AND e.source_system=%s
+                 AND e.created_at > COALESCE(%s,now() - interval '30 days')
+               ORDER BY e.event_at""",
             (company_id, source_system, since),
         ).fetchall()]
+        return collapse_procurement_alert_events(rows)
 
     def _movement_events(self, company_id: str, source_system: str, since: datetime | None) -> list[dict[str, Any]]:
         return [dict(row) for row in self.connection.execute(

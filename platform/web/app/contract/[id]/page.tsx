@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { DataNote } from "@/components/DataNote";
 import { PredictionPanel } from "@/components/PredictionPanel";
-import { compactMoney, dateLabel, money, reported } from "@/lib/format";
+import { compactMoney, dateLabel, money, moneyExact, reported } from "@/lib/format";
 import { getContractProfile } from "@/lib/profiles";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +27,6 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
       <div className="description-panel"><h2>Description</h2><p>{reported(a.description)}</p>{a.source_url ? <p><a className="source-link" href={a.source_url} target="_blank" rel="noreferrer">View federal source ↗</a></p> : <p>Source URL not reported.</p>}</div></section>
     <section className="section" id="lifecycle"><div className="section-header"><div><p className="eyebrow">Derived from official transactions</p><h2>Contract lifecycle</h2></div></div><ActivityTimeline events={data.events} /></section>
     <section className="section" id="intelligence"><div className="section-header"><div><p className="eyebrow">Point-in-time model</p><h2>Contract change outlook</h2></div></div><PredictionPanel predictions={data.predictions} /></section>
-    <section className="section" id="transactions"><div className="section-header"><div><p className="eyebrow">Uncollapsed source history</p><h2>Transactions and modifications</h2></div></div><div className="table-wrap"><table className="data-table"><thead><tr><th>Action date</th><th>Modification</th><th>Action type</th><th>Obligation</th><th>Current total</th><th>Potential total</th><th>Description</th></tr></thead><tbody>{data.transactions.map((tx: any) => <tr key={tx.id}><td>{dateLabel(tx.action_date)}</td><td>{reported(tx.modification_number)}</td><td>{reported(tx.action_type)}</td><td className="numeric">{money(tx.obligation)}</td><td className="numeric">{money(tx.current_total_value)}</td><td className="numeric">{money(tx.potential_total_value)}</td><td>{reported(tx.description)}</td></tr>)}</tbody></table></div></section>
+    <section className="section" id="transactions"><div className="section-header"><div><p className="eyebrow">Uncollapsed source history</p><h2>Transactions and modifications</h2></div></div><div className="table-wrap"><table className="data-table"><thead><tr><th scope="col">Action date</th><th scope="col">Modification</th><th scope="col">Action type</th><th scope="col">Exact obligation</th><th scope="col">Current total</th><th scope="col">Potential total</th><th scope="col">Description</th><th scope="col">Source</th></tr></thead><tbody>{data.transactions.map((tx: any) => <tr key={tx.id}><td>{dateLabel(tx.action_date)}</td><td>{reported(tx.modification_number)}</td><td>{reported(tx.action_type)}</td><td className="numeric">{moneyExact(tx.obligation)}</td><td className="numeric">{moneyExact(tx.current_total_value)}</td><td className="numeric">{moneyExact(tx.potential_total_value)}</td><td>{reported(tx.description)}</td><td>{a.source_url ? <a href={a.source_url} target="_blank" rel="noreferrer">USAspending ↗</a> : "Not reported"}</td></tr>)}</tbody></table></div></section>
   </>;
 }

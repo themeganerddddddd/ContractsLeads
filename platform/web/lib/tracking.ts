@@ -1,6 +1,12 @@
 import "server-only";
 
 import { query, withTransaction } from "@/lib/db";
+import {
+  collapseCompanyProcurementEvents,
+  evaluateAwardAdjustment,
+  materialityPercentLabel,
+  type AdjustmentMaterialityStatus,
+} from "@/lib/procurement-materiality";
 
 export type RawTrackingParams = Record<string, string | string[] | undefined>;
 
@@ -31,6 +37,15 @@ export type IntelligenceTimelineRow = {
   collected_at: string;
   verification_status: string;
   match_status: string;
+  raw_source_id: string | null;
+  award_id: string | null;
+  adjustment_delta: string | null;
+  reference_award_value: string | null;
+  modification_number: string | null;
+  materiality_status: AdjustmentMaterialityStatus | null;
+  materiality_percent: number | null;
+  adjustment_direction: "increase" | "decrease" | null;
+  correlated_event_count: number;
 };
 
 function scalar(value: string | string[] | undefined): string | undefined {
@@ -228,14 +243,36 @@ export async function getCompanyTracking(companyId: string) {
 }
 
 export async function getCompanyIntelligenceTimeline(companyId: string): Promise<IntelligenceTimelineRow[]> {
-  return (await query<IntelligenceTimelineRow>(
-    `SELECT * FROM (
+  const rows = (await query<IntelligenceTimelineRow>(
+    `WITH transaction_values AS (
+       SELECT t.*,
+       lag(t.current_total_value) OVER (
+         PARTITION BY t.award_id ORDER BY t.action_date NULLS LAST,t.created_at,t.id
+       ) AS prior_current_total_value
+       FROM transactions t WHERE NOT t.is_benchmark
+     )
+     SELECT * FROM (
        SELECT 'procurement:'||e.id::text AS id,'PROCUREMENT'::text AS category,e.event_type,
        e.event_at::text AS event_at,e.title,e.description AS summary,
        COALESCE(e.value_delta_native,e.value_native)::text AS value,e.currency,
        COALESCE(e.source_market,e.source_country) AS market,e.source_system,d.name AS publisher,e.source_url,
-       e.created_at::text AS collected_at,'source_backed'::text AS verification_status,'auto_verified'::text AS match_status
+       e.created_at::text AS collected_at,'source_backed'::text AS verification_status,'auto_verified'::text AS match_status,
+       e.raw_source_id,e.award_id::text,
+       CASE WHEN e.event_type IN ('contract_modified','value_increased','value_decreased','option_exercised')
+            THEN COALESCE(e.value_delta_native,tx.obligation) END::text AS adjustment_delta,
+       COALESCE(
+         NULLIF(abs(tx.prior_current_total_value),0),
+         NULLIF(abs(tx.current_total_value),0),
+         NULLIF(abs(a.current_value),0),
+         NULLIF(abs(a.potential_value),0),
+         NULLIF(abs(a.total_obligated),0)
+       )::text AS reference_award_value,
+       COALESCE(e.evidence->>'modification_number',tx.modification_number) AS modification_number,
+       NULL::text AS materiality_status,NULL::numeric AS materiality_percent,NULL::text AS adjustment_direction,
+       1::int AS correlated_event_count
        FROM procurement_events e LEFT JOIN data_sources d ON d.source_system=e.source_system
+       LEFT JOIN transaction_values tx ON tx.source_transaction_id=e.raw_source_id AND tx.award_id=e.award_id
+       LEFT JOIN awards a ON a.id=e.award_id
        WHERE e.company_id=$1
        UNION ALL
        SELECT 'movement:'||e.id::text,
@@ -245,7 +282,8 @@ export async function getCompanyIntelligenceTimeline(companyId: string): Promise
             ELSE 'CORPORATE' END,
        e.event_type,COALESCE(e.event_date,e.effective_start_date,e.announced_date)::timestamptz::text,
        e.title,e.summary,e.capital_investment::text,e.currency,COALESCE(d.source_market,e.source_country),e.source_system,
-       source.publisher,source.original_url,source.collected_at::text,e.verification_status,ec.review_status
+       source.publisher,source.original_url,source.collected_at::text,e.verification_status,ec.review_status,
+       NULL::text,NULL::text,NULL::text,NULL::text,NULL::text,NULL::text,NULL::numeric,NULL::text,1::int
        FROM company_event_companies ec JOIN company_events e ON e.id=ec.event_id
        LEFT JOIN data_sources d ON d.source_system=e.source_system
        JOIN LATERAL (
@@ -257,13 +295,15 @@ export async function getCompanyIntelligenceTimeline(companyId: string): Promise
        SELECT 'permit:'||p.id::text,'FACILITY',p.relevance_classification,
        COALESCE(p.issue_date,p.application_date)::timestamptz::text,p.permit_number,p.description,
        p.project_value::text,p.currency,COALESCE(d.source_market,p.country_code),p.source_system,d.name,p.source_url,
-       p.last_observed_at::text,'source_backed',r.review_status
+       p.last_observed_at::text,'source_backed',r.review_status,
+       NULL::text,NULL::text,NULL::text,NULL::text,NULL::text,NULL::text,NULL::numeric,NULL::text,1::int
        FROM permit_company_relationships r JOIN development_permits p ON p.id=r.permit_id
        LEFT JOIN data_sources d ON d.source_system=p.source_system
        WHERE r.company_id=$1 AND r.review_status IN ('auto_verified','approved')
      ) timeline ORDER BY event_at DESC NULLS LAST,id DESC LIMIT 250`,
     [companyId],
   )) || [];
+  return collapseCompanyProcurementEvents(rows);
 }
 
 export async function getDiscoveredCompanies() {
@@ -310,16 +350,118 @@ export type AlertEventRow = {
   seen_at: string | null;
   slug: string | null;
   canonical_name: string | null;
+  monitor_target_id: string | null;
+  company_id: string | null;
+  procurement_event_type: string | null;
+  raw_source_id: string | null;
+  award_id: string | null;
+  adjustment_delta: string | null;
+  reference_award_value: string | null;
+  adjustment_currency: string | null;
+  modification_number: string | null;
 };
 
+function compactNativeAmount(value: string, currency: string | null): string {
+  const amount = Math.abs(Number(value));
+  if (!Number.isFinite(amount)) return "adjusted value";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(amount);
+  } catch {
+    return `${currency || "Native"} ${amount.toLocaleString("en-US", { maximumFractionDigits: 1 })}`;
+  }
+}
+
+function presentProcurementAlerts(rows: AlertEventRow[]): AlertEventRow[] {
+  const groups = new Map<string, AlertEventRow[]>();
+  const presented: AlertEventRow[] = [];
+  for (const row of rows) {
+    const isModification = row.source_type === "procurement_event" && row.alert_type === "contract_modified";
+    const key = isModification && row.raw_source_id && row.award_id
+      ? `${row.monitor_target_id || row.company_id}|${row.source_system}|${row.raw_source_id}|${row.award_id}`
+      : null;
+    if (!key) {
+      presented.push(row);
+      continue;
+    }
+    const group = groups.get(key);
+    if (group) group.push(row);
+    else groups.set(key, [row]);
+  }
+
+  for (const group of groups.values()) {
+    const option = group.find((row) => row.procurement_event_type === "option_exercised");
+    const base = option || group.find((row) => row.procurement_event_type === "contract_modified") || group[0];
+    const adjustmentRow = group.find((row) => row.adjustment_delta !== null) || base;
+    const adjustment = adjustmentRow.adjustment_delta;
+    const evaluation = adjustment === null ? null : evaluateAwardAdjustment({
+      adjustment,
+      referenceAwardValue: adjustmentRow.reference_award_value,
+      currency: adjustmentRow.adjustment_currency,
+    });
+    const direction = adjustment === null || Number(adjustment) === 0
+      ? null
+      : Number(adjustment) > 0 ? "increased" : "decreased";
+    const company = base.canonical_name || "Company";
+    if (option) {
+      base.title = `${company}: option exercised`;
+      base.summary = evaluation?.status === "material" && direction && adjustment
+        ? `Award value ${direction} by ${compactNativeAmount(adjustment, adjustmentRow.adjustment_currency)}${evaluation.percent === null ? "" : ` · ${materialityPercentLabel(evaluation.percent)}`}`
+        : "Option exercise recorded; no immaterial adjustment amount is promoted.";
+    } else if (evaluation?.status === "material" && direction && adjustment) {
+      base.title = `${company} award ${direction} by ${compactNativeAmount(adjustment, adjustmentRow.adjustment_currency)}`;
+      base.summary = materialityPercentLabel(evaluation.percent) || "Material award adjustment.";
+    } else {
+      base.title = `${company} award adjusted`;
+      base.summary = evaluation?.status === "immaterial"
+        ? "Minor contract modification. Exact source values remain available in contract detail."
+        : "Contract modification. Exact source values remain available in contract detail.";
+    }
+    presented.push(base);
+  }
+  return presented.toSorted((left, right) =>
+    Number(right.seen_at === null) - Number(left.seen_at === null)
+      || String(right.event_date || "").localeCompare(String(left.event_date || ""))
+      || right.created_at.localeCompare(left.created_at)
+  );
+}
+
 export async function getAlertEvents() {
-  return query<AlertEventRow>(
-    `SELECT a.id::text,a.alert_type,a.title,a.summary,a.event_date::text,a.market,a.source_type,a.source_system,
-     a.source_url,a.match_status,a.created_at::text,a.seen_at::text,c.slug,c.canonical_name
+  const rows = await query<AlertEventRow>(
+    `WITH transaction_values AS (
+       SELECT t.*,
+       lag(t.current_total_value) OVER (
+         PARTITION BY t.award_id ORDER BY t.action_date NULLS LAST,t.created_at,t.id
+       ) AS prior_current_total_value
+       FROM transactions t WHERE NOT t.is_benchmark
+     )
+     SELECT a.id::text,a.alert_type,a.title,a.summary,a.event_date::text,a.market,a.source_type,a.source_system,
+     a.source_url,a.match_status,a.created_at::text,a.seen_at::text,c.slug,c.canonical_name,
+     a.monitor_target_id::text,a.company_id::text,pe.event_type AS procurement_event_type,pe.raw_source_id,
+     pe.award_id::text,
+     CASE WHEN pe.event_type IN ('contract_modified','value_increased','value_decreased','option_exercised')
+          THEN COALESCE(pe.value_delta_native,tx.obligation) END::text AS adjustment_delta,
+     COALESCE(
+       NULLIF(abs(tx.prior_current_total_value),0),
+       NULLIF(abs(tx.current_total_value),0),
+       NULLIF(abs(award.current_value),0),
+       NULLIF(abs(award.potential_value),0),
+       NULLIF(abs(award.total_obligated),0)
+     )::text AS reference_award_value,
+     pe.currency AS adjustment_currency,
+     COALESCE(pe.evidence->>'modification_number',tx.modification_number) AS modification_number
      FROM alert_events a LEFT JOIN companies c ON c.id=a.company_id
+     LEFT JOIN procurement_events pe ON a.source_type='procurement_event' AND pe.id::text=a.source_id
+     LEFT JOIN transaction_values tx ON tx.source_transaction_id=pe.raw_source_id AND tx.award_id=pe.award_id
+     LEFT JOIN awards award ON award.id=pe.award_id
      WHERE a.user_id IS NULL
      ORDER BY (a.seen_at IS NULL) DESC,a.event_date DESC,a.created_at DESC LIMIT 250`,
   );
+  return presentProcurementAlerts(rows);
 }
 
 export async function getAdminTrackingSnapshot(search = "") {

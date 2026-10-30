@@ -32,6 +32,12 @@ describe("company tracking queries", () => {
     expect(sql).toContain("FROM company_event_companies");
     expect(sql).toContain("FROM permit_company_relationships");
     expect(sql).toContain("UNION ALL");
+    expect(sql).toContain("lag(t.current_total_value)");
+    expect(sql).toContain("tx.prior_current_total_value");
+    expect(sql).toContain("tx.current_total_value");
+    expect(sql).toContain("a.current_value");
+    expect(sql).toContain("a.potential_value");
+    expect(sql).toContain("a.total_obligated");
     expect(sql).not.toContain("INSERT");
     expect(sql).toContain("ec.review_status <> 'rejected'");
     expect(sql).toContain("r.review_status IN ('auto_verified','approved')");
@@ -55,5 +61,25 @@ describe("company tracking queries", () => {
     mockedQuery.mockResolvedValueOnce([] as never);
     await getAlertEvents();
     expect(String(mockedQuery.mock.calls[0][0])).toContain("WHERE a.user_id IS NULL");
+  });
+
+  it("deduplicates tracked procurement alerts and adds material award context", async () => {
+    const base = {
+      alert_type: "contract_modified", title: "raw title", summary: "raw summary", event_date: "2026-10-29",
+      market: "US_FEDERAL", source_type: "procurement_event", source_system: "usaspending",
+      source_url: "https://www.usaspending.gov/award/AWARD-1/", match_status: "auto_verified",
+      created_at: "2026-10-29T01:00:00Z", seen_at: null, slug: "example-company", canonical_name: "Example Company",
+      monitor_target_id: "target-1", company_id: "company-1", raw_source_id: "tx-1", award_id: "award-1",
+      adjustment_delta: "-600000", reference_award_value: "10000000", adjustment_currency: "USD",
+      modification_number: "P00003",
+    };
+    mockedQuery.mockResolvedValueOnce([
+      { ...base, id: "alert-1", procurement_event_type: "contract_modified" },
+      { ...base, id: "alert-2", procurement_event_type: "value_decreased" },
+    ] as never);
+    const rows = await getAlertEvents();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].title).toBe("Example Company award decreased by $600.0K");
+    expect(rows[0].summary).toBe("6% of award value");
   });
 });

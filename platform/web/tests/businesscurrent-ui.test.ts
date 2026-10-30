@@ -27,6 +27,7 @@ describe("BusinessCurrent public product", () => {
     expect(read("app/tracked-companies/page.tsx")).toContain("Sources with errors");
     expect(read("app/alerts/page.tsx")).toContain("Evidence changed");
     expect(read("app/data-coverage/page.tsx")).toContain("50 states + DC");
+    expect(read("app/methodology/page.tsx")).toContain("at least 5% of that award’s reference value or at least $1 million USD");
     expect(read("app/search/page.tsx")).toContain("Government Business");
     expect(read("app/companies/page.tsx")).toContain('mode: "companies"');
   });
@@ -41,5 +42,17 @@ describe("BusinessCurrent public product", () => {
     expect(css).toContain("@media(max-width:860px)");
     expect(css).toContain("@media(max-width:600px)");
     expect(css).toContain("overflow-x:auto");
+  });
+
+  it("keeps materiality in company presentation while contract detail stays complete", () => {
+    const company = read("app/company/[slug]/page.tsx");
+    const timeline = read("components/CompanyIntelligenceTimeline.tsx");
+    const contract = read("app/contract/[id]/page.tsx");
+    expect(company).toContain("Annual net U.S. obligations");
+    expect(timeline).toContain("Minor contract modification");
+    expect(timeline).toContain("material-adjustment");
+    for (const label of ["Exact obligation", "Current total", "Potential total", "Modification", "Action type", "Source"]) {
+      expect(contract).toContain(label);
+    }
   });
 });

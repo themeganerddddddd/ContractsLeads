@@ -6,6 +6,7 @@ from movements.tracking import (
     ALL_MONITOR_SOURCES,
     CompanyTrackingService,
     SOURCE_POLICIES,
+    collapse_procurement_alert_events,
     discovery_key,
     monitor_alert_key,
     procurement_alert_type,
@@ -262,6 +263,40 @@ def test_company_alert_types_persist_once_per_real_source_event():
         assert service._insert_alert(target, row, alert_type, source_type) == 1
         assert service._insert_alert(target, row, alert_type, source_type) == 0
     assert connection.alert_types[::2] == [case[1] for case in cases]
+
+
+def test_procurement_alerts_collapse_correlated_modification_events_and_apply_materiality():
+    base = {
+        "event_date": date(2026, 10, 29), "source_system": "usaspending",
+        "raw_source_id": "tx-1", "award_id": "award-1", "currency": "USD",
+        "reference_award_value": "10000000", "adjustment_delta": "-600000",
+        "source_url": "https://www.usaspending.gov/award/AWARD-1/",
+    }
+    rows = collapse_procurement_alert_events([
+        {**base, "id": "modified", "event_type": "contract_modified"},
+        {**base, "id": "decreased", "event_type": "value_decreased"},
+    ])
+    assert len(rows) == 1
+    assert rows[0]["event_type"] == "value_decreased"
+    assert rows[0]["title"] == "Award decreased by $600.0K"
+    assert rows[0]["materiality_percent"] == 6
+
+
+def test_procurement_alerts_keep_adjustment_but_suppress_immaterial_amount():
+    base = {
+        "event_date": date(2026, 10, 29), "source_system": "usaspending",
+        "raw_source_id": "tx-1", "award_id": "award-1", "currency": "USD",
+        "reference_award_value": "10000000", "adjustment_delta": "-10000",
+        "source_url": "https://www.usaspending.gov/award/AWARD-1/",
+    }
+    rows = collapse_procurement_alert_events([
+        {**base, "id": "modified", "event_type": "contract_modified"},
+        {**base, "id": "decreased", "event_type": "value_decreased"},
+    ])
+    assert len(rows) == 1
+    assert rows[0]["event_type"] == "contract_modified"
+    assert rows[0]["title"] == "Award adjusted"
+    assert "$" not in rows[0]["summary"]
 
 
 def test_pending_movement_and_unreviewed_permit_cannot_generate_alerts():

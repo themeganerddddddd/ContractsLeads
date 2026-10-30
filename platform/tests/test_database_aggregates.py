@@ -78,3 +78,35 @@ def test_transaction_aggregates_are_not_changed_by_page_size_and_keep_geographie
     finally:
         connection.rollback()
         connection.close()
+
+
+def test_annual_company_activity_keeps_signed_deobligations_in_net_reporting():
+    connection = database_connection()
+    suffix = uuid.uuid4().hex[:10]
+    try:
+        company = connection.execute(
+            """INSERT INTO companies (legal_name,canonical_name,slug,first_seen,last_seen)
+               VALUES (%s,%s,%s,current_date,current_date) RETURNING id""",
+            (f"Net Accounting Test {suffix}", f"Net Accounting Test {suffix}", f"net-accounting-test-{suffix}"),
+        ).fetchone()["id"]
+        award = connection.execute(
+            """INSERT INTO awards (generated_award_id,recipient_company_id,award_date)
+               VALUES (%s,%s,'2026-01-01') RETURNING id""",
+            (f"NET-{suffix}", company),
+        ).fetchone()["id"]
+        connection.cursor().executemany(
+            "INSERT INTO transactions (source_transaction_id,award_id,action_date,obligation) VALUES (%s,%s,%s,%s)",
+            [
+                (f"NET-T1-{suffix}", award, "2026-01-01", Decimal("10000000")),
+                (f"NET-T2-{suffix}", award, "2026-06-01", Decimal("-2000000")),
+            ],
+        )
+        annual = connection.execute(
+            """SELECT transaction_count,disclosed_obligations FROM annual_company_activity
+               WHERE company_id=%s AND calendar_year=2026""",
+            (company,),
+        ).fetchone()
+        assert annual == {"transaction_count": 2, "disclosed_obligations": Decimal("8000000")}
+    finally:
+        connection.rollback()
+        connection.close()
