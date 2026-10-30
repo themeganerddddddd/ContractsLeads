@@ -1556,6 +1556,8 @@ a:focus-visible {
 .evidence-grid p{margin:5px 0 0;color:#475568;font-size:13px}
 .government-layer{margin-top:34px;border-top:1px solid var(--line)}
 .government-layer-content{display:grid;gap:28px;margin-top:28px}
+.government-layer-content>*{min-width:0}
+.table-wrap{max-width:100%;min-width:0}
 
 .business-change-primary-filters{display:grid;grid-template-columns:90px minmax(160px,1fr) minmax(150px,1fr) minmax(170px,1fr) 135px auto;gap:9px;align-items:end}
 .business-change-advanced{margin-top:16px}
