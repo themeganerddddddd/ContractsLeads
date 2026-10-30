@@ -24993,6 +24993,27 @@
       "company_name": "IDENTIFICATION TECHNOLOGY PARTNERS INC",
       "company": null,
       "last_checked": null
+    },
+    "uei-qck1ldj3a6k5": {
+      "company_id": "uei-qck1ldj3a6k5",
+      "uei": "QCK1LDJ3A6K5",
+      "company_name": "CELLINK LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-yjugup5m8966": {
+      "company_id": "uei-yjugup5m8966",
+      "uei": "YJUGUP5M8966",
+      "company_name": "ENVIGO BIOPRODUCTS INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-v4gpjequ6nm7": {
+      "company_id": "uei-v4gpjequ6nm7",
+      "uei": "V4GPJEQU6NM7",
+      "company_name": "SHADY GROVE REPRODUCTIVE SCIENCE CENTER, P.C.",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -28011,7 +28032,10 @@
     "RS3WLFN3TDH6": "uei-rs3wlfn3tdh6",
     "RGGGDCW4LL65": "uei-rgggdcw4ll65",
     "RCMAVBED3UR5": "uei-rcmavbed3ur5",
-    "SKFCSM2YXC91": "uei-skfcsm2yxc91"
+    "SKFCSM2YXC91": "uei-skfcsm2yxc91",
+    "QCK1LDJ3A6K5": "uei-qck1ldj3a6k5",
+    "YJUGUP5M8966": "uei-yjugup5m8966",
+    "V4GPJEQU6NM7": "uei-v4gpjequ6nm7"
   },
-  "updated_at": "2026-10-29T17:27:09Z"
+  "updated_at": "2026-10-30T17:03:23Z"
 }
