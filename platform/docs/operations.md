@@ -21,7 +21,7 @@ Configure the provider's current project storage ceiling and inspect the live
 database before every historical operation:
 
 ```powershell
-$env:DATABASE_CAPACITY_BYTES="1073741824" # verify against the current provider plan first
+$env:DATABASE_CAPACITY_BYTES="1000000000" # verified 1 GB project allowance; re-check provider terms before changing
 python -m operations storage-report
 ```
 
@@ -52,6 +52,43 @@ python -m ingestion backfill --start 2021-10-01 --end 2026-10-20 --batch-size 10
 Repeat for subsequent fiscal years through the current date. The current checkpoint is stored in `backfill_jobs` only in the same database commit as the corresponding data batch. After a process or network failure, run the identical command; the partial archive download and CSV checkpoint are resumed. A job marked `success` is a no-op on rerun. Do not change the date window during a resume.
 
 Capacity-plan `BACKFILL_CACHE_DIR` for at least one compressed full-year archive at a time plus database and WAL growth; official archives can be multiple gigabytes. The production database also retains append-only raw payload versions, which are frequently the dominant storage category. Prefer compressed raw-source archives in object storage with hashes and database pointers once that tier is provisioned; do not silently delete database history. The importer upserts observed corrections and retains append-only source versions. It deliberately does not infer that a transaction was deleted solely because it is absent from a later full archive, so investigate upstream deletions/tombstones separately before treating the local database as an exact deletion mirror.
+
+## Raw archive retention and feature exports
+
+Migration `0016_businesscurrent_retention.sql` adds manifests, row pointers,
+retention policies, national coverage status, monthly permanent features, and
+feature-export manifests. It does not move, replace, prune, or delete production
+payloads when applied.
+
+Read the archive plan before every write:
+
+```powershell
+python -m operations retention-plan --as-of 2026-10-30
+```
+
+A bounded archive run requires an explicit acknowledgement. The worker writes
+deterministic gzip JSONL, independently reads the object back, verifies SHA-256,
+and only then commits the manifest. It never prunes PostgreSQL:
+
+```powershell
+python -m operations retention-archive --source usaspending_transaction_versions --limit 1000 --execute
+```
+
+Use `--local-root` only for development/prototype archives. Production uses an
+S3-compatible client configured through `ARCHIVE_S3_BUCKET`, optional endpoint,
+region, and prefix values; credentials remain in the provider SDK environment
+and never enter a manifest or log.
+
+Annual Parquet feature exports are separate from raw retention. Planning is
+read-only; exporting requires both `--execute` and the optional PyArrow package:
+
+```powershell
+python -m operations feature-export-plan --dataset company_monthly_features --year 2026
+python -m operations feature-export --dataset company_monthly_features --year 2026 --execute
+```
+
+The exporter keeps every PostgreSQL feature row, verifies the uploaded Parquet
+checksum, and records an additive manifest. There is no warehouse dependency.
 
 For a bounded production-like validation using an official-format local file:
 

@@ -4,14 +4,16 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div>
-        <strong>Federal Ledger</strong>
-        <p>Location-first business change intelligence backed by retained official-source evidence. Government procurement remains a distinct context layer.</p>
+        <div className="footer-brand"><span className="brand-mark" aria-hidden="true">BC</span><strong>BusinessCurrent <small>Beta</small></strong></div>
+        <p>Business change intelligence, nationwide. Every signal is tied to evidence. Missing coverage stays visible.</p>
       </div>
       <div className="footer-links">
-        <Link href="/business-change">Business Radar</Link>
+        <Link href="/business-change">Radar</Link>
         <Link href="/companies">Companies</Link>
-        <Link href="/search">Procurement</Link>
-        <Link href="/data-coverage">Data Coverage</Link>
+        <Link href="/locations">Markets</Link>
+        <Link href="/search">Government Business</Link>
+        <Link href="/data-coverage">Coverage</Link>
+        <Link href="/methodology">Methodology</Link>
         <Link href="/pricing">Plans</Link>
       </div>
     </footer>

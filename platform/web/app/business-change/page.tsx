@@ -36,6 +36,16 @@ function tabHref(raw: BusinessChangeParams, tab: BusinessChangeTab): string {
   return `/business-change?${params.toString()}`;
 }
 
+function viewHref(raw: BusinessChangeParams, view: "cards" | "table"): string {
+  const params = new URLSearchParams();
+  Object.entries(raw).forEach(([key, value]) => {
+    const first = Array.isArray(value) ? value[0] : value;
+    if (first && key !== "page" && key !== "view") params.set(key, first);
+  });
+  params.set("view", view);
+  return `/business-change?${params.toString()}`;
+}
+
 function placeLabel(row: BusinessChangeRow): string {
   return reported([row.city, row.county, row.state_code, row.postal_code].filter(Boolean).join(", "));
 }
@@ -93,11 +103,13 @@ function MapPanel({ rows }: { rows: BusinessChangeRow[] }) {
 export default async function BusinessChangePage({ searchParams }: { searchParams: Promise<BusinessChangeParams> }) {
   const raw = await searchParams;
   const input = parseBusinessChangeInput(raw);
+  const requestedView = Array.isArray(raw.view) ? raw.view[0] : raw.view;
+  const view = requestedView === "table" ? "table" : "cards";
   try {
     const result = await searchBusinessChange(input);
     return <>
       <section className="business-change-hero">
-        <div><p className="eyebrow">Federal Ledger · location intelligence</p><h1>Business Change Radar</h1><p>See businesses opening, closing, growing, shrinking, forming, and moving in your market—then inspect the official evidence behind each record.</p></div>
+        <div><p className="eyebrow">BusinessCurrent Radar</p><h1>Business Change Radar</h1><p>See businesses opening, growing, moving, shrinking, closing, and forming in your market—then inspect the official evidence behind each record.</p></div>
         <Link className="button secondary" href="/data-coverage">View source coverage</Link>
       </section>
 
@@ -118,14 +130,15 @@ export default async function BusinessChangePage({ searchParams }: { searchParam
         {BUSINESS_CHANGE_TABS.map((tab) => <Link className={input.tab === tab ? "active" : ""} href={tabHref(raw, tab)} key={tab} aria-current={input.tab === tab ? "page" : undefined}><span>{TAB_LABELS[tab]}</span><strong>{result.counts[tab].toLocaleString()}</strong></Link>)}
       </nav>
 
-      <div className="results-toolbar"><div><h2>{result.total.toLocaleString()} supported {TAB_LABELS[input.tab].toLowerCase()} records</h2><p>Counts reflect the active geography, date, industry, confidence, and source filters—not all business activity in the market.</p></div></div>
+      <div className="results-toolbar"><div><h2>{result.total.toLocaleString()} supported {TAB_LABELS[input.tab].toLowerCase()} records</h2><p>Counts reflect the active geography, date, industry, confidence, and source filters—not all business activity in the market.</p></div><div className="view-toggle" aria-label="Result view"><Link className={view === "cards" ? "active" : ""} href={viewHref(raw, "cards")} aria-current={view === "cards" ? "page" : undefined}>Cards</Link><Link className={view === "table" ? "active" : ""} href={viewHref(raw, "table")} aria-current={view === "table" ? "page" : undefined}>Table</Link></div></div>
       <div className="business-change-layout">
         <div className="business-change-results">
-          {result.rows.length ? result.rows.map((row) => <article className="change-card" id={row.record_id} key={row.record_id}>
+          {view === "table" && result.rows.length ? <div className="table-wrap radar-table-wrap"><table className="data-table radar-table"><thead><tr><th scope="col">Company</th><th scope="col">Change</th><th scope="col">Location</th><th scope="col">Industry</th><th scope="col">Evidence</th><th scope="col">Confidence</th><th scope="col">Latest signal</th></tr></thead><tbody>{result.rows.map((row) => <tr key={row.record_id}><td>{row.company_slug ? <Link className="primary-cell" href={`/company/${row.company_slug}`}>{row.business_name}</Link> : row.business_name}</td><td><span className={`change-band band-${row.band}`}>{TAB_LABELS[row.category]}</span></td><td>{placeLabel(row)}<small>{row.location_precision.replaceAll("_", " ")}</small></td><td>{reported(row.industry_label)}</td><td>{evidenceLinks(row).length} source{evidenceLinks(row).length === 1 ? "" : "s"}<small>{reported(row.source_family?.replaceAll("_", " "))}</small></td><td>{bandLabel(row)}{row.score !== null ? <small>{Number(row.score).toFixed(0)} / 100 evidence</small> : null}</td><td>{dateLabel(row.record_date)}<small>{row.source_url ? <a href={row.source_url} target="_blank" rel="noreferrer">View evidence ↗</a> : "Source link unavailable"}</small></td></tr>)}</tbody></table></div> : result.rows.length ? result.rows.map((row) => <article className="change-card" id={row.record_id} key={row.record_id}>
             <div className="change-card-heading"><div><p className="eyebrow">{TAB_LABELS[row.category]} · {row.layer}</p><h2>{row.company_slug ? <Link href={`/company/${row.company_slug}`}>{row.business_name}</Link> : row.establishment_id ? <Link href={`/establishment/${row.establishment_id}`}>{row.business_name}</Link> : row.business_name}</h2></div><span className={`change-band band-${row.band}`}>{bandLabel(row)}</span></div>
             <dl className="change-answers"><div><dt>What changed?</dt><dd>{row.what_changed.replaceAll("_", " ")}</dd></div><div><dt>Where?</dt><dd>{placeLabel(row)} <small>· {row.location_precision.replaceAll("_", " ")}</small></dd></div><div><dt>When?</dt><dd>{dateLabel(row.record_date)}</dd></div><div><dt>Confidence</dt><dd>{bandLabel(row)}{row.score !== null ? <small> · {Number(row.score).toFixed(0)} / 100 evidence score, not probability</small> : null}</dd></div></dl>
             {row.category === "moving" ? <div className="move-route"><span>{reported(Object.values(row.origin || {}).filter(Boolean).join(", "))}</span><strong aria-label="to">→</strong><span>{reported(Object.values(row.destination || {}).filter(Boolean).join(", "))}</span></div> : null}
             <div className="evidence-row"><strong>Why we think this</strong>{evidenceLinks(row).length ? <ul>{evidenceLinks(row).map((source, index) => <li key={`${source.source_url}-${index}`}><a href={source.source_url} target="_blank" rel="noreferrer">{source.label || source.source_system || "Official evidence"} ↗</a></li>)}</ul> : <span>No public evidence link was retained for this descriptive indication.</span>}</div>
+            <div className="change-card-actions">{row.company_slug ? <Link href={`/company/${row.company_slug}`}>View company →</Link> : row.establishment_id ? <Link href={`/establishment/${row.establishment_id}`}>View location →</Link> : <span />}{row.source_url ? <a href={row.source_url} target="_blank" rel="noreferrer">View evidence ↗</a> : null}</div>
             <small>First observed {dateLabel(row.first_observed_at)} · source family {reported(row.source_family?.replaceAll("_", " "))}</small>
           </article>) : <div className="empty-panel">No supported {TAB_LABELS[input.tab].toLowerCase()} detected in this period and filter set. This does not mean no businesses changed; it reflects current source coverage.</div>}
         </div>
@@ -134,6 +147,6 @@ export default async function BusinessChangePage({ searchParams }: { searchParam
       {result.total > result.pageSize ? <nav className="pagination" aria-label="Result pages">{input.page > 1 ? <Link href={`${tabHref(raw, input.tab)}&page=${input.page - 1}`}>← Previous</Link> : <span /> }<span>Page {input.page}</span>{input.page * input.pageSize < result.total ? <Link href={`${tabHref(raw, input.tab)}&page=${input.page + 1}`}>Next →</Link> : <span />}</nav> : null}
     </>;
   } catch (cause) {
-    return <><section className="page-heading"><p className="eyebrow">Federal Ledger · location intelligence</p><h1>Business Change Radar</h1><p>The additive location-intelligence migration must be applied before this route can query records.</p></section><DatabaseNotice message={cause instanceof Error ? cause.message : String(cause)} /></>;
+    return <><section className="page-heading"><p className="eyebrow">BusinessCurrent Radar</p><h1>Business Change Radar</h1><p>Business-change data is temporarily unavailable. Coverage varies by source and geography.</p></section><DatabaseNotice message={cause instanceof Error ? cause.message : String(cause)} /></>;
   }
 }

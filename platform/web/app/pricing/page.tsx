@@ -1,6 +1,6 @@
 import { BillingButton } from "@/components/BillingButton";
 
-export const metadata = { title: "Pricing", description: "Plans for federal contract intelligence, geographic searches, alerts, and exports." };
+export const metadata = { title: "Plans", description: "BusinessCurrent plans for market intelligence, alerts, history, and exports." };
 
 const plans = [
   {name:"Free",price:"$0",note:"forever",features:["30 days history","20 results per search","Company and contract profiles","Basic company-location search","Basic industry browsing"]},
@@ -11,5 +11,5 @@ const plans = [
 ];
 
 export default function PricingPage() {
-  return <><section className="page-heading"><p className="eyebrow">Simple market-data pricing</p><h1>Start useful. Upgrade for depth.</h1><p>Public profiles and a meaningful search preview remain free. Paid plans unlock more history, geography, alerts, and exports.</p></section><section className="pricing-grid">{plans.map((plan)=><article className={`price-card ${plan.featured?"featured":""}`} key={plan.name}>{plan.featured?<span className="plan-badge">Best for analysts</span>:null}<h2>{plan.name}</h2><div className="price">{plan.price} <small>{plan.note}</small></div><ul>{plan.features.map((feature)=><li key={feature}>{feature}</li>)}</ul>{plan.name==="Free"?<a className="button secondary" href="/search">Search free</a>:plan.name==="Organization"?<a className="button secondary" href="mailto:sales@example.test">Contact</a>:<BillingButton plan={plan.name.toLowerCase()}>{`Choose ${plan.name}`}</BillingButton>}</article>)}</section><p className="notice">Local development uses <code>DEV_PLAN</code> and optional mock checkout. No Stripe credentials are required to evaluate plan behavior.</p></>;
+  return <><section className="page-heading"><p className="eyebrow">BusinessCurrent plans</p><h1>Start useful. Upgrade for depth.</h1><p>Public profiles and a meaningful search preview remain free. Paid plans unlock more history, geography, alerts, and exports.</p></section><section className="pricing-grid">{plans.map((plan)=><article className={`price-card ${plan.featured?"featured":""}`} key={plan.name}>{plan.featured?<span className="plan-badge">Best for analysts</span>:null}<h2>{plan.name}</h2><div className="price">{plan.price} <small>{plan.note}</small></div><ul>{plan.features.map((feature)=><li key={feature}>{feature}</li>)}</ul>{plan.name==="Free"?<a className="button secondary" href="/companies">Search free</a>:plan.name==="Organization"?<a className="button secondary" href="mailto:sales@example.test">Contact</a>:<BillingButton plan={plan.name.toLowerCase()}>{`Choose ${plan.name}`}</BillingButton>}</article>)}</section><p className="notice">BusinessCurrent is in public beta. Plan capabilities and limits may change before general availability.</p></>;
 }

@@ -53,3 +53,9 @@ def test_storage_report_includes_totals_counts_and_observed_rates():
     assert report["counts"]["procurement_notices"] == 7
     assert report["observed_relation_bytes_per_100k"]["awards"] == 500_000
     assert report["observed_relation_bytes_per_100k"]["transactions"] == 0
+    assert report["normalized_hot_bytes"] == 10
+    assert report["raw_payload_bytes"] == 0
+    assert report["version_history_bytes"] == 0
+    assert report["derived_history_bytes"] == 0
+    assert report["permanent_bytes"] == 0
+    assert report["archive_eligible_bytes"] == 0

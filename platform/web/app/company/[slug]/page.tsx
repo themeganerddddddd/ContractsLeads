@@ -70,7 +70,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
 
     <nav className="tabs company-profile-tabs" aria-label="Company profile sections">
       <a href="#overview">Overview</a>
-      <a href="#locations-change">Locations &amp; Change</a>
+      <a href="#locations-change">Locations</a>
       <a href="#intelligence-timeline">Timeline</a>
       <a href="#government-business">Government Business</a>
       <a href="#sources">Sources</a>
@@ -94,16 +94,16 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
     </section>
 
     <section className="section profile-section-group" id="locations-change">
-      <div className="section-header"><div><p className="eyebrow">Company ≠ establishment</p><h2>Locations &amp; Change</h2><p>Operating locations, their history, confirmed outcomes, early indications, and predictions remain separate from recipient and performance addresses.</p></div><Link href={`/business-change?state=${encodeURIComponent(company.recipient_state || "")}`}>Browse market changes →</Link></div>
+      <div className="section-header"><div><p className="eyebrow">Company and locations stay distinct</p><h2>Locations</h2><p>Operating locations, address history, confirmed outcomes, and early indications remain separate from recipient and contract-performance addresses.</p></div><Link href={`/business-change?state=${encodeURIComponent(company.recipient_state || "")}`}>Browse market changes →</Link></div>
       <div className="profile-subsection" id="locations"><h3>Operating locations and recent change</h3><EstablishmentIntelligencePanel data={data.establishmentIntelligence} /></div>
-      <div className="profile-subsection" id="change-intelligence"><div className="section-header"><div><p className="eyebrow">Observed → indicated → validated</p><h3>Change intelligence</h3><p>A score out of 100 measures evidence strength—not event probability.</p></div></div><ChangeIntelligencePanel data={data.changeIntelligence} /></div>
-      <div className="profile-subsection" id="movements"><div className="section-header"><div><p className="eyebrow">Reviewed evidence</p><h3>Source-backed movements</h3><p>Official workforce and economic-development records matched to this legal entity. Name-only matches remain visibly pending review.</p></div><Link href={`/movements?q=${encodeURIComponent(company.canonical_name)}`}>Search all movement records →</Link></div><MovementTable rows={data.movements} /></div>
-      <div className="profile-subsection" id="early-indicators"><div className="section-header"><div><p className="eyebrow">Auditable signals</p><h3>Early indications</h3><p>Descriptive scores require multiple independent evidence types and are never presented as calibrated probabilities.</p></div><Link href="/indicators">Browse covered permits →</Link></div><EarlyIndicatorsPanel data={data.earlyIndicators} /></div>
+      <div className="profile-subsection" id="change-intelligence"><div className="section-header"><div><p className="eyebrow">Evidence summary</p><h3>Business change</h3><p>A score out of 100 measures evidence strength—not event probability. Unsupported states remain visibly unavailable.</p></div></div><ChangeIntelligencePanel data={data.changeIntelligence} /></div>
+      <div className="profile-subsection" id="movements"><div className="section-header"><div><p className="eyebrow">Reviewed evidence</p><h3>Moves and market changes</h3><p>Official workforce and economic-development records matched to this legal entity. Name-only matches remain visibly pending review.</p></div><Link href={`/movements?q=${encodeURIComponent(company.canonical_name)}`}>View supporting records →</Link></div><MovementTable rows={data.movements} /></div>
+      <div className="profile-subsection" id="early-indicators"><div className="section-header"><div><p className="eyebrow">Early evidence</p><h3>Early indications</h3><p>Descriptive scores require multiple independent evidence types and are never presented as calibrated probabilities.</p></div><Link href="/data-coverage">Review evidence coverage →</Link></div><EarlyIndicatorsPanel data={data.earlyIndicators} /></div>
       <div className="profile-subsection" id="intelligence"><div className="section-header"><div><p className="eyebrow">Gated probabilities</p><h3>Predictions and momentum</h3><p>Probabilities are withheld when the model or entity history does not pass the documented gates.</p></div></div><div className="intelligence-layout"><PredictionPanel predictions={data.predictions} /><MomentumPanel momentum={data.momentum} /></div></div>
     </section>
 
     <section className="section" id="intelligence-timeline">
-      <div className="section-header"><div><p className="eyebrow">One auditable chronology</p><h2>Company Intelligence Timeline</h2><p>Procurement, reviewed movement, facility, and SEC evidence queried from canonical source tables. Pending matches remain explicitly pending.</p></div></div>
+      <div className="section-header"><div><p className="eyebrow">One source-backed chronology</p><h2>Timeline</h2><p>Government business, workforce, facility, and corporate evidence appear chronologically. Pending matches remain explicitly pending.</p></div></div>
       <CompanyIntelligenceTimeline rows={data.intelligenceTimeline} />
     </section>
 

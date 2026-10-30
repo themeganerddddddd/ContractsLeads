@@ -191,7 +191,9 @@ export async function getTrackingOverview() {
      count(*) FILTER (WHERE tracking_status='active')::int AS active_targets,
      count(*) FILTER (WHERE tracking_status='paused')::int AS paused_targets,
      count(*) FILTER (WHERE tracking_status='review_required')::int AS review_required,
-     count(*) FILTER (WHERE priority='high' AND tracking_status='active')::int AS high_priority
+     count(*) FILTER (WHERE priority='high' AND tracking_status='active')::int AS high_priority,
+     (SELECT count(*)::int FROM alert_events WHERE user_id IS NULL AND seen_at IS NULL) AS new_alerts,
+     (SELECT count(*)::int FROM company_monitor_source_state WHERE status='error') AS sources_with_errors
      FROM company_monitor_targets`,
   );
   return rows[0];
@@ -293,8 +295,25 @@ export async function getDiscoveredCompanies() {
   );
 }
 
+export type AlertEventRow = {
+  id: string;
+  alert_type: string;
+  title: string;
+  summary: string | null;
+  event_date: string | null;
+  market: string | null;
+  source_type: string | null;
+  source_system: string;
+  source_url: string;
+  match_status: string | null;
+  created_at: string;
+  seen_at: string | null;
+  slug: string | null;
+  canonical_name: string | null;
+};
+
 export async function getAlertEvents() {
-  return query<any>(
+  return query<AlertEventRow>(
     `SELECT a.id::text,a.alert_type,a.title,a.summary,a.event_date::text,a.market,a.source_type,a.source_system,
      a.source_url,a.match_status,a.created_at::text,a.seen_at::text,c.slug,c.canonical_name
      FROM alert_events a LEFT JOIN companies c ON c.id=a.company_id

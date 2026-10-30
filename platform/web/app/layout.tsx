@@ -7,11 +7,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
   title: {
-    default: "Federal Ledger — Business Change Intelligence",
-    template: "%s | Federal Ledger",
+    default: "BusinessCurrent — Business change intelligence, nationwide",
+    template: "%s | BusinessCurrent",
   },
   description:
-    "Find source-backed signals of businesses opening, growing, moving, closing, shrinking, and forming in a market.",
+    "Track businesses opening, growing, moving, shrinking, and closing across the United States using source-backed public data.",
   robots: { index: true, follow: true },
 };
 

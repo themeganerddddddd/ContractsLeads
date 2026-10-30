@@ -41,12 +41,12 @@ export default async function SearchPage({
     return (
       <>
         <section className="page-heading">
-          <p className="eyebrow">Global procurement database</p>
-          <h1>Search government contracts</h1>
+          <p className="eyebrow">{input.mode === "companies" ? "BusinessCurrent company directory" : "Government Business"}</p>
+          <h1>{input.mode === "companies" ? "Search companies" : "Search government business"}</h1>
           <p>
-            Search U.S. federal awards, UK Find a Tender processes, and EU TED
-            notices while keeping native identifiers, currencies, countries,
-            and official source links intact.
+            {input.mode === "companies"
+              ? "Find companies by name, industry, and observed recipient location, then inspect locations, changes, timelines, and source evidence."
+              : "Search U.S. federal awards, UK Find a Tender processes, and EU TED notices while keeping native identifiers, currencies, countries, and official source links intact."}
           </p>
         </section>
         <SearchForm input={input} options={options} />
@@ -179,8 +179,8 @@ export default async function SearchPage({
     return (
       <>
         <section className="page-heading">
-          <p className="eyebrow">Global procurement database</p>
-          <h1>Search government contracts</h1>
+          <p className="eyebrow">Government Business</p>
+          <h1>{input.mode === "companies" ? "Search companies" : "Search government business"}</h1>
         </section>
         <DatabaseNotice message={message} />
       </>
