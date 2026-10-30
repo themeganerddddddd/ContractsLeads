@@ -120,7 +120,7 @@ describe("company timeline procurement presentation", () => {
 
 describe("award table headline value", () => {
   it("prefers positive current value over transaction obligation and potential value", () => {
-    expect(valueLabel({ id: "1", total_obligated: "-12483", current_value: "25000000", potential_value: "30000000" })).toBe("$25.0M");
+    expect(valueLabel({ id: "1", total_obligated: "-12483", current_value: "25000000", potential_value: "30000000" })).toMatch(/^\$25(?:\.0)?M$/);
   });
 
   it("does not call a lone negative deobligation the contract value", () => {

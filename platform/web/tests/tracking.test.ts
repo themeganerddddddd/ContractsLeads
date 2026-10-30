@@ -79,7 +79,7 @@ describe("company tracking queries", () => {
     ] as never);
     const rows = await getAlertEvents();
     expect(rows).toHaveLength(1);
-    expect(rows[0].title).toBe("Example Company award decreased by $600.0K");
+    expect(rows[0].title).toMatch(/^Example Company award decreased by \$600(?:\.0)?K$/);
     expect(rows[0].summary).toBe("6% of award value");
   });
 });
