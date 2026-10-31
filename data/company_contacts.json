@@ -25014,6 +25014,13 @@
       "company_name": "SHADY GROVE REPRODUCTIVE SCIENCE CENTER, P.C.",
       "company": null,
       "last_checked": null
+    },
+    "uei-sg53jkazczv7": {
+      "company_id": "uei-sg53jkazczv7",
+      "uei": "SG53JKAZCZV7",
+      "company_name": "PSALM PRECISION SOLUTIONS LLC",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -28035,7 +28042,8 @@
     "SKFCSM2YXC91": "uei-skfcsm2yxc91",
     "QCK1LDJ3A6K5": "uei-qck1ldj3a6k5",
     "YJUGUP5M8966": "uei-yjugup5m8966",
-    "V4GPJEQU6NM7": "uei-v4gpjequ6nm7"
+    "V4GPJEQU6NM7": "uei-v4gpjequ6nm7",
+    "SG53JKAZCZV7": "uei-sg53jkazczv7"
   },
-  "updated_at": "2026-10-30T17:03:23Z"
+  "updated_at": "2026-10-31T16:11:35Z"
 }
