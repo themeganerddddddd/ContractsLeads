@@ -25,8 +25,8 @@ export default async function SearchPage({
 }) {
   const raw = await searchParams;
   const input = parseSearchInput(raw);
-  const plan = await resolvePlan();
   try {
+    const plan = await resolvePlan();
     const [options, result] = await Promise.all([
       getFilterOptions(),
       input.mode === "companies"

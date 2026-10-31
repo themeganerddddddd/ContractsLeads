@@ -9,13 +9,9 @@ const primaryLinks = [
 ] as const;
 
 const moreLinks = [
-  ["Government Business", "/search"],
-  ["Industries", "/industries"],
-  ["Agencies", "/agencies"],
-  ["Saved searches", "/saved-searches"],
-  ["Data Coverage", "/data-coverage"],
-  ["Methodology", "/methodology"],
-  ["Plans", "/pricing"],
+  { label: "Intelligence", links: [["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"]] },
+  { label: "Workspace", links: [["Saved searches", "/saved-searches"], ["Plans", "/pricing"]] },
+  { label: "Product", links: [["Data Coverage", "/data-coverage"], ["Methodology", "/methodology"]] },
 ] as const;
 
 export function Header() {
@@ -30,9 +26,12 @@ export function Header() {
           {primaryLinks.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}
           <details className="more-menu">
             <summary>More</summary>
-            <div>{moreLinks.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}</div>
+            <div className="more-menu-panel">{moreLinks.map((group) => <section key={group.label}>
+              <span>{group.label}</span>
+              {group.links.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}
+            </section>)}</div>
           </details>
-          <Link className="nav-search" href="/companies" aria-label="Search companies, places, and industries">Search</Link>
+          <Link className="nav-search" href="/companies" aria-label="Search companies, places, and industries"><span aria-hidden="true">⌕</span> Search</Link>
         </nav>
       </div>
     </header>

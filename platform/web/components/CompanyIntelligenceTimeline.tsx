@@ -24,25 +24,28 @@ export function CompanyIntelligenceTimeline({ rows }: { rows: IntelligenceTimeli
           ? COMMERCIAL_PROCUREMENT_EVENT_LABELS[row.event_type] || "Government business updated"
           : row.event_type.replaceAll("_", " ");
         return <li key={row.id}>
-          <span className={`event-dot event-category-${row.category.toLowerCase()}`} aria-hidden="true" />
-          <div className="event-heading">
-            <strong><span className="timeline-category">{row.category === "PROCUREMENT" ? "GOVERNMENT BUSINESS" : row.category}</span> {label}</strong>
+          <div className="timeline-date">
             <time dateTime={row.event_at}>{dateLabel(row.event_at)}</time>
+            <span>{row.category === "PROCUREMENT" ? "Government" : row.category.toLowerCase()}</span>
           </div>
-          <p>{reported(row.title || row.summary)}</p>
-          <div className="event-meta">
-            <span>{row.market} · {row.publisher || row.source_system}</span>
-            {isMaterialAdjustment && displayAmount
-              ? <strong className={`material-adjustment material-adjustment-${row.adjustment_direction}`}>
-                  {row.event_type === "option_exercised" ? `Award value ${direction} by ${displayAmount}` : `${direction[0].toUpperCase()}${direction.slice(1)} by ${displayAmount}`}
-                </strong>
-              : displayAmount ? <span>{displayAmount}</span> : null}
-            {isMaterialAdjustment && percentage ? <span>{percentage}</span> : null}
-            {row.modification_number ? <span>Modification {row.modification_number}</span> : null}
-            {row.materiality_status === "immaterial" && row.event_type === "contract_modified" ? <span>Minor contract modification</span> : null}
-            <span>{row.verification_status.replaceAll("_", " ")} · match {row.match_status.replaceAll("_", " ")}</span>
-            <span>collected {dateLabel(row.collected_at)}</span>
-            <a href={row.source_url} target="_blank" rel="noreferrer">Official source ↗</a>
+          <span className={`event-dot event-category-${row.category.toLowerCase()}`} aria-hidden="true" />
+          <div className="timeline-body">
+            <div className="event-heading"><strong>{label}</strong></div>
+            <p>{reported(row.title || row.summary)}</p>
+            <div className="event-meta">
+              <span>{row.market} · {row.publisher || row.source_system}</span>
+              {isMaterialAdjustment && displayAmount
+                ? <strong className={`material-adjustment material-adjustment-${row.adjustment_direction}`}>
+                    {row.event_type === "option_exercised" ? `Award value ${direction} by ${displayAmount}` : `${direction[0].toUpperCase()}${direction.slice(1)} by ${displayAmount}`}
+                  </strong>
+                : displayAmount ? <span>{displayAmount}</span> : null}
+              {isMaterialAdjustment && percentage ? <span>{percentage}</span> : null}
+              {row.modification_number ? <span>Modification {row.modification_number}</span> : null}
+              {row.materiality_status === "immaterial" && row.event_type === "contract_modified" ? <span className="minor-adjustment">Minor contract modification</span> : null}
+              <span>{row.verification_status.replaceAll("_", " ")} · match {row.match_status.replaceAll("_", " ")}</span>
+              <span>collected {dateLabel(row.collected_at)}</span>
+              <a href={row.source_url} target="_blank" rel="noreferrer">Official source ↗</a>
+            </div>
           </div>
         </li>
       })}

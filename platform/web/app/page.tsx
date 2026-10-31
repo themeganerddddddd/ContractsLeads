@@ -72,7 +72,7 @@ export default async function HomePage() {
 
     <section className="section product-preview">
       <div className="section-header"><div><p className="eyebrow">Business Change Radar</p><h2>One view of the business lifecycle</h2><p>Move from an early source event to the company, location, supporting evidence, and confirmed outcome.</p></div><Link href="/business-change">Open Radar →</Link></div>
-      <div className="change-category-grid">{changeCategories.map(([label, tab, description], index) => <Link href={`/business-change?tab=${tab}&period=90`} key={tab}><i aria-hidden="true">{String(index + 1).padStart(2, "0")}</i><span>{label}</span><p>{description}</p><strong>Explore signals →</strong></Link>)}</div>
+      <div className="change-category-grid">{changeCategories.map(([label, tab, description]) => <Link href={`/business-change?tab=${tab}&period=90`} key={tab}><span>{label}</span><p>{description}</p><strong>Explore signals →</strong></Link>)}</div>
     </section>
 
     <section className="section evidence-section">
