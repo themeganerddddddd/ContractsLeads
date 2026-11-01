@@ -12,7 +12,7 @@ export function TrackedCompanyCard({ row }: { row: any }) {
         <div>
           <p className="eyebrow">{row.priority} priority · {row.tracking_status.replaceAll("_", " ")}</p>
           <h2><Link href={`/company/${row.slug}`}>{row.canonical_name}</Link></h2>
-          <p>{reported(row.industry_name)} · {reported(location)}</p>
+          <p>{reported(row.industry_name)} · observed recipient location {reported(location)}</p>
         </div>
         <div className="signal-count"><strong>{changes}</strong><span>signals in 30 days</span></div>
       </header>

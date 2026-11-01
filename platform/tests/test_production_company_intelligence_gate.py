@@ -43,7 +43,7 @@ def test_manual_gate_uses_secret_without_printing_it_and_runs_bounded_sources_in
     assert "materialize-discoveries --limit 1000" in workflow
     assert "cat \"$RUNNER_TEMP/company-intelligence-failures.txt\"" in workflow
     assert "echo \"$PLATFORM_DATABASE_DIRECT_URL\"" not in workflow
-    assert 'DATABASE_CAPACITY_BYTES: "536870912"' in workflow
+    assert 'DATABASE_CAPACITY_BYTES: "1000000000"' in workflow
 
 
 def test_materialization_has_a_non_alerting_cli_entry_point():

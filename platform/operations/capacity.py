@@ -53,12 +53,59 @@ class CapacityGuard:
             """SELECT c.relname AS name,
                       pg_relation_size(c.oid)::bigint AS data_bytes,
                       pg_indexes_size(c.oid)::bigint AS index_bytes,
-                      pg_total_relation_size(c.oid)::bigint AS total_bytes
+                      pg_total_relation_size(c.oid)::bigint AS total_bytes,
+                      COALESCE(s.n_live_tup,0)::bigint AS live_rows,
+                      COALESCE(s.n_dead_tup,0)::bigint AS dead_rows,
+                      s.last_vacuum,s.last_autovacuum,s.last_analyze,s.last_autoanalyze
                FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+               LEFT JOIN pg_stat_user_tables s ON s.relid=c.oid
                WHERE n.nspname='public' AND c.relkind IN ('r','p')
                ORDER BY pg_total_relation_size(c.oid) DESC"""
         ).fetchall()
         return [dict(row) for row in rows]
+
+    def _indexes(self) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            """SELECT indexrelname AS name,relname AS table_name,
+                      pg_relation_size(indexrelid)::bigint AS index_bytes,
+                      COALESCE(idx_scan,0)::bigint AS scans
+               FROM pg_stat_user_indexes
+               ORDER BY pg_relation_size(indexrelid) DESC
+               LIMIT 30"""
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def _storage_category(name: str) -> str:
+        version_tables = {
+            "raw_source_transaction_versions", "company_geography_observation_versions",
+            "award_identity_observation_versions", "development_permit_versions",
+            "business_license_versions", "outcome_definition_versions",
+        }
+        raw_tables = {
+            "raw_source_transactions", "procurement_process_releases", "procurement_notices",
+            "establishment_event_evidence", "company_event_sources",
+        }
+        derived_tables = {
+            "movement_assessments", "business_change_assessments", "movement_indicators",
+            "predictions", "company_change_predictions", "company_momentum",
+        }
+        permanent_tables = {
+            "companies", "company_identifiers", "business_establishments", "establishment_address_history",
+            "company_outcomes", "business_change_outcomes", "establishment_events", "business_registrations",
+            "raw_source_archives", "raw_source_archive_items", "source_retention_policies",
+            "company_monthly_features", "establishment_monthly_features",
+            "geography_industry_monthly_features", "national_source_coverage", "data_sources",
+        }
+        if name in version_tables or name.endswith("_versions"):
+            return "version_history"
+        if name in raw_tables:
+            return "raw_payload"
+        if name in derived_tables or "assessment" in name or "prediction" in name:
+            return "derived_history"
+        if name in permanent_tables or name.endswith("_outcomes"):
+            return "permanent"
+        return "normalized_hot"
 
     def _counts(self) -> dict[str, int]:
         row = self.connection.execute(
@@ -80,6 +127,7 @@ class CapacityGuard:
             self.connection.execute("SELECT pg_database_size(current_database()) AS bytes").fetchone()["bytes"]
         )
         relations = self._relations()
+        indexes = self._indexes()
         counts = self._counts()
         table_data_bytes = sum(int(row["data_bytes"]) for row in relations)
         index_bytes = sum(int(row["index_bytes"]) for row in relations)
@@ -91,6 +139,20 @@ class CapacityGuard:
             "procurement_notices",
         }
         raw_bytes = sum(int(row["total_bytes"]) for row in relations if row["name"] in raw_names)
+        category_bytes = {
+            category: sum(
+                int(row["data_bytes"]) for row in relations if self._storage_category(str(row["name"])) == category
+            )
+            for category in ("normalized_hot", "raw_payload", "version_history", "derived_history", "permanent")
+        }
+        archive_eligible_names = {
+            "raw_source_transaction_versions", "procurement_process_releases", "procurement_notices",
+            "business_license_versions", "development_permit_versions", "establishment_event_evidence",
+            "company_event_sources", "business_change_signals",
+        }
+        archive_eligible_bytes = sum(
+            int(row["data_bytes"]) for row in relations if row["name"] in archive_eligible_names
+        )
         capacity = self.thresholds.capacity_bytes
         utilization = database_bytes / capacity if capacity else None
         relation_lookup = {row["name"]: int(row["total_bytes"]) for row in relations}
@@ -114,9 +176,16 @@ class CapacityGuard:
             "utilization_percent": round(utilization * 100, 3) if utilization is not None else None,
             "raw_bytes": raw_bytes,
             "raw_share_percent": round(raw_bytes / database_bytes * 100, 3) if database_bytes else 0,
+            "normalized_hot_bytes": category_bytes["normalized_hot"],
+            "raw_payload_bytes": category_bytes["raw_payload"],
+            "version_history_bytes": category_bytes["version_history"],
+            "derived_history_bytes": category_bytes["derived_history"],
+            "permanent_bytes": category_bytes["permanent"],
+            "archive_eligible_bytes": archive_eligible_bytes,
             "counts": counts,
             "observed_relation_bytes_per_100k": observed_bytes_per_100k,
             "relations": relations,
+            "indexes": indexes,
         }
 
     def check(

@@ -5,6 +5,18 @@ export function money(value: string | number | null | undefined): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
 }
 
+export function moneyExact(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "Not reported";
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "Not reported";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 export function compactMoney(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "Not reported";
   const amount = Number(value);

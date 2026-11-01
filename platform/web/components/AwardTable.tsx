@@ -10,9 +10,12 @@ type Award = {
   prediction_sufficiency?: string | null;
 };
 
-function valueLabel(row: Award): string {
-  const value = row.total_obligated ?? row.current_value ?? row.potential_value;
-  if (row.currency && row.currency !== "USD") return value == null ? "Not reported" : `${row.currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+export function valueLabel(row: Award): string {
+  const candidates = [row.current_value, row.potential_value, row.total_obligated];
+  const value = candidates.find((candidate) => candidate !== null && candidate !== undefined && Number(candidate) > 0);
+  const hasReportedValue = candidates.some((candidate) => candidate !== null && candidate !== undefined && candidate !== "");
+  if (value === undefined) return hasReportedValue ? "Adjusted / no current positive award value reported" : "Not reported";
+  if (row.currency && row.currency !== "USD") return `${row.currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   return compactMoney(value);
 }
 
@@ -21,7 +24,7 @@ export function AwardTable({ rows, compact = false }: { rows: Award[]; compact?:
   return (
     <div className="table-wrap">
       <table className="data-table">
-        <thead><tr><th>Date</th><th>Contract</th><th>Company</th><th>Buyer / agency</th><th>Value</th>{compact ? null : <><th>Industry</th><th>Country / work location</th><th>Outlook</th></>}</tr></thead>
+        <thead><tr><th scope="col">Date</th><th scope="col">Contract</th><th scope="col">Company</th><th scope="col">Buyer / agency</th><th scope="col">Value</th>{compact ? null : <><th scope="col">Industry</th><th scope="col">Country / work location</th><th scope="col">Outlook</th></>}</tr></thead>
         <tbody>{rows.map((row) => <tr key={row.id}>
           <td>{dateLabel(row.award_date)}</td>
           <td><Link className="primary-cell" href={row.href || `/contract/${row.id}`}>{reported(row.title || row.description)}</Link>{row.is_demo ? <span className="demo-pill">Demo</span> : null}</td>

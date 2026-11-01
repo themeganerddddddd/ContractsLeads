@@ -1,8 +1,8 @@
-export function DatabaseNotice({ message }: { message?: string }) {
+export function DatabaseNotice({ message: _message }: { message?: string }) {
   return (
-    <section className="notice error-notice" role="status">
-      <strong>Database not available</strong>
-      <p>{message || "Start PostgreSQL, run migrations, and seed demo data using the commands in platform/README.md."}</p>
+    <section className="notice error-notice" role="status" aria-live="polite">
+      <strong>Live data is temporarily unavailable</strong>
+      <p>Please try again shortly. Existing source records and saved workspace settings are unchanged.</p>
     </section>
   );
 }

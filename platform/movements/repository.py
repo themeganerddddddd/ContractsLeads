@@ -8,6 +8,8 @@ from typing import Any
 import psycopg
 from psycopg.rows import dict_row
 
+from procurement_materiality import evaluate_award_adjustment
+
 from .models import CompanyMatch, NormalizedMovement
 from .change_intelligence import material_indication_change
 
@@ -393,18 +395,43 @@ class MovementRepository:
         for signal in signals:
             signal["source_family"] = signal.get("source_system")
         rows = self.connection.execute(
-            """SELECT id::text,event_type AS indicator_type,event_at AS observed_at,source_system,source_url,
-               CASE WHEN event_type IN ('value_decreased') THEN 'negative' ELSE 'positive' END AS direction,
-               source_country AS country_code,0.55::text AS strength,0.95::text AS reliability,
-               0.90::text AS confidence
-               FROM procurement_events
-               WHERE company_id=%s AND event_at < (%s::date + interval '1 day')
-                 AND event_type IN ('award_announced','value_increased','value_decreased')
-               ORDER BY event_at""",
+            """WITH transaction_values AS (
+                 SELECT t.*,
+                        lag(t.current_total_value) OVER (
+                          PARTITION BY t.award_id ORDER BY t.action_date NULLS LAST,t.created_at,t.id
+                        ) AS prior_current_total_value
+                 FROM transactions t WHERE NOT t.is_benchmark
+               )
+               SELECT e.id::text,e.event_type AS indicator_type,e.event_at AS observed_at,e.source_system,e.source_url,
+               CASE WHEN e.event_type='value_decreased' THEN 'negative' ELSE 'positive' END AS direction,
+               e.source_country AS country_code,0.55::text AS strength,0.95::text AS reliability,
+               0.90::text AS confidence,e.currency,
+               COALESCE(e.value_delta_native,tx.obligation) AS adjustment_delta,
+               COALESCE(
+                 NULLIF(abs(tx.prior_current_total_value),0),
+                 NULLIF(abs(tx.current_total_value),0),
+                 NULLIF(abs(a.current_value),0),
+                 NULLIF(abs(a.potential_value),0),
+                 NULLIF(abs(a.total_obligated),0)
+               ) AS reference_award_value
+               FROM procurement_events e
+               LEFT JOIN transaction_values tx ON tx.source_transaction_id=e.raw_source_id AND tx.award_id=e.award_id
+               LEFT JOIN awards a ON a.id=e.award_id
+               WHERE e.company_id=%s AND e.event_at < (%s::date + interval '1 day')
+                 AND e.event_type IN ('award_announced','value_increased','value_decreased')
+               ORDER BY e.event_at""",
             (company_id, as_of_date),
         ).fetchall()
         for row in rows:
             item = dict(row)
+            if item["indicator_type"] in {"value_increased", "value_decreased"}:
+                materiality = evaluate_award_adjustment(
+                    item.get("adjustment_delta"), item.get("reference_award_value"), item.get("currency")
+                )
+                if materiality.status != "material":
+                    continue
+                item["materiality_status"] = materiality.status
+                item["materiality_percent"] = materiality.percent
             item.update({
                 "evidence_key": f"procurement:{item['id']}",
                 "source_family": "federal_procurement",
