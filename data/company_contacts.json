@@ -25021,6 +25021,55 @@
       "company_name": "PSALM PRECISION SOLUTIONS LLC",
       "company": null,
       "last_checked": null
+    },
+    "uei-gy5db1hajg45": {
+      "company_id": "uei-gy5db1hajg45",
+      "uei": "GY5DB1HAJG45",
+      "company_name": "TOMMYTQL LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-nm13flejh5a8": {
+      "company_id": "uei-nm13flejh5a8",
+      "uei": "NM13FLEJH5A8",
+      "company_name": "OSI FEDERAL TECHNOLOGIES INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-khdvaetpz7v4": {
+      "company_id": "uei-khdvaetpz7v4",
+      "uei": "KHDVAETPZ7V4",
+      "company_name": "TRILLIUM HEALTH, LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-g746kj7k4dc8": {
+      "company_id": "uei-g746kj7k4dc8",
+      "uei": "G746KJ7K4DC8",
+      "company_name": "SOL CONSULTING GROUP LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-ecgck1arg1e1": {
+      "company_id": "uei-ecgck1arg1e1",
+      "uei": "ECGCK1ARG1E1",
+      "company_name": "5615 FISHERS LANE LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-cm39n6xpqf41": {
+      "company_id": "uei-cm39n6xpqf41",
+      "uei": "CM39N6XPQF41",
+      "company_name": "UNITED CLEANUP OAK RIDGE LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-j1k7gk6lmjd5": {
+      "company_id": "uei-j1k7gk6lmjd5",
+      "uei": "J1K7GK6LMJD5",
+      "company_name": "CALCO ENTERPRISES, LLC",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -28043,7 +28092,14 @@
     "QCK1LDJ3A6K5": "uei-qck1ldj3a6k5",
     "YJUGUP5M8966": "uei-yjugup5m8966",
     "V4GPJEQU6NM7": "uei-v4gpjequ6nm7",
-    "SG53JKAZCZV7": "uei-sg53jkazczv7"
+    "SG53JKAZCZV7": "uei-sg53jkazczv7",
+    "GY5DB1HAJG45": "uei-gy5db1hajg45",
+    "NM13FLEJH5A8": "uei-nm13flejh5a8",
+    "KHDVAETPZ7V4": "uei-khdvaetpz7v4",
+    "G746KJ7K4DC8": "uei-g746kj7k4dc8",
+    "ECGCK1ARG1E1": "uei-ecgck1arg1e1",
+    "CM39N6XPQF41": "uei-cm39n6xpqf41",
+    "J1K7GK6LMJD5": "uei-j1k7gk6lmjd5"
   },
-  "updated_at": "2026-10-31T16:11:35Z"
+  "updated_at": "2026-11-01T17:08:31Z"
 }

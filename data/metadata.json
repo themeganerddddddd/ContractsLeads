@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-10-31T16:11:35Z",
+  "last_updated": "2026-11-01T17:08:31Z",
   "sources_checked": [
     "War.gov",
     "USAspending",
@@ -37,14 +37,14 @@
     },
     "usaspending": {
       "status": "success",
-      "records_retrieved": 278,
-      "known_company_matches": 8,
-      "county_discovery_matches": 181,
-      "place_of_performance_matches": 89,
-      "outside_company_performance_matches": 89,
+      "records_retrieved": 356,
+      "known_company_matches": 10,
+      "county_discovery_matches": 223,
+      "place_of_performance_matches": 123,
+      "outside_company_performance_matches": 123,
       "place_of_performance_lookback_days": 7,
-      "new_entities_discovered": 86,
-      "moco_matches": 186
+      "new_entities_discovered": 98,
+      "moco_matches": 230
     },
     "nasa": {
       "records_retrieved": 0,
@@ -72,14 +72,14 @@
       "moco_matches": 0
     }
   },
-  "record_count": 13086,
+  "record_count": 13118,
   "market_counts": {
-    "moco_company": 526,
-    "moco_company_working_in_moco": 6265,
-    "outside_company_working_in_moco": 6295
+    "outside_company_working_in_moco": 6304,
+    "moco_company": 539,
+    "moco_company_working_in_moco": 6275
   },
   "contact_stats": {
-    "companies_examined": 3023,
+    "companies_examined": 3030,
     "company_contacts_found": 386,
     "named_company_contacts": 386,
     "company_contacts_with_email": 7,
