@@ -25070,6 +25070,13 @@
       "company_name": "CALCO ENTERPRISES, LLC",
       "company": null,
       "last_checked": null
+    },
+    "uei-hywmra3b7t75": {
+      "company_id": "uei-hywmra3b7t75",
+      "uei": "HYWMRA3B7T75",
+      "company_name": "DB CONSULTING GROUP, INC.",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -28099,7 +28106,8 @@
     "G746KJ7K4DC8": "uei-g746kj7k4dc8",
     "ECGCK1ARG1E1": "uei-ecgck1arg1e1",
     "CM39N6XPQF41": "uei-cm39n6xpqf41",
-    "J1K7GK6LMJD5": "uei-j1k7gk6lmjd5"
+    "J1K7GK6LMJD5": "uei-j1k7gk6lmjd5",
+    "HYWMRA3B7T75": "uei-hywmra3b7t75"
   },
-  "updated_at": "2026-11-01T17:08:31Z"
+  "updated_at": "2026-11-02T20:48:15Z"
 }
