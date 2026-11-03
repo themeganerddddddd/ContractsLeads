@@ -73,7 +73,9 @@ describe("sellable BusinessCurrent V1", () => {
 
   it("exposes the existing Stripe portal and current plan without placeholder sales claims", () => {
     expect(read("app/api/billing/portal/route.ts")).toContain("stripe.billingPortal.sessions.create");
-    expect(read("app/account/page.tsx")).toContain("Current plan");
+    const account = read("app/account/page.tsx");
+    expect(account).toContain("Current plan");
+    expect(account).toContain("Subscription status:");
     const pricing = read("app/pricing/page.tsx");
     expect(pricing).toContain("Manage your subscription");
     expect(read("components/BillingPortalButton.tsx")).toContain("Manage subscription");
@@ -81,5 +83,14 @@ describe("sellable BusinessCurrent V1", () => {
     expect(pricing).not.toContain("sales@example.test");
     expect(pricing).not.toContain("API access");
     expect(pricing).not.toContain("XLSX");
+  });
+
+  it("uses the configured public contact without a placeholder fallback", () => {
+    for (const path of ["components/Footer.tsx", "app/terms/page.tsx", "app/privacy/page.tsx"]) {
+      const source = read(path);
+      expect(source).toContain("NEXT_PUBLIC_SALES_EMAIL");
+      expect(source).not.toContain("sales@example.test");
+      expect(source).not.toContain("developer@example.test");
+    }
   });
 });

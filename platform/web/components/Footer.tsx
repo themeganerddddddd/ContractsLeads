@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 export function Footer() {
+  const contactEmail = process.env.NEXT_PUBLIC_SALES_EMAIL?.trim();
   return (
     <footer className="site-footer">
       <div>
@@ -16,6 +17,7 @@ export function Footer() {
         <Link href="/methodology">Methodology</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/privacy">Privacy</Link>
+        {contactEmail ? <a href={`mailto:${contactEmail}`}>Contact</a> : null}
       </div>
     </footer>
   );
