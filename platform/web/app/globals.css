@@ -1932,7 +1932,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible,summary:focus-visi
 .radar-empty div{display:flex;justify-content:center;gap:18px;font-size:12px;font-weight:700}
 
 .entity-heading{margin-top:22px;padding:28px 30px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);box-shadow:var(--shadow-xs)}
-.entity-heading h1{font-size:clamp(36px,4.8vw,60px)}
+.entity-heading h1{max-width:100%;overflow-wrap:anywhere;font-size:clamp(36px,4.8vw,60px)}
 .entity-subtitle{font-size:14px!important}
 .entity-meta{margin-top:15px}
 .meta-chip{padding:4px 8px;border-radius:var(--radius-sm);background:#f8fafc;font-size:10px}
