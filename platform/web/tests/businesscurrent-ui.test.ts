@@ -42,6 +42,7 @@ describe("BusinessCurrent public product", () => {
     expect(css).toContain("@media(max-width:860px)");
     expect(css).toContain("@media(max-width:600px)");
     expect(css).toContain("overflow-x:auto");
+    expect(css).toContain(".entity-heading h1{max-width:100%;overflow-wrap:anywhere");
   });
 
   it("keeps materiality in company presentation while contract detail stays complete", () => {
