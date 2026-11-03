@@ -2071,3 +2071,148 @@ input:focus,select:focus,button:focus-visible,a:focus-visible,summary:focus-visi
   html{scroll-behavior:auto}
   *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* Sellable BusinessCurrent V1 surfaces. */
+body{overflow-x:hidden}
+.sellable-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(330px,.65fr);gap:clamp(38px,7vw,92px);align-items:center;padding:clamp(68px,8vw,112px) 0 70px}
+.sellable-hero::before{content:"";position:absolute;z-index:-1;inset:0 calc(50% - 50vw);background:linear-gradient(120deg,#fbfcfe 0%,#f2f6fa 70%,#eaf1f7 100%);border-bottom:1px solid var(--line)}
+.sellable-hero h1{max-width:900px;margin:0;color:var(--navy);font-family:Georgia,"Times New Roman",serif;font-size:clamp(46px,5.8vw,76px);font-weight:600;line-height:1.02;letter-spacing:-.05em}
+.sellable-hero-copy>p:not(.eyebrow){max-width:800px;margin:22px 0;color:var(--ink-secondary);font-size:clamp(17px,1.6vw,21px);line-height:1.55}
+.hero-company-search{max-width:780px;margin:30px 0 22px}
+.hero-company-search>label,.company-search-field>label{display:block;margin-bottom:7px;color:var(--navy);font-size:12px;font-weight:800}
+.hero-company-search>div,.company-search-field>div{display:flex;gap:8px}
+.hero-company-search input,.company-search-field input{width:100%;min-width:0;min-height:52px;font-size:16px}
+.hero-company-search .button{min-height:52px}
+.hero-proof-card{padding:30px;border:1px solid #c8d5e2;border-top:4px solid var(--blue2);border-radius:var(--radius-lg);background:rgba(255,255,255,.88);box-shadow:var(--shadow-md)}
+.hero-proof-card h2{margin:0;color:var(--navy);font-size:27px;line-height:1.2}
+.hero-proof-card ul{display:grid;gap:10px;margin:22px 0;padding:0;list-style:none;color:var(--ink-secondary);font-size:13px}
+.hero-proof-card li{position:relative;padding-left:22px}
+.hero-proof-card li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:900}
+.live-company-example{padding-top:62px}
+.home-company-table{min-width:820px}
+.positioning-panel{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,.6fr);gap:34px;align-items:center;padding:36px;border:1px solid #cbd9e6;border-left:4px solid var(--navy);border-radius:var(--radius-md);background:#edf4fa}
+.positioning-panel h2{margin:0;color:var(--navy);font-size:31px}
+.positioning-panel p{max-width:780px;color:var(--ink-secondary)}
+.positioning-links{display:grid;gap:8px}
+.positioning-links a{padding:10px 12px;border:1px solid #bdcedf;border-radius:var(--radius-sm);background:#fff;font-weight:750}
+.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.trust-grid article{padding:24px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff}
+.trust-grid h3{margin:0;color:var(--navy)}
+.trust-grid p{margin:7px 0 0;color:var(--ink-secondary);font-size:13px}
+
+.company-screener,.location-screener,.prediction-filters{margin:4px 0 28px;padding:22px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow-sm)}
+.company-search-field{max-width:920px;margin-bottom:18px}
+.screener-filter-grid,.location-filter-grid,.prediction-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(135px,1fr));gap:10px;align-items:end}
+.screener-filter-grid label,.location-filter-grid label,.prediction-filter-grid label,.sort-form label{display:grid;gap:5px;color:#536176;font-size:10px;font-weight:800;letter-spacing:.025em}
+.advanced-company-filters{margin-top:16px;border-top:1px solid var(--line)}
+.advanced-company-filters summary{display:inline-block;padding:14px 0 10px;color:var(--blue2);font-size:12px;font-weight:800;cursor:pointer}
+.advanced-company-filters .screener-filter-grid{grid-template-columns:repeat(5,minmax(150px,1fr))}
+.checkbox-filter{display:flex!important;align-items:center;justify-content:flex-start;min-height:42px;flex-direction:row!important;gap:8px!important}
+.checkbox-filter input{width:17px;min-height:17px}
+.screener-actions{display:flex;gap:8px;margin-top:18px}
+.results-toolbar{display:flex;align-items:end;justify-content:space-between;gap:24px;margin:30px 0 14px}
+.results-toolbar h2{margin:0;color:var(--navy);font-size:22px}
+.results-toolbar p{margin:4px 0 0;color:var(--ink-secondary);font-size:12px}
+.sort-form{display:flex;align-items:end;gap:8px}
+.sort-form select{min-width:250px}
+.company-table,.prediction-table{min-width:1240px}
+.company-table td,.prediction-table td{vertical-align:top}
+.company-table td small,.prediction-table td small,.home-company-table td small{display:block;margin-top:4px;color:var(--muted);font-size:10px;line-height:1.35}
+.company-table .money-cell strong,.prediction-table .numeric strong{white-space:nowrap;color:var(--navy)}
+.company-track-cell{min-width:82px}
+.table-action{font-size:12px;font-weight:800}
+.button-reset{padding:0;border:0;background:transparent;color:var(--blue2);cursor:pointer}
+.button-reset:disabled{cursor:default;opacity:.7}
+.compact-location-metrics{grid-template-columns:repeat(4,1fr)}
+
+.prediction-intro{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:30px;align-items:end}
+.prediction-disclaimer,.prediction-safety-note{display:flex;gap:10px;align-items:flex-start;max-width:850px;margin-top:18px;padding:14px 16px;border:1px solid #dccb9f;border-radius:var(--radius-md);background:#fff9ec;color:#614c20;font-size:12px}
+.prediction-disclaimer strong,.prediction-safety-note strong{flex:0 0 auto;color:#4b3a15}
+.outlook-section{padding:24px 0 6px}
+.outlook-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.outlook-card{padding:22px;border:1px solid var(--line);border-top:3px solid #779fc5;border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow-xs)}
+.outlook-card>span{display:block;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.outlook-card>strong{display:block;margin:8px 0;color:var(--navy);font-size:20px}
+.outlook-card>small{display:block;color:var(--ink-secondary);line-height:1.45}
+.company-parent{margin:8px 0 0!important;color:var(--ink-secondary)}
+.company-facts{margin-top:30px}
+.company-facts h2{color:var(--navy);font-size:23px}
+
+.pricing-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:32px;align-items:end}
+.pricing-heading h1,.pricing-heading>p{grid-column:1}
+.current-plan{grid-column:2;grid-row:1/4;align-self:center;display:grid;min-width:190px;padding:17px 20px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow-xs)}
+.current-plan span{color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.current-plan strong{margin:3px 0;color:var(--navy);font-size:24px}
+.pricing-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:20px}
+.price-card{padding:24px;border-radius:var(--radius-md);box-shadow:var(--shadow-xs)}
+.price-card.current{box-shadow:inset 0 0 0 2px #7fa1c1}
+.current-badge{display:inline-flex;align-self:flex-start;margin-bottom:10px;padding:3px 7px;border-radius:999px;background:#e9f3ed;color:var(--green);font-size:9px;font-weight:800;text-transform:uppercase}
+.plan-actions{display:grid;gap:8px}
+.plan-actions .billing-action,.plan-actions .button{width:100%}
+.plan-actions .billing-action:nth-child(2) .button{border-color:#aebbc9;background:#fff;color:var(--blue2)}
+.billing-action{display:grid;gap:5px}
+.billing-action small{min-height:16px;color:var(--muted)}
+.checkout-state,.checkout-resume,.subscription-panel{display:flex;align-items:center;justify-content:space-between;gap:28px;margin:12px 0 26px;padding:22px 24px;border:1px solid #c8d7e5;border-left:4px solid var(--blue2);border-radius:var(--radius-md);background:#f4f8fc}
+.checkout-state{display:block}
+.checkout-success{border-color:#b7dac8;border-left-color:var(--green);background:#f1f8f4}
+.checkout-state h2,.subscription-panel h2{margin:0;color:var(--navy)}
+.checkout-state p,.subscription-panel p{margin:6px 0;color:var(--ink-secondary)}
+.activation-pulse{display:block;width:48px;height:4px;margin-top:14px;border-radius:99px;background:var(--blue2);animation:activation-pulse 1.2s ease-in-out infinite alternate}
+@keyframes activation-pulse{to{width:150px;opacity:.35}}
+
+.auth-shell{display:grid;place-items:center;min-height:calc(100vh - 190px);padding:52px 0}
+.auth-card{width:min(100%,500px);padding:36px;border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow-md)}
+.auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:30px;color:var(--navy);font-size:18px;font-weight:800}
+.auth-card h1{margin:0;color:var(--navy);font-family:Georgia,"Times New Roman",serif;font-size:38px;line-height:1.1}
+.auth-card>p{color:var(--ink-secondary)}
+.provider-stack{display:grid;gap:10px;margin:24px 0}
+.provider-button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;border:1px solid #aebbc9;border-radius:var(--radius-sm);background:#fff;color:var(--navy);font-weight:800;cursor:pointer}
+.provider-button:hover{background:#f4f7fa}
+.provider-button span{display:grid;place-items:center;width:25px;height:25px;border:1px solid var(--line);border-radius:50%;font-size:10px}
+.auth-unavailable{margin:22px 0;padding:14px;border:1px solid #dbc99d;border-radius:var(--radius-sm);background:#fff9eb}
+.auth-unavailable p{margin:4px 0 0;color:#665127;font-size:12px}
+.auth-card>small,.auth-card>.text-action{display:block;margin-top:18px;color:var(--muted)}
+
+.account-shell{max-width:1000px;margin:0 auto}
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.account-card{padding:26px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff;box-shadow:var(--shadow-xs)}
+.account-card>span{color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.account-card h2{margin:5px 0;color:var(--navy)}
+.account-card p{color:var(--ink-secondary)}
+.account-links{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.account-links a{padding:16px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff;font-weight:800;text-align:center}
+.legal-page{max-width:820px;margin:0 auto;padding:60px 0}
+.legal-page h1{margin:0;color:var(--navy);font-family:Georgia,"Times New Roman",serif;font-size:48px}
+.legal-page h2{margin:34px 0 8px;color:var(--navy);font-size:22px}
+.legal-page p{color:var(--ink-secondary);line-height:1.75}
+.legal-updated{font-size:12px}
+
+@media(max-width:1180px){
+  .nav-shell nav{gap:12px}.nav-shell nav>a,.more-menu{font-size:11px}
+  .screener-filter-grid,.location-filter-grid,.prediction-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .advanced-company-filters .screener-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:860px){
+  .sellable-hero,.prediction-intro{grid-template-columns:1fr}
+  .sellable-hero{padding-top:56px}
+  .hero-proof-card{max-width:660px}
+  .positioning-panel{grid-template-columns:1fr}
+  .outlook-grid,.trust-grid{grid-template-columns:1fr}
+  .pricing-heading{display:block}.current-plan{margin-top:18px}
+  .account-grid{grid-template-columns:1fr}.account-links{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .sellable-hero h1{font-size:42px}
+  .hero-company-search>div,.company-search-field>div{display:grid}
+  .hero-company-search .button,.company-search-field .button{width:100%}
+  .screener-filter-grid,.location-filter-grid,.prediction-filter-grid,.advanced-company-filters .screener-filter-grid{grid-template-columns:1fr}
+  .company-screener,.location-screener,.prediction-filters{padding:16px}
+  .screener-actions,.results-toolbar,.sort-form,.checkout-state,.checkout-resume,.subscription-panel{align-items:stretch;flex-direction:column}
+  .sort-form select{min-width:0;width:100%}
+  .compact-location-metrics,.pricing-grid{grid-template-columns:1fr}
+  .auth-card{padding:26px 20px}.auth-card h1{font-size:34px}
+  .account-links{grid-template-columns:1fr}
+  .legal-page{padding:40px 0}.legal-page h1{font-size:40px}
+  .site-footer{flex-direction:column}.footer-links{gap:12px 16px}
+}
