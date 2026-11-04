@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-03T18:29:13Z",
+  "generated_at": "2026-11-04T18:46:42Z",
   "contact_enrichment": {
     "companies_examined": 3031,
     "company_contacts_found": 386,
@@ -11,13 +11,13 @@
     "federal_award_contacts": 0
   },
   "bootstrap": {
-    "previous_archive_records": 13125,
+    "previous_archive_records": 13128,
     "required_moco_record_floor": 470,
-    "moco_company_records": 6824,
+    "moco_company_records": 6846,
     "moco_record_floor_passed": true,
-    "outside_company_working_in_moco_records": 6304,
+    "outside_company_working_in_moco_records": 6312,
     "work_records_earliest_date": "2026-01-30",
-    "work_records_latest_date": "2026-10-30",
+    "work_records_latest_date": "2026-11-02",
     "largest_10": [
       {
         "company": "ORANO FEDERAL SERVICES LLC",
@@ -103,7 +103,7 @@
       },
       {
         "company": "GUIDEHOUSE DIGITAL LLC",
-        "records": 64
+        "records": 66
       },
       {
         "company": "NEW TECH SOLUTIONS, INC.",
@@ -115,7 +115,7 @@
       },
       {
         "company": "BECTON, DICKINSON AND COMPANY",
-        "records": 55
+        "records": 56
       },
       {
         "company": "HONEYWELL INTERNATIONAL, INC",
