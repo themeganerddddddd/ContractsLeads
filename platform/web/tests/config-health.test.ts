@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   alertEmailEnabled,
+  authProviderAvailability,
   authEnabled,
   developmentMockEnabled,
   developmentPlan,
@@ -72,9 +73,14 @@ describe("production configuration", () => {
   it("requires OAuth credentials when production authentication is enabled", () => {
     const { AUTH_GITHUB_ID, AUTH_GITHUB_SECRET, ...missingOauth } =
       completeProduction;
-    expect(() => validateRuntimeConfig(missingOauth)).toThrow(
-      /AUTH_GITHUB_ID/,
-    );
+    expect(() => validateRuntimeConfig(missingOauth)).toThrow(/Google or GitHub/);
+  });
+  it("accepts either complete Google or GitHub credentials and hides partial providers", () => {
+    const base = { ...completeProduction, AUTH_GITHUB_ID: undefined, AUTH_GITHUB_SECRET: undefined };
+    expect(() => validateRuntimeConfig({ ...base, AUTH_GOOGLE_ID: "google-id", AUTH_GOOGLE_SECRET: "google-secret" })).not.toThrow();
+    expect(authProviderAvailability({ AUTH_ENABLED: "true", AUTH_GOOGLE_ID: "google-id", AUTH_GOOGLE_SECRET: "google-secret" })).toEqual({ google: true, github: false });
+    expect(authProviderAvailability({ AUTH_ENABLED: "true", AUTH_GOOGLE_ID: "google-id" })).toEqual({ google: false, github: false });
+    expect(authProviderAvailability({ AUTH_ENABLED: "false", AUTH_GITHUB_ID: "github-id", AUTH_GITHUB_SECRET: "github-secret" })).toEqual({ google: false, github: false });
   });
   it("requires Stripe settings only when billing is enabled", () => {
     expect(() =>

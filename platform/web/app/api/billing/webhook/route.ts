@@ -27,7 +27,11 @@ export async function POST(request: Request) {
     }
     if(event.type==="checkout.session.completed"){
       const session=event.data.object as Stripe.Checkout.Session; const userId=session.metadata?.userId||session.client_reference_id; const subscription=typeof session.subscription==="string"?session.subscription:null; const customer=typeof session.customer==="string"?session.customer:null;
-      if(userId&&subscription)await client.query(`INSERT INTO subscriptions (user_id,provider,provider_customer_id,provider_subscription_id,plan,status) VALUES ($1,'stripe',$2,$3,$4,'active') ON CONFLICT (provider,provider_subscription_id) DO UPDATE SET user_id=EXCLUDED.user_id,provider_customer_id=EXCLUDED.provider_customer_id,plan=EXCLUDED.plan,status='active'`,[userId,customer,subscription,session.metadata?.plan||"free"]);
+      if(userId&&subscription&&session.payment_status!=="unpaid"){
+        const stripeSubscription=await stripe.subscriptions.retrieve(subscription);
+        const item=stripeSubscription.items.data[0] as Stripe.SubscriptionItem|undefined;
+        await client.query(`INSERT INTO subscriptions (user_id,provider,provider_customer_id,provider_subscription_id,plan,status,period_start,period_end) VALUES ($1,'stripe',$2,$3,$4,$5,to_timestamp($6),to_timestamp($7)) ON CONFLICT (provider,provider_subscription_id) DO UPDATE SET user_id=EXCLUDED.user_id,provider_customer_id=EXCLUDED.provider_customer_id,plan=EXCLUDED.plan,status=EXCLUDED.status,period_start=EXCLUDED.period_start,period_end=EXCLUDED.period_end`,[userId,customer,subscription,planForPrice(item?.price?.id),stripeSubscription.status,item?.current_period_start||0,item?.current_period_end||0]);
+      }
     }
     return true;
   });

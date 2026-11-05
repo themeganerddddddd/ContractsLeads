@@ -1,103 +1,51 @@
 import Link from "next/link";
 
-import { AwardTable } from "@/components/AwardTable";
-import { DataNote } from "@/components/DataNote";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
-import { MetricCard } from "@/components/MetricCard";
-import { RankedList } from "@/components/RankedList";
-import { compactMoney } from "@/lib/format";
-import { getHomeOverview } from "@/lib/profiles";
+import { getHomepageCompanyExamples } from "@/lib/company-intelligence";
+import { compactMoney, reported } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const changeCategories = [
-  ["Opening", "opening", "New operating locations and verified openings."],
-  ["Growing", "growing", "Expansion, hiring, and facility-growth evidence."],
-  ["Moving", "moving", "Source-backed origin and destination changes."],
-  ["Shrinking", "shrinking", "Contraction, layoffs, and reduced operations."],
-  ["Closing", "closing", "Confirmed closures and location exits."],
-  ["New Businesses", "new-businesses", "Formation and licensing signals."],
-] as const;
-
-const evidenceFamilies = [
-  ["Registrations", "Official formation and corporate registration records."],
-  ["Licenses", "Public operating and business-license observations."],
-  ["Permits", "Commercial construction and facility activity."],
-  ["Workforce", "WARN notices and supported workforce events."],
-  ["Economic Development", "Official expansion, investment, and jobs announcements."],
-  ["Corporate Filings", "Reviewed public-company disclosures."],
-  ["Government Business", "Awards and buying relationships as commercial context."],
-] as const;
+function changeLabel(value: string | null) {
+  const labels: Record<string, string> = { expansion: "Expansion", growth: "Growing", relocation: "Moving", contraction: "Contraction", closure_distress: "Closing risk" };
+  return value ? labels[value] || value.replaceAll("_", " ") : "No recent change";
+}
 
 export default async function HomePage() {
-  let data: Awaited<ReturnType<typeof getHomeOverview>> | null = null;
+  let companies: Awaited<ReturnType<typeof getHomepageCompanyExamples>> = [];
   let error = "";
   try {
-    data = await getHomeOverview();
+    companies = await getHomepageCompanyExamples();
   } catch (cause) {
     error = cause instanceof Error ? cause.message : String(cause);
   }
-
   return <>
-    <section className="bc-home-hero">
-      <div className="bc-home-copy">
-        <p className="eyebrow">BusinessCurrent <span className="beta-chip">Beta</span></p>
-        <h1>Business change intelligence, nationwide.</h1>
-        <p className="hero-copy">See which businesses are opening, growing, moving, shrinking, and closing — and the evidence behind every signal.</p>
-        <div className="hero-actions">
-          <Link className="button primary" href="/locations">Explore a market</Link>
-          <Link className="button secondary" href="/companies">Search companies</Link>
-          <Link className="text-action" href="/search">Explore government business →</Link>
-        </div>
-        <dl className="trust-strip" aria-label="BusinessCurrent product principles">
-          <div><dt>Source backed</dt><dd>Official evidence retained</dd></div>
-          <div><dt>Coverage aware</dt><dd>Missing sources stay visible</dd></div>
-          <div><dt>Location precise</dt><dd>Company and establishment stay distinct</dd></div>
-        </dl>
-      </div>
-      <div className="market-search-card commercial-card">
-        <p className="eyebrow">National market search</p>
-        <h2>What is changing here?</h2>
-        <p>Search by city, county, state, or ZIP. No FIPS code required.</p>
-        <form action="/locations" method="get">
-          <label htmlFor="market-search">Market</label>
-          <div className="market-search-line">
-            <input id="market-search" name="q" placeholder="Rockville, MD or 20850" autoComplete="postal-code" />
-            <button className="button primary" type="submit">Explore</button>
-          </div>
+    <section className="sellable-hero">
+      <div className="sellable-hero-copy">
+        <p className="eyebrow">Company intelligence built around change</p>
+        <h1>Find the companies that are changing before everyone else does.</h1>
+        <p>Search companies and locations, track commercial activity, and identify expansion, relocation, and contraction signals from source-backed public data.</p>
+        <form action="/companies" method="get" className="hero-company-search">
+          <label htmlFor="home-company-search">Search companies</label>
+          <div><input id="home-company-search" name="q" placeholder="Search a company…" autoComplete="organization" /><button className="button primary" type="submit">Search</button></div>
         </form>
-        <div className="market-shortcuts"><span>Popular:</span><Link href="/location/md/24031">Montgomery County, MD</Link><Link href="/business-change?state=VA&period=90">Virginia</Link><Link href="/business-change?state=DC&period=90">Washington, DC</Link></div>
+        <div className="hero-actions"><Link className="button primary" href="/companies">Search companies</Link><Link className="button secondary" href="/locations">Explore locations</Link><Link className="text-action" href="/pricing">View plans →</Link></div>
       </div>
+      <aside className="hero-proof-card">
+        <p className="eyebrow">Operational intelligence</p>
+        <h2>Understand what changed—and why.</h2>
+        <ul><li>Company and legal-name discovery</li><li>Location semantics kept explicit</li><li>Government obligations, not estimated revenue</li><li>Evidence signals never relabeled as probability</li></ul>
+        <Link href="/methodology">How BusinessCurrent works →</Link>
+      </aside>
     </section>
 
-    <section className="section product-preview">
-      <div className="section-header"><div><p className="eyebrow">Business Change Radar</p><h2>One view of the business lifecycle</h2><p>Move from an early source event to the company, location, supporting evidence, and confirmed outcome.</p></div><Link href="/business-change">Open Radar →</Link></div>
-      <div className="change-category-grid">{changeCategories.map(([label, tab, description]) => <Link href={`/business-change?tab=${tab}&period=90`} key={tab}><span>{label}</span><p>{description}</p><strong>Explore signals →</strong></Link>)}</div>
+    <section className="section live-company-example">
+      <div className="section-header"><div><p className="eyebrow">Live company intelligence</p><h2>Start with the companies that matter commercially.</h2><p>These examples come from the current database. Disclosed government-business values are net U.S. obligations—not company revenue.</p></div><Link href="/companies">Open the company screener →</Link></div>
+      {error ? <DatabaseNotice message={error} /> : <div className="table-wrap"><table className="data-table home-company-table"><thead><tr><th>Company</th><th>Industry</th><th>Location</th><th>Change</th><th>Government Business</th></tr></thead><tbody>{companies.map((company) => <tr key={company.id}><td><Link className="primary-cell" href={`/company/${company.slug}`}>{company.canonical_name}</Link></td><td>{reported(company.industry_name)}</td><td>{reported(company.location_label)}<small>{company.location_basis}</small></td><td>{changeLabel(company.latest_change_type)}</td><td className="numeric"><strong>{compactMoney(company.government_business)}</strong></td></tr>)}</tbody></table></div>}
     </section>
 
-    <section className="section evidence-section">
-      <div className="section-header"><div><p className="eyebrow">Evidence, not guesses</p><h2>Understand why we believe a business changed.</h2><p>A single source rarely proves a business changed. BusinessCurrent preserves the evidence and distinguishes confirmed events from early indications.</p></div><Link href="/methodology">Read the methodology →</Link></div>
-      <div className="evidence-family-grid">{evidenceFamilies.map(([name, description]) => <article key={name}><span aria-hidden="true" /><strong>{name}</strong><p>{description}</p></article>)}</div>
-    </section>
+    <section className="section positioning-panel"><div><p className="eyebrow">A clearer way to screen</p><h2>Company intelligence built around change.</h2><p>Search companies, understand where they operate, see source-backed commercial activity, and identify signals of expansion, relocation, and contraction.</p></div><div className="positioning-links"><Link href="/predicted-expansion">Expansion signals</Link><Link href="/predicted-moves">Move signals</Link><Link href="/predicted-contraction">Contraction signals</Link></div></section>
 
-    <section className="section coverage-callout">
-      <div><p className="eyebrow">Built state by state</p><h2>Nationwide federal sources + transparent state and local coverage.</h2><p>BusinessCurrent does not pretend every jurisdiction publishes the same data. See what is active, partial, restricted, or still planned across all 50 states and DC.</p></div>
-      <Link className="button secondary" href="/data-coverage">View national coverage</Link>
-    </section>
-
-    {!data ? <DatabaseNotice message={error} /> : <section className="section government-layer">
-      <div className="section-header"><div><p className="eyebrow">Government Business</p><h2>A powerful evidence family, not the whole product.</h2><p>Federal awards add commercial context. Recipient addresses, verified headquarters, operating establishments, and places of performance remain separate.</p></div><Link href="/search">Search government business →</Link></div>
-      <div className="metrics-grid">
-        <MetricCard label="U.S. companies" value={Number(data.metrics?.companies || 0).toLocaleString()} note="awarded legal entities" />
-        <MetricCard label="U.S. contracts" value={Number(data.metrics?.awards || 0).toLocaleString()} note="normalized federal awards" />
-        <MetricCard label="Disclosed obligations" value={compactMoney(data.metrics?.activity)} note="transaction obligations only" />
-        <MetricCard label="States represented" value={Number(data.metrics?.states || 0).toLocaleString()} note="recipient or performance evidence" />
-      </div>
-      <DataNote updated={data.lastUpdated} />
-      <div className="government-layer-content">
-        <div><div className="section-header"><div><h2>Recent federal contracts</h2></div></div><AwardTable rows={data.recent} compact /></div>
-        <div className="split-grid"><div className="panel"><div className="panel-header"><h2>Active companies</h2><Link href="/companies">View all →</Link></div><RankedList rows={data.companies} route="company" /></div><div className="panel"><div className="panel-header"><h2>Active industries</h2><Link href="/industries">View all →</Link></div><RankedList rows={data.industries} route="industry" /></div></div>
-      </div>
-    </section>}
+    <section className="section trust-grid"><article><h3>Source backed</h3><p>Official links and evidence dates remain visible from signal through profile.</p></article><article><h3>Coverage aware</h3><p>Unavailable or partial coverage stays explicit instead of becoming false certainty.</p></article><article><h3>Location precise</h3><p>Verified headquarters, operating locations, and observed recipient addresses remain distinct.</p></article></section>
   </>;
 }
