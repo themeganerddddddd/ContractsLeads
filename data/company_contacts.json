@@ -25077,6 +25077,13 @@
       "company_name": "DB CONSULTING GROUP, INC.",
       "company": null,
       "last_checked": null
+    },
+    "name-clark-construction-group": {
+      "company_id": "name-clark-construction-group",
+      "uei": null,
+      "company_name": "Clark Construction Group LLC",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -28109,5 +28116,5 @@
     "J1K7GK6LMJD5": "uei-j1k7gk6lmjd5",
     "HYWMRA3B7T75": "uei-hywmra3b7t75"
   },
-  "updated_at": "2026-11-04T18:46:42Z"
+  "updated_at": "2026-11-05T18:46:00Z"
 }
