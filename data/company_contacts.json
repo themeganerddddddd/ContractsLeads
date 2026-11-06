@@ -25084,6 +25084,83 @@
       "company_name": "Clark Construction Group LLC",
       "company": null,
       "last_checked": null
+    },
+    "uei-zwnmhkygbvm9": {
+      "company_id": "uei-zwnmhkygbvm9",
+      "uei": "ZWNMHKYGBVM9",
+      "company_name": "INVICTUS CONSULTING SERVICES LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-mhp8jh2rngw7": {
+      "company_id": "uei-mhp8jh2rngw7",
+      "uei": "MHP8JH2RNGW7",
+      "company_name": "EG DESIGNBUILD, L.L.C.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-dafvwz8mlnf1": {
+      "company_id": "uei-dafvwz8mlnf1",
+      "uei": "DAFVWZ8MLNF1",
+      "company_name": "EAGLE PROTECTION AGENCY LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-jgcetczmkdx3": {
+      "company_id": "uei-jgcetczmkdx3",
+      "uei": "JGCETCZMKDX3",
+      "company_name": "ZAYAS HENDRICK MEDIAWORKS LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-fcc8ssgll6l8": {
+      "company_id": "uei-fcc8ssgll6l8",
+      "uei": "FCC8SSGLL6L8",
+      "company_name": "LOMBART BROTHERS, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-e356xna5byd5": {
+      "company_id": "uei-e356xna5byd5",
+      "uei": "E356XNA5BYD5",
+      "company_name": "ONE K WORDS, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-d1vpkjajzw36": {
+      "company_id": "uei-d1vpkjajzw36",
+      "uei": "D1VPKJAJZW36",
+      "company_name": "GOLDSTONE PARTNERS LLC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-x5znl3ex5ke4": {
+      "company_id": "uei-x5znl3ex5ke4",
+      "uei": "X5ZNL3EX5KE4",
+      "company_name": "MACGREGOR USA INC",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-sgk5egb9vqm8": {
+      "company_id": "uei-sgk5egb9vqm8",
+      "uei": "SGK5EGB9VQM8",
+      "company_name": "ARCTIC SLOPE TECHNICAL SERVICES, INC.",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-prmwka5mkwk3": {
+      "company_id": "uei-prmwka5mkwk3",
+      "uei": "PRMWKA5MKWK3",
+      "company_name": "EARNEST LUCIOUS",
+      "company": null,
+      "last_checked": null
+    },
+    "uei-em6erjcy9996": {
+      "company_id": "uei-em6erjcy9996",
+      "uei": "EM6ERJCY9996",
+      "company_name": "JCBE INC",
+      "company": null,
+      "last_checked": null
     }
   },
   "by_uei": {
@@ -28114,7 +28191,18 @@
     "ECGCK1ARG1E1": "uei-ecgck1arg1e1",
     "CM39N6XPQF41": "uei-cm39n6xpqf41",
     "J1K7GK6LMJD5": "uei-j1k7gk6lmjd5",
-    "HYWMRA3B7T75": "uei-hywmra3b7t75"
+    "HYWMRA3B7T75": "uei-hywmra3b7t75",
+    "ZWNMHKYGBVM9": "uei-zwnmhkygbvm9",
+    "MHP8JH2RNGW7": "uei-mhp8jh2rngw7",
+    "DAFVWZ8MLNF1": "uei-dafvwz8mlnf1",
+    "JGCETCZMKDX3": "uei-jgcetczmkdx3",
+    "FCC8SSGLL6L8": "uei-fcc8ssgll6l8",
+    "E356XNA5BYD5": "uei-e356xna5byd5",
+    "D1VPKJAJZW36": "uei-d1vpkjajzw36",
+    "X5ZNL3EX5KE4": "uei-x5znl3ex5ke4",
+    "SGK5EGB9VQM8": "uei-sgk5egb9vqm8",
+    "PRMWKA5MKWK3": "uei-prmwka5mkwk3",
+    "EM6ERJCY9996": "uei-em6erjcy9996"
   },
-  "updated_at": "2026-11-05T18:46:00Z"
+  "updated_at": "2026-11-06T18:01:11Z"
 }
