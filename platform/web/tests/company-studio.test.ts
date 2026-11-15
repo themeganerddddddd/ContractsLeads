@@ -27,6 +27,16 @@ describe("Company-first SEO and intelligence experience", () => {
     expect(radar).toContain("Destination unknown");
   });
 
+  it("splits public SEO sitemaps into 20k-record partitions without indexing private pages", () => {
+    const index = read("app/sitemap.xml/route.ts");
+    const shard = read("app/sitemaps/[section]/[page]/route.ts");
+    expect(index).toContain("RECORDS_PER_SITEMAP = 20000");
+    expect(shard).toContain("PAGE_SIZE = 20000");
+    expect(shard).toContain("has_contracts");
+    expect(shard).not.toContain('"/account"');
+    expect(shard).not.toContain('"/saved-searches"');
+  });
+
   it("uses company-backed metadata, canonical routes and noindex for demo records", () => {
     const company = read("app/company/[slug]/page.tsx");
     const contract = read("app/contract/[id]/page.tsx");
