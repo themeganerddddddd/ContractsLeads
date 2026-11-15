@@ -42,13 +42,18 @@ export default async function CompanyContractsPage({ params, searchParams }: { p
   const agency = scalar(raw.agency)?.trim().slice(0, 100) || null;
   const page = Math.max(1, Math.min(100000, Number.parseInt(scalar(raw.page) || "1", 10) || 1));
 
+  let companyRows: { id: string; slug: string; canonical_name: string; is_demo: boolean }[];
   try {
-    const companyRows = await query<{ id: string; slug: string; canonical_name: string; is_demo: boolean }>(
+    companyRows = await query<{ id: string; slug: string; canonical_name: string; is_demo: boolean }>(
       "SELECT id::text,slug,canonical_name,is_demo FROM companies WHERE slug=$1 AND NOT is_benchmark LIMIT 1", [slug]
     );
-    const company = companyRows[0];
-    if (!company) notFound();
+  } catch (error) {
+    return <><section className="page-heading"><p className="studio-section-label">GOVERNMENT CONTRACT HISTORY</p><h1>Historical company awards</h1></section><DatabaseNotice message={error instanceof Error ? error.message : String(error)} /></>;
+  }
+  const company = companyRows[0];
+  if (!company) notFound();
 
+  try {
     const where = `recipient_company_id=$1 AND NOT is_benchmark AND NOT is_demo AND
       ($2::int IS NULL OR EXTRACT(YEAR FROM award_date)::int=$2) AND
       ($3::text IS NULL OR awarding_agency ILIKE '%' || $3 || '%')`;
@@ -72,7 +77,7 @@ export default async function CompanyContractsPage({ params, searchParams }: { p
         <Link href={`/company/${company.slug}#government-business`} className="studio-archive-back">← Company intelligence profile</Link>
       </section>
       <form action={`/company/${company.slug}/contracts`} method="get" className="studio-archive-filter">
-        <label>Fiscal / award calendar year
+        <label>Award calendar year
           <select name="year" defaultValue={year || ""}><option value="">All available years</option>{years.map(row => <option value={row.year} key={row.year}>{row.year}</option>)}</select>
         </label>
         <label>Agency name
