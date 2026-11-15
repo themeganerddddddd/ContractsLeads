@@ -59,7 +59,8 @@ export async function GET(_request: Request, { params }: { params: Promise<Param
           const county = String(row.county || "");
           if (/^[a-z]{2}$/.test(state) && /^\d{3,5}$/.test(county)) entries.push({ path: `/location/${state}/${county}` });
         } else if (/^[a-zA-Z0-9-]+$/.test(slug)) {
-          const prefix = { contracts: "contract", processes: "process", industries: "industry", agencies: "agency" }[section];
+          const prefixes: Record<string, string> = { contracts: "contract", processes: "process", industries: "industry", agencies: "agency" };
+          const prefix = prefixes[section];
           if (prefix) entries.push({ path: `/${prefix}/${slug}`, lastModified: row.updated_at });
         }
       }
