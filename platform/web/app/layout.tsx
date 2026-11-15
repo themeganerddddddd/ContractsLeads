@@ -5,6 +5,7 @@ import { publicAppUrl } from "@/lib/config";
 import "./globals.css";
 import "./studio.css";
 import "./studio-detail.css";
+import "./studio-fallback.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),

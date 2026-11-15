@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CompanyTable } from "@/components/CompanyTable";
+import { OfficialContractsExplorer } from "@/components/OfficialContractsExplorer";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -298,6 +299,7 @@ export default async function CompaniesPage({
         <DatabaseNotice
           message={cause instanceof Error ? cause.message : String(cause)}
         />
+        <OfficialContractsExplorer searchParams={{ recipient: typeof raw.q === "string" ? raw.q : "" }} compact />
       </>
     );
   }

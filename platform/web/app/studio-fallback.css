@@ -1,0 +1,26 @@
+/* Public source mode when a preview has no attached company database. */
+.official-source-section{margin:34px 0 65px;padding:33px;border:1px solid #d7e5e9;border-radius:16px;background:#fff;box-shadow:0 14px 32px rgba(12,53,63,.03)}
+.official-source-header{display:flex;align-items:start;justify-content:space-between;gap:24px}
+.official-source-header h2{margin:0;color:#173b4b;font-size:clamp(26px,2.8vw,36px);font-weight:780;letter-spacing:-.05em}
+.official-source-header p:not(.studio-section-label){max-width:730px;color:#657987;font-size:13px;line-height:1.7}
+.official-source-header>a{padding:10px 14px;white-space:nowrap;border:1px solid #cfe2e0;border-radius:8px;color:#13675e;font-size:12px;font-weight:780}
+.official-source-search{margin:26px 0}
+.official-source-search label{display:block;margin-bottom:10px;color:#51707f;font-size:12px;font-weight:750}
+.official-source-search>div{display:flex;gap:9px;flex-wrap:wrap}
+.official-source-search input{min-width:260px;flex:1;padding:11px 15px;border:1px solid #cbdde4;border-radius:8px;color:#143546;background:#fff}
+.official-source-table-wrap{overflow:auto;border:1px solid #e3ebef;border-radius:10px}
+.official-source-table{min-width:760px}
+.official-source-table td{padding:16px}
+.official-source-table td small{display:block;max-width:410px;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#718694;font-size:11px}
+.official-source-table td strong{font-weight:720}
+.official-source-table td a{color:#197065;font-size:12px;font-weight:800}
+.official-source-disclaimer{margin:24px 0 0;padding:14px 17px;border:1px solid #d8e7e3;border-radius:9px;background:#f2f8f5;color:#5a7880;font-size:11px;line-height:1.7}
+.official-source-disclaimer strong{color:#296458}
+.official-source-note{padding:30px;border:1px dashed #d5e3e7;border-radius:9px;color:#607988}
+.official-source-note strong{color:#254555}
+.official-source-note p{font-size:13px}
+.official-source-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:21px 0 0;color:#677e8b;font-size:12px}
+.official-source-pagination>div{display:flex;gap:18px}
+.official-source-pagination a,.official-source-actions a{font-size:12px;font-weight:790;color:#166d64}
+.official-source-compact{margin:0 0 65px}
+@media(max-width:720px){.official-source-section{padding:23px 16px}.official-source-header{flex-direction:column}.official-source-search input{min-width:100%}.official-source-pagination{flex-direction:column;align-items:flex-start}}
