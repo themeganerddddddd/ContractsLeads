@@ -70,3 +70,9 @@
 .prediction-table .outlook-cell strong{color:#126f64;font-size:14px}
 @media(max-width:860px){.company-profile-heading{padding:30px 26px!important}.company-profile-tabs.studio-profile-tabs{top:112px}.studio-history-heading{flex-direction:column}.studio-history-archive-cta{align-items:flex-start;flex-direction:column}.prediction-heading{padding:30px}}
 @media(max-width:600px){.company-profile-heading{padding:25px 20px!important}.studio-archive-hero{padding:28px 23px}.studio-history{padding:24px 15px}.studio-history-chart svg{min-width:420px}.studio-range-selector{width:100%;justify-content:space-between}.studio-range-selector button{flex:1}.company-profile-tabs.studio-profile-tabs{top:110px}.studio-archive-filter{padding:15px}.studio-archive-filter label{width:100%}.prediction-heading{padding:26px 20px}.studio-history-heading h3{font-size:23px}}
+
+/* Cross-radar intelligence navigation */
+.studio-radar-tabs{display:flex;flex-wrap:wrap;gap:9px;margin:27px 0 0}
+.studio-radar-tabs a{padding:12px 17px;border:1px solid #dce6ea;border-radius:10px;background:#fff;color:#5f7481;font-size:12px;font-weight:800}
+.studio-radar-tabs a:hover{text-decoration:none;border-color:#7cbca8}
+.studio-radar-tabs a[aria-current="page"]{background:#0e3340;color:#e1fff3;border-color:#0e3340;box-shadow:0 8px 24px rgba(16,58,68,.12)}

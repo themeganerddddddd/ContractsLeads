@@ -21,19 +21,19 @@ const CONTENT: Record<
   { title: string; purpose: string; assessment: "expansion" | "relocation" | "contraction" }
 > = {
   expansion: {
-    title: "Predicted Expansion",
-    purpose: "Find companies showing evidence that they may expand.",
+    title: "Expansion Radar",
+    purpose: "Follow source-backed activity that may indicate facility growth, capacity investment or market entry.",
     assessment: "expansion",
   },
   moves: {
-    title: "Predicted Moves",
+    title: "Movement Radar",
     purpose:
-      "Find companies that may relocate, add a location, or materially change their geographic footprint.",
+      "Explore changes to company operating footprints. New locations are not automatically classified as relocations.",
     assessment: "relocation",
   },
   contraction: {
-    title: "Predicted Contraction",
-    purpose: "Find companies showing evidence that operations may shrink or close.",
+    title: "Retention Radar",
+    purpose: "Investigate source-backed contraction and workforce signals that may warrant business retention outreach.",
     assessment: "contraction",
   },
 };
@@ -128,8 +128,9 @@ export async function PredictionScreener({
     );
     return (
       <>
+        <div className="studio-radar-tabs" aria-label="Explore company change intelligence"><Link href="/predicted-expansion" aria-current={kind === "expansion" ? "page" : undefined}>↗ Expansion</Link><Link href="/predicted-moves" aria-current={kind === "moves" ? "page" : undefined}>⇄ Movement</Link><Link href="/predicted-contraction" aria-current={kind === "contraction" ? "page" : undefined}>◈ Retention</Link></div>
         <section className="page-heading prediction-heading">
-          <p className="eyebrow">Company outlook</p>
+          <p className="eyebrow">BUSINESSCURRENT / SOURCE-BACKED RADAR</p>
           <h1>{copy.title}</h1>
           <p>{copy.purpose}</p>
           <div className="prediction-safety-note">
@@ -199,7 +200,7 @@ export async function PredictionScreener({
               </select>
             </label>
             <label>
-              Prediction horizon
+              Model horizon (when validated)
               <select name="horizon" defaultValue={input.horizon?.toString()}>
                 <option value="90">90 days</option>
                 <option value="180">180 days</option>
@@ -250,8 +251,8 @@ export async function PredictionScreener({
         ) : null}
         <div className="results-toolbar">
           <div>
-            <h2>{result.visibleTotal.toLocaleString()} visible companies</h2>
-            <p>{result.total.toLocaleString()} matching source-backed signals</p>
+            <h2>{result.visibleTotal.toLocaleString()} companies in view</h2>
+            <p>{result.total.toLocaleString()} matching records. Evidence strength is not a calibrated probability.</p>
           </div>
         </div>
         <div className="table-wrap prediction-table-wrap">

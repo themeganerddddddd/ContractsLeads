@@ -23,26 +23,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/data-coverage",
     "/tracked-companies",
     "/discovered-companies",
-    "/alerts",
     "/locations",
     "/methodology",
     "/industries",
     "/agencies",
     "/pricing",
-    "/sign-in",
-    "/account",
-    "/terms",
-    "/privacy",
   ].map((path) => ({ url: `${base}${path}`, changeFrequency: "daily" }));
 
   try {
     const [companies, awards, processes, industries, agencies, locations] =
       await Promise.all([
         query<any>(
-          "SELECT slug,updated_at FROM companies WHERE NOT is_benchmark",
+          "SELECT slug,updated_at FROM companies WHERE NOT is_benchmark AND NOT is_demo",
         ),
         query<any>(
-          "SELECT id::text,updated_at FROM awards WHERE NOT is_benchmark",
+          "SELECT id::text,updated_at FROM awards WHERE NOT is_benchmark AND NOT is_demo",
         ),
         query<any>(
           "SELECT id::text,updated_at FROM procurement_processes WHERE NOT is_demo",
@@ -55,10 +50,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]);
 
     companies.forEach((row: any) =>
-      urls.push({
+      (urls.push({
         url: `${base}/company/${row.slug}`,
         lastModified: row.updated_at,
-      }),
+      }), urls.push({
+        url: `${base}/company/${row.slug}/contracts`,
+        lastModified: row.updated_at,
+      })),
     );
     awards.forEach((row: any) =>
       urls.push({

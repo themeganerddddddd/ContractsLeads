@@ -10,7 +10,7 @@ describe("BusinessCurrent public product", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
     expect(layout).toContain("BusinessCurrent — Business change intelligence, nationwide");
-    for (const label of ["Companies", "Locations", "Predicted Expansion", "Predicted Moves", "Predicted Contraction"]) {
+    for (const label of ["Companies", "Locations", "Expansion Radar", "Movement Radar", "Retention Radar", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
     for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology", "Plans", "Account"]) {
@@ -21,7 +21,8 @@ describe("BusinessCurrent public product", () => {
 
   it("covers the sellable homepage and preserves supporting legacy experiences", () => {
     expect(read("app/page.tsx")).toContain("Find the companies that are changing before everyone else does.");
-    expect(read("app/page.tsx")).toContain("Live company intelligence");
+    expect(read("app/page.tsx")).toContain("Know which companies");
+    expect(read("app/page.tsx")).toContain("LIVE COMPANY INTELLIGENCE");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
     expect(read("app/locations/page.tsx")).toContain("County / Parish / Local Area");
@@ -51,7 +52,9 @@ describe("BusinessCurrent public product", () => {
     const company = read("app/company/[slug]/page.tsx");
     const timeline = read("components/CompanyIntelligenceTimeline.tsx");
     const contract = read("app/contract/[id]/page.tsx");
-    expect(company).toContain("Annual net U.S. obligations");
+    expect(read("components/ContractHistoryChart.tsx")).toContain("Annual net U.S. obligations");
+    expect(company).toContain("ContractHistoryChart");
+    expect(read("app/company/[slug]/contracts/page.tsx")).toContain("Federal contract history");
     expect(timeline).toContain("Minor contract modification");
     expect(timeline).toContain("material-adjustment");
     for (const label of ["Exact obligation", "Current total", "Potential total", "Modification", "Action type", "Source"]) {
