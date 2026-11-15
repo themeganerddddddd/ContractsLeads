@@ -11,7 +11,21 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  return { title: `Contract ${id}`, description: `Federal contract lifecycle, transaction history, and explainable intelligence for ${id}.` };
+  try {
+    const profile = await getContractProfile(id);
+    if (!profile) return { title: "Government contract", robots: { index: false } };
+    const award = profile.award;
+    const name = award.canonical_name || "Company";
+    const description = (award.title || award.description || "Federal award").slice(0, 80);
+    return {
+      title: `${name}: ${description} — Government contract`,
+      description: `Federal contract details for ${name}. View award history, transaction obligations, modifications, buyer and official sources.`,
+      alternates: { canonical: `/contract/${id}` },
+      robots: { index: !award.is_demo, follow: true },
+    };
+  } catch {
+    return { title: "Government contract", robots: { index: false } };
+  }
 }
 
 export default async function ContractPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +34,7 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
   if (!data) notFound();
   const a = data.award;
   return <>
-    <section className="entity-heading"><div className="breadcrumb"><Link href="/contracts">Contracts</Link><span>/</span><span>{reported(a.piid || a.generated_award_id)}</span></div><div className="entity-header-row"><div><p className="eyebrow">{reported(a.award_type)}</p><h1>{reported(a.title || a.description)}</h1><p>Awarded to <Link href={`/company/${a.company_slug}`}>{a.canonical_name}</Link></p><div className="entity-meta"><span className="meta-chip">PIID {reported(a.piid)}</span><span className="meta-chip">US · USAspending</span><span className="meta-chip">{reported(a.industry_name)}</span>{a.is_demo ? <span className="demo-pill">Demonstration contract</span> : null}</div></div><div><strong className="price">{compactMoney(a.total_obligated)}</strong><DataNote updated={data.lastUpdated} demo={a.is_demo} /></div></div></section>
+    <section className="entity-heading"><div className="breadcrumb"><Link href="/contracts">Contracts</Link><span>/</span><span>{reported(a.piid || a.generated_award_id)}</span></div><div className="entity-header-row"><div><p className="eyebrow">GOVERNMENT CONTRACT / {reported(a.award_type)}</p><h1>{reported(a.title || a.description)}</h1><p>Awarded to <Link href={`/company/${a.company_slug}`}>{a.canonical_name}</Link></p><div className="entity-meta"><span className="meta-chip">PIID {reported(a.piid)}</span><span className="meta-chip">US · USAspending</span><span className="meta-chip">{reported(a.industry_name)}</span>{a.is_demo ? <span className="demo-pill">Demonstration contract</span> : null}</div></div><div><strong className="price">{compactMoney(a.total_obligated)}</strong><DataNote updated={data.lastUpdated} demo={a.is_demo} /></div></div></section>
     <nav className="tabs"><a href="#overview">Overview</a><a href="#lifecycle">Lifecycle</a><a href="#intelligence">Predictive intelligence</a><a href="#transactions">Raw transactions</a></nav>
     <section id="overview"><div className="metrics-grid"><article className="metric-card"><span>Transaction obligation</span><strong>{money(a.total_obligated)}</strong><small>sum disclosed on award record</small></article><article className="metric-card"><span>Current contract value</span><strong>{money(a.current_value)}</strong><small>not interchangeable with obligation</small></article><article className="metric-card"><span>Potential contract value</span><strong>{money(a.potential_value)}</strong><small>including options if reported</small></article><article className="metric-card"><span>Award date</span><strong>{dateLabel(a.award_date)}</strong></article></div>
       <dl className="detail-grid"><div><dt>Company legal name</dt><dd>{reported(a.legal_name)}</dd></div><div><dt>UEI / CAGE</dt><dd>{reported(a.uei)} / {reported(a.cage_code)}</dd></div><div><dt>Parent award</dt><dd>{reported(a.parent_award_id)}</dd></div><div><dt>Awarding agency</dt><dd>{reported(a.awarding_agency)}</dd></div><div><dt>Subagency</dt><dd>{reported(a.awarding_subagency)}</dd></div><div><dt>Industry</dt><dd>{reported(a.industry_name)}</dd></div><div><dt>NAICS</dt><dd>{reported(a.naics)}</dd></div><div><dt>PSC</dt><dd>{reported(a.psc)}</dd></div><div><dt>Performance period</dt><dd>{dateLabel(a.start_date)} — {dateLabel(a.end_date)}</dd></div><div><dt>Recipient address</dt><dd>{reported([a.recipient_address, a.recipient_city, a.recipient_county, a.recipient_state, a.recipient_zip].filter(Boolean).join(", "))}</dd></div><div><dt>Place of performance</dt><dd>{reported([a.performance_city, a.performance_county, a.performance_state, a.performance_zip].filter(Boolean).join(", "))}</dd></div><div><dt>Source last modified</dt><dd>{dateLabel(a.last_modified)}</dd></div></dl>

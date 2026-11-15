@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { publicAppUrl } from "@/lib/config";
 import "./globals.css";
 import "./studio.css";
+import "./studio-detail.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),

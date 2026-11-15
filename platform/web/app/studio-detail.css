@@ -1,0 +1,72 @@
+/* Company archive, searchable history, and radar presentation. */
+.studio-profile-history-cta{background:#115864!important;color:#fff!important;border-color:#115864!important;white-space:nowrap}
+.studio-profile-history-cta:hover{background:#197c80!important;color:#fff!important}
+.company-profile-heading{position:relative;margin:28px 0 0;padding:40px 42px!important;border:1px solid #d8e4e6;border-radius:18px;background:linear-gradient(120deg,#fff 45%,#eaf5f2 100%);box-shadow:0 15px 40px rgba(26,61,75,.045)}
+.company-profile-heading h1{max-width:950px;color:#102c3c!important;font-size:clamp(35px,4.8vw,60px)!important;line-height:1.08!important;letter-spacing:-.06em!important}
+.company-profile-heading .entity-subtitle{margin-top:15px!important;color:#5c7181;font-size:14px}
+.company-profile-heading .entity-actions{align-items:flex-end;gap:12px}
+.company-profile-tabs.studio-profile-tabs{top:73px;margin:14px 0 30px;border:1px solid #dbe5eb;border-radius:11px;background:rgba(255,255,255,.96);box-shadow:0 8px 24px rgba(25,54,66,.035);backdrop-filter:blur(18px)}
+.studio-profile-tabs a{padding:15px 20px;font-size:12px;font-weight:780;color:#667d8a}
+.studio-profile-tabs a:hover{color:#146b68;background:#f0f8f5}
+.company-overview{padding-top:6px}
+.company-metrics .metric-card{min-height:146px;border:1px solid #dfe8ee;border-radius:12px;padding:24px 22px;box-shadow:0 6px 24px rgba(23,58,73,.03)}
+.company-metrics .metric-card strong{font-size:clamp(24px,2.5vw,35px);letter-spacing:-.045em}
+.company-metrics .metric-card span{color:#748698}
+.studio-outlook-section{padding:35px 0 13px}
+.studio-outlook-section .section-header h2{font-size:30px;letter-spacing:-.04em}
+.outlook-grid{gap:14px}
+.outlook-card{min-height:160px;padding:24px;border-radius:12px;border:1px solid #dce5ec;border-top:3px solid #66b8a9;box-shadow:0 9px 25px rgba(23,58,73,.035)}
+.outlook-card:nth-child(2){border-top-color:#7ca8be}
+.outlook-card:nth-child(3){border-top-color:#d6a06c}
+.outlook-card>strong{font-size:22px;color:#173e4b}
+.profile-section-group{scroll-margin-top:130px}
+.profile-subsection{scroll-margin-top:135px}
+.company-facts{border:1px solid #dce5ec;border-radius:12px;background:#fff;padding:25px 28px}
+.company-facts h2{font-size:23px;margin-top:0}
+.studio-inline-action{font-size:12px;font-weight:800;color:#146f65;white-space:nowrap}
+.studio-history{padding:28px 27px 18px;border:1px solid #d9e6e8;border-radius:16px;background:#fff;box-shadow:0 14px 36px rgba(23,58,73,.045)}
+.studio-history-heading{display:flex;justify-content:space-between;align-items:start;gap:28px}
+.studio-chart-kicker{margin:0 0 12px;color:#197566;font-size:10px;font-weight:800;letter-spacing:.14em}
+.studio-history-heading h3{margin:0;color:#142f40;font-size:27px;letter-spacing:-.04em;line-height:1.2}
+.studio-history-heading p:not(.studio-chart-kicker){max-width:650px;color:#758696;font-size:12px;line-height:1.6}
+.studio-range-selector{display:flex;gap:2px;padding:4px;border:1px solid #dce6ea;border-radius:9px;background:#f3f6f8;white-space:nowrap}
+.studio-range-selector button{border:0;padding:7px 13px;border-radius:6px;color:#667b8b;background:transparent;font-size:11px;font-weight:780;cursor:pointer}
+.studio-range-selector button.active{background:#fff;color:#124b52;box-shadow:0 2px 9px rgba(23,58,73,.08)}
+.studio-history-chart{max-width:100%;margin:27px 0 8px;overflow-x:auto}
+.studio-history-chart svg{min-width:520px;overflow:visible}
+.studio-grid-line{stroke:#e8eef1;stroke-width:1;stroke-dasharray:3 7}
+.studio-zero-line{stroke:#a6b8c0;stroke-width:1.4}
+.studio-bar.positive{fill:#318b8b}
+.studio-bar.negative{fill:#ca777f}
+.studio-chart-value{fill:#3f5967;font-size:10px;font-weight:700}
+.studio-chart-year{fill:#83949f;font-size:12px;font-weight:700}
+.studio-chart-axis{fill:#90a4af;font-size:12px}
+.studio-chart-footer{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;padding-top:18px;border-top:1px solid #e7edef;color:#8a99a1;font-size:11px}
+.studio-chart-footer a{color:#1d6c72;font-weight:700}
+.studio-chart-legend{display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:2px;background:#318b8b}
+.studio-history-archive-cta{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:19px;padding:19px 24px;border:1px solid #dae9e8;border-radius:12px;background:#eef7f5}
+.studio-history-archive-cta p{margin:0;color:#55717b;font-size:12px}
+.studio-history-archive-cta .studio-outline-link{background:#fff}
+.studio-archive-hero{margin-top:32px;padding:44px 45px;border:1px solid #dfe9ed;border-radius:16px;background:linear-gradient(110deg,#fff 55%,#e6f2f0)}
+.studio-archive-hero .breadcrumb{margin-bottom:35px}
+.studio-archive-hero h1{margin:0;color:#183747;font-size:clamp(33px,4.4vw,55px);font-weight:780;letter-spacing:-.06em;line-height:1.1}
+.studio-archive-hero h2{margin:9px 0 0;color:#41697b;font-size:clamp(21px,2.5vw,29px);letter-spacing:-.035em}
+.studio-archive-hero>p:not(.studio-section-label){max-width:720px;margin:22px 0;color:#688091;font-size:14px;line-height:1.7}
+.studio-archive-back{font-size:12px;font-weight:780;color:#147568}
+.studio-archive-filter{display:flex;flex-wrap:wrap;align-items:end;gap:15px;margin:22px 0;padding:22px;border:1px solid #dce6ec;border-radius:12px;background:#fff}
+.studio-archive-filter label{display:grid;gap:8px;min-width:190px;color:#5c7180;font-size:11px;font-weight:770}
+.studio-archive-filter input,.studio-archive-filter select{min-height:44px;border:1px solid #d5e1e8;border-radius:8px;padding:8px 12px;background:#fff;color:#183747;font-size:13px}
+.studio-archive-filter .button{min-height:43px}
+.studio-archive-results{margin-top:34px}
+.studio-archive-results>a{font-size:12px;font-weight:750}
+.studio-archive-note{margin:22px 0 60px;color:#788b98;font-size:12px}
+.prediction-heading{padding:40px 45px;margin:28px 0 18px;border:1px solid #d9e6eb;border-radius:17px;background:linear-gradient(120deg,#fff,#e9f4f1);box-shadow:0 9px 32px rgba(23,58,73,.04)}
+.prediction-heading h1{font-size:clamp(39px,4.3vw,59px);font-weight:790;letter-spacing:-.065em}
+.prediction-heading>p:not(.eyebrow){max-width:720px;color:#647c89}
+.prediction-safety-note{margin-top:25px;border-radius:10px;border-color:#e1e7dd;background:#f7f8f0}
+.prediction-filters{padding:24px!important;border:1px solid #dde7eb;border-radius:13px;background:#fff!important}
+.prediction-table-wrap{border-radius:13px;border:1px solid #dce6eb;background:#fff;overflow:auto}
+.prediction-table td,.prediction-table th{padding:17px!important}
+.prediction-table .outlook-cell strong{color:#126f64;font-size:14px}
+@media(max-width:860px){.company-profile-heading{padding:30px 26px!important}.company-profile-tabs.studio-profile-tabs{top:112px}.studio-history-heading{flex-direction:column}.studio-history-archive-cta{align-items:flex-start;flex-direction:column}.prediction-heading{padding:30px}}
+@media(max-width:600px){.company-profile-heading{padding:25px 20px!important}.studio-archive-hero{padding:28px 23px}.studio-history{padding:24px 15px}.studio-history-chart svg{min-width:420px}.studio-range-selector{width:100%;justify-content:space-between}.studio-range-selector button{flex:1}.company-profile-tabs.studio-profile-tabs{top:110px}.studio-archive-filter{padding:15px}.studio-archive-filter label{width:100%}.prediction-heading{padding:26px 20px}.studio-history-heading h3{font-size:23px}}
