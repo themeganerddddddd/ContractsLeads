@@ -109,7 +109,7 @@ describe("location-first business change", () => {
     expect(page).toContain("Know which companies");
     expect(page).toContain('name="q"');
     expect(page).toContain("Explore government business histories, follow corporate signals");
-    expect(page).toContain("GOVERNMENT BUSINESS");
+    expect(page).toContain("GOVERNMENT CONTRACT HISTORY");
     expect(page).not.toContain("Largest recent awards");
     expect(header).toContain("BusinessCurrent");
     expect(header).toContain('["Companies", "/companies"]');
