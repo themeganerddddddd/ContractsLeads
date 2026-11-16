@@ -366,6 +366,16 @@ export async function searchPredictionCompanies(
   const pageSize = Math.min(25, entitlementLimit);
   const offset = Math.max(0, (input.page - 1) * pageSize);
   const values = [...filters.values, pageSize, offset];
+  // A "most likely" sort is a probability ranking ONLY for calibrated, active models.
+  // Non-calibrated companies remain ordered by descriptive evidence score, never a fake percentage.
+  const orderBy = input.rank === "recent"
+    ? `s.${scoreColumn}_date::date DESC NULLS LAST,s.${scoreColumn}_score::numeric DESC NULLS LAST,s.canonical_name`
+    : input.rank === "evidence"
+      ? `s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`
+      : `CASE WHEN pm.probability_eligible = true AND pm.status = 'active'
+            AND cp.data_sufficiency = 'sufficient' AND cp.probability IS NOT NULL
+          THEN cp.probability ELSE NULL END DESC NULLS LAST,
+          s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`;
   const rows = await query<PredictionCompanyRow>(
     `${SNAPSHOT_CTES}
      SELECT s.*,cp.probability::text,cp.data_sufficiency AS prediction_sufficiency,
@@ -378,7 +388,7 @@ export async function searchPredictionCompanies(
      ) cp ON true
      LEFT JOIN prediction_models pm ON pm.id=cp.model_id
      ${filters.text()}
-     ORDER BY s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC,s.canonical_name
+     ORDER BY ${orderBy}
      LIMIT $${values.length - 1} OFFSET $${values.length}`,
     values,
   );

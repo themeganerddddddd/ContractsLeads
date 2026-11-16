@@ -33,6 +33,7 @@ export type PredictionInput = {
   horizon?: number;
   recencyDays?: number;
   governmentMin?: number;
+  rank: "likelihood" | "evidence" | "recent";
   page: number;
 };
 
@@ -54,7 +55,7 @@ export function parseCompanyScreenerInput(raw: RawParams): CompanyScreenerInput 
   return {
     q: one(raw.q)?.trim() || undefined,
     industry: one(raw.industry)?.trim() || undefined,
-    country: one(raw.country)?.trim().toUpperCase() || undefined,
+    country: one(raw.country)?.trim().toUpperCase() === "ALL" ? undefined : (one(raw.country)?.trim().toUpperCase() || "US"),
     state: one(raw.state)?.trim().toUpperCase() || undefined,
     county: one(raw.county)?.trim() || undefined,
     city: one(raw.city)?.trim() || undefined,
@@ -72,17 +73,19 @@ export function parseCompanyScreenerInput(raw: RawParams): CompanyScreenerInput 
 }
 
 export function parsePredictionInput(raw: RawParams): PredictionInput {
+  const ranking = one(raw.rank);
   const horizon = optionalNumber(one(raw.horizon));
   const recencyDays = optionalNumber(one(raw.recency));
   return {
     industry: one(raw.industry)?.trim() || undefined,
-    country: one(raw.country)?.trim().toUpperCase() || undefined,
+    country: one(raw.country)?.trim().toUpperCase() === "ALL" ? undefined : (one(raw.country)?.trim().toUpperCase() || "US"),
     state: one(raw.state)?.trim().toUpperCase() || undefined,
     county: one(raw.county)?.trim() || undefined,
     city: one(raw.city)?.trim() || undefined,
     horizon: horizon && [90, 180, 365].includes(horizon) ? horizon : 180,
     recencyDays: recencyDays && [30, 90, 180, 365].includes(recencyDays) ? recencyDays : 180,
     governmentMin: optionalNumber(one(raw.government_min)),
+    rank: ranking === "evidence" || ranking === "recent" ? ranking : "likelihood",
     page: positiveInteger(one(raw.page), 1),
   };
 }
