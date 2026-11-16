@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MarketFilterBar, marketHref } from "@/components/MarketFilterBar";
+import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
 import { indicationLabel } from "@/lib/change-intelligence";
@@ -18,17 +19,17 @@ type RawParams = Record<string,string|string[]|undefined>;
 type Config = { index: string; title: string; headline: string; purpose: string; assessment: "expansion"|"relocation"|"contraction"; signal: string };
 const CONTENT: Record<PredictionKind,Config> = {
   expansion: {
-    index:"01",title:"Expansion Radar",headline:"Find the next expansion.",
+    index:"01",title:"Expansion Radar",headline:"Expansion intelligence",
     purpose:"Surface companies showing verified indications of investment, additional capacity or a new location. Explore the evidence before making an outreach decision.",
     assessment:"expansion",signal:"Expansion",
   },
   moves: {
-    index:"02",title:"Movement Radar",headline:"See where companies may move.",
+    index:"02",title:"Movement Radar",headline:"Movement intelligence",
     purpose:"Assess source-backed footprint and relocation indications. An additional operating site does not automatically mean a company is relocating.",
     assessment:"relocation",signal:"Movement",
   },
   contraction: {
-    index:"03",title:"Retention Radar",headline:"Find companies that may need attention.",
+    index:"03",title:"Retention Radar",headline:"Retention intelligence",
     purpose:"Prioritize retention outreach using supported contraction, closure and workforce-change indicators—not an isolated contract reduction.",
     assessment:"contraction",signal:"Retention",
   },
@@ -122,8 +123,8 @@ function Tabs({kind,values}:{kind:PredictionKind;values:Parameters<typeof market
   </nav>;
 }
 
-export async function PredictionScreener({kind,searchParams}:{
-  kind:PredictionKind;searchParams:Promise<RawParams>;
+export async function PredictionScreener({kind,searchParams,dashboard=false}:{
+  kind:PredictionKind;searchParams:Promise<RawParams>;dashboard?:boolean;
 }){
   const raw=await searchParams;
   const input=parsePredictionInput(raw);
@@ -148,42 +149,33 @@ export async function PredictionScreener({kind,searchParams}:{
   } catch {unavailable=true;}
 
   const title = copy.title;
-  return <div className="terminal-view">
-    <section className="terminal-heading">
+  return <div className={`terminal-view bc-intelligence-view${dashboard?" bc-dashboard-mode":""}`}>
+    {!dashboard ? <section className="terminal-heading">
       <div className="terminal-heading-main">
-        <p className="terminal-eyebrow"><span className="terminal-greenline"/> BUSINESSCURRENT / U.S. MARKET INTELLIGENCE</p>
+        <p className="terminal-eyebrow"><span className="terminal-greenline"/> INTELLIGENCE / {copy.index}</p>
         <h1>{copy.headline}</h1>
         <p>{copy.purpose}</p>
       </div>
       <div className="terminal-heading-right">
-        <span className="terminal-scope-label">GEOGRAPHY</span>
-        <strong>{input.county ? `${input.county}${input.state?`, ${input.state}`:""}` : input.state? `${input.state} · all counties`:input.country==="US"?"United States":input.country==="ALL"?"Global coverage":input.country}</strong>
-        <span className="terminal-status-badge">{unavailable?"Source not connected":"Verified source records"}</span>
+        <span className="terminal-scope-label">CURRENT MARKET</span>
+        <strong>{input.county ? `${input.county}${input.state?`, ${input.state}`:""}` : input.state? `${input.state} · all counties`:input.country==="US"?"United States":input.country==="ALL"?"All countries":input.country}</strong>
       </div>
-    </section>
+    </section> : null}
     <Tabs kind={kind} values={values}/>
     <MarketFilterBar action={path} values={values} industries={industries} knownCounties={counties} otherStates={states} />
     <section className="terminal-result-pane">
       <div className="terminal-result-head">
         <div><p className="terminal-eyebrow">{copy.index} / RANKED {copy.signal.toUpperCase()} INTELLIGENCE</p>
-        <h2>{title} · ranked companies</h2>
+        <h2>{dashboard ? "Expansion watchlist" : title + " · ranked companies"}</h2>
         <p>{unavailable
-          ?"The ranked view will populate when its company data source is connected."
+          ?"Ranked companies will appear here once the intelligence source is connected."
           :"Ranked by validated likelihood when available, then descriptive source-evidence strength. Evidence strength is not a calibrated probability."}</p></div>
         {!unavailable ? <div className="terminal-result-meta">
           <strong>{(data?.visibleTotal||0).toLocaleString()}</strong>
           <span>visible signals</span>
         </div> : null}
       </div>
-      {unavailable?
-        <div className="terminal-ranking-placeholder" role="status">
-          <span className="terminal-ranking-placeholder-icon" aria-hidden="true">◌</span>
-          <div className="terminal-ranking-placeholder-content">
-            <strong>No live {copy.signal.toLowerCase()} rankings to display</strong>
-            <p>The company intelligence source is disconnected. The U.S., state and county filters are ready; no likelihoods or signals are being inferred from unrelated contract records.</p>
-          </div>
-          <Link href="/public-records" className="terminal-ranking-source-link">Source library <span aria-hidden="true">↗</span></Link>
-        </div>:
+      {unavailable?<RankingsEmptyState variant={kind}/>:
         <>
           {data?.resultLimited?<PaywallNotice title={`Showing ${data.visibleTotal.toLocaleString()} ranked results`}>Additional company records and advanced analysis depend on your plan and available source coverage.</PaywallNotice>:null}
           <RankedSignalsTable kind={kind} rows={data?.rows||[]} page={data?.page||1}/>
