@@ -236,3 +236,13 @@ button,input,select{font-family:inherit}
   .market-field input,.market-field select{font-size:12px}
   .market-filter-submit{min-height:45px}
 }
+
+/* Minimal disconnected-data row. Archived records live only in /public-records. */
+.terminal-ranking-placeholder{display:flex;align-items:center;gap:17px;min-height:115px;padding:28px 26px;background:#fbfcfd;border-top:1px solid #e9eef1}
+.terminal-ranking-placeholder-icon{display:grid;place-items:center;flex:0 0 auto;width:39px;height:39px;border-radius:9px;border:1px solid #dce6ec;background:#f2f6f8;color:#8093a1;font-size:26px;line-height:1}
+.terminal-ranking-placeholder-content{min-width:0;flex:1}
+.terminal-ranking-placeholder-content strong{display:block;color:#304757;font-size:13px;font-weight:790}
+.terminal-ranking-placeholder-content p{max-width:790px;margin:6px 0 0;color:#81929c;font-size:11px;line-height:1.65}
+.terminal-ranking-source-link{display:inline-flex;align-items:center;gap:11px;padding:10px 13px;flex:0 0 auto;border:1px solid #d7e2ea;border-radius:6px;background:#fff;color:#245bc0;font-size:11px;font-weight:780;white-space:nowrap}
+.terminal-ranking-source-link:hover{background:#f2f7ff;text-decoration:none}
+@media(max-width:710px){.terminal-ranking-placeholder{align-items:flex-start;padding:20px 15px;flex-wrap:wrap;gap:12px}.terminal-ranking-placeholder-content{flex:1 1 calc(100% - 55px)}.terminal-ranking-source-link{margin-left:55px}}

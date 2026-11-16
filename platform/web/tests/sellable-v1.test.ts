@@ -45,7 +45,7 @@ describe("sellable BusinessCurrent V1", () => {
     expect(locations).toContain('CompanyDirectory searchParams={searchParams} locationFocus');
     const directory = read("components/CompanyDirectory.tsx");
     expect(directory).toContain("getCompanyFilterOptions(input.country");
-    expect(directory).toContain("OfflineRecordsExplorer");
+    expect(directory).toContain("terminal-ranking-placeholder");
     expect(locations).not.toContain("featured markets");
   });
 

@@ -34,6 +34,16 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(filter).toContain('["LA","Louisiana"]');
     expect(filter).not.toContain("@/lib/db");
   });
+  it("does not repeat the unrelated Montgomery County archive across nationwide radar screens",()=>{
+    const radar=read("components/PredictionScreener.tsx");
+    const directory=read("components/CompanyDirectory.tsx");
+    expect(radar).not.toContain("OfflineRecordsExplorer");
+    expect(directory).not.toContain("OfflineRecordsExplorer");
+    expect(radar).toContain("terminal-ranking-placeholder");
+    expect(directory).toContain("terminal-ranking-placeholder");
+    expect(radar).toContain('href="/public-records"');
+    expect(read("app/public-records/page.tsx")).toContain("OfflineRecordsExplorer");
+  });
   it("uses ranked tables rather than company cards on main screens and one dropdown arrow",()=>{
     expect(read("app/page.tsx")).toContain('PredictionScreener kind="expansion"');
     expect(read("components/PredictionScreener.tsx")).toContain("terminal-ranking-table");

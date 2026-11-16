@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { MarketFilterBar, marketHref } from "@/components/MarketFilterBar";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -159,7 +158,7 @@ export async function PredictionScreener({kind,searchParams}:{
       <div className="terminal-heading-right">
         <span className="terminal-scope-label">GEOGRAPHY</span>
         <strong>{input.county ? `${input.county}${input.state?`, ${input.state}`:""}` : input.state? `${input.state} · all counties`:input.country==="US"?"United States":input.country==="ALL"?"Global coverage":input.country}</strong>
-        <span className="terminal-status-badge">{unavailable?"Historical source mode":"Verified source records"}</span>
+        <span className="terminal-status-badge">{unavailable?"Source not connected":"Verified source records"}</span>
       </div>
     </section>
     <Tabs kind={kind} values={values}/>
@@ -167,20 +166,23 @@ export async function PredictionScreener({kind,searchParams}:{
     <section className="terminal-result-pane">
       <div className="terminal-result-head">
         <div><p className="terminal-eyebrow">{copy.index} / RANKED {copy.signal.toUpperCase()} INTELLIGENCE</p>
-        <h2>{unavailable?"Evidence rankings currently offline":title+" · ranked companies"}</h2>
+        <h2>{title} · ranked companies</h2>
         <p>{unavailable
-          ?"The company scoring database is unavailable. Below are dated public records, without invented likelihoods."
+          ?"The ranked view will populate when its company data source is connected."
           :"Ranked by validated likelihood when available, then descriptive source-evidence strength. Evidence strength is not a calibrated probability."}</p></div>
-        <div className="terminal-result-meta">
-          <strong>{unavailable?"—":(data?.visibleTotal||0).toLocaleString()}</strong>
-          <span>{unavailable?"No model data":"visible signals"}</span>
-        </div>
+        {!unavailable ? <div className="terminal-result-meta">
+          <strong>{(data?.visibleTotal||0).toLocaleString()}</strong>
+          <span>visible signals</span>
+        </div> : null}
       </div>
       {unavailable?
-        <div className="terminal-offline-state">
-          <div className="terminal-notice-line"><span aria-hidden="true">◌</span><div><strong>Predicted likelihoods are not available.</strong>
-            <p>Neon is paused or not connected to this preview. Archived contracts alone cannot establish expansion, relocation or retention risk. Filters below apply only to the limited archived U.S. source sample.</p></div></div>
-          <OfflineRecordsExplorer compact state={input.state} county={input.county} query={input.q||""} />
+        <div className="terminal-ranking-placeholder" role="status">
+          <span className="terminal-ranking-placeholder-icon" aria-hidden="true">◌</span>
+          <div className="terminal-ranking-placeholder-content">
+            <strong>No live {copy.signal.toLowerCase()} rankings to display</strong>
+            <p>The company intelligence source is disconnected. The U.S., state and county filters are ready; no likelihoods or signals are being inferred from unrelated contract records.</p>
+          </div>
+          <Link href="/public-records" className="terminal-ranking-source-link">Source library <span aria-hidden="true">↗</span></Link>
         </div>:
         <>
           {data?.resultLimited?<PaywallNotice title={`Showing ${data.visibleTotal.toLocaleString()} ranked results`}>Additional company records and advanced analysis depend on your plan and available source coverage.</PaywallNotice>:null}
