@@ -67,8 +67,8 @@ export function MarketFilterBar({
     values.industry || values.governmentMin != null ||
     (mode === "radar" && (values.rank !== "likelihood" || (values.recencyDays && values.recencyDays !== 180) || (values.horizon && values.horizon !== 180)))
   ));
-  const otherStatesSet = new Set(US_STATES.map(([code]) => code));
-  const regionOptions = country === "US"
+  const otherStatesSet = new Set<string>(US_STATES.map(([code]) => code));
+  const regionOptions: {code: string; label: string}[] = country === "US"
     ? US_STATES.map(([code,label])=>({code,label}))
     : otherStates.filter(s=>!otherStatesSet.has(s)).map(code=>({code,label:code}));
   if(state && !regionOptions.some(r=>r.code===state))regionOptions.unshift({code:state,label:state});
