@@ -10,7 +10,7 @@ const primaryLinks = [
 ] as const;
 
 const moreLinks = [
-  { label: "Research", links: [["Government Business","/search"],["Industries","/industries"],["Agencies","/agencies"],["Business changes","/business-change"],["Public source archive","/public-records"]] },
+  { label: "Research", links: [["Government Business", "/search"],["Industries","/industries"],["Agencies","/agencies"],["Business changes","/business-change"],["Public source archive","/public-records"]] },
   { label: "Workspace", links: [["Saved","/saved-searches"],["Alerts","/alerts"],["Account","/account"]] },
   { label: "About", links: [["Coverage","/coverage"],["Methodology","/methodology"],["Plans","/pricing"]] },
 ] as const;
