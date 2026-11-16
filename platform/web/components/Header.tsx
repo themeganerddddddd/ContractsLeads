@@ -11,7 +11,7 @@ const primaryLinks = [
 
 const moreLinks = [
   { label: "Your workspace", links: [["Saved", "/saved-searches"], ["Alerts", "/alerts"], ["Account", "/account"]] },
-  { label: "Explore", links: [["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Business changes", "/business-change"]] },
+  { label: "Explore", links: [["Public source archive", "/public-records"], ["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Business changes", "/business-change"]] },
   { label: "About the data", links: [["Coverage", "/coverage"], ["Methodology", "/methodology"], ["Plans", "/pricing"]] },
 ] as const;
 

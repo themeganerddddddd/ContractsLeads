@@ -14,6 +14,7 @@ export function Footer() {
         <Link href="/pricing">Plans</Link>
         <Link href="/account">Account</Link>
         <Link href="/coverage">Coverage</Link>
+        <Link href="/public-records">Source archive</Link>
         <Link href="/methodology">Methodology</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/privacy">Privacy</Link>

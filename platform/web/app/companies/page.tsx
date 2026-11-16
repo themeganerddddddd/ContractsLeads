@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CompanyTable } from "@/components/CompanyTable";
 import { OfficialContractsExplorer } from "@/components/OfficialContractsExplorer";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -58,6 +59,10 @@ export default async function CompaniesPage({
 }) {
   const raw = await searchParams;
   const input = parseCompanyScreenerInput(raw);
+  if (!process.env.DATABASE_URL) return <>
+    <section className="page-heading"><p className="eyebrow">BusinessCurrent source archive</p><h1>Companies</h1><p>Live company screening is paused while PostgreSQL is unavailable. Browse the existing verified local registry and recent federal actions without a database connection.</p></section>
+    <OfflineRecordsExplorer query={typeof raw.q==="string" ? raw.q : ""} />
+  </>;
   try {
     const [viewer, options] = await Promise.all([
       resolveViewer(),
@@ -299,6 +304,7 @@ export default async function CompaniesPage({
         <DatabaseNotice
           message={cause instanceof Error ? cause.message : String(cause)}
         />
+        <OfflineRecordsExplorer query={typeof raw.q === "string" ? raw.q : ""} />
         <OfficialContractsExplorer searchParams={{ recipient: typeof raw.q === "string" ? raw.q : "" }} compact />
       </>
     );

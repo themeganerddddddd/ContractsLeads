@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { OfficialContractsExplorer } from "@/components/OfficialContractsExplorer";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
+import { archivedSources } from "@/lib/offline-snapshot";
 import { getHomepageCompanyExamples } from "@/lib/company-intelligence";
 import { compactMoney, reported } from "@/lib/format";
 
@@ -18,9 +20,11 @@ function changeLabel(value: string | null) {
 }
 
 export default async function HomePage() {
+  const databaseConfigured = Boolean(process.env.DATABASE_URL);
   let companies: Awaited<ReturnType<typeof getHomepageCompanyExamples>> = [];
   let error = "";
   try {
+    if (!databaseConfigured) throw new Error("The company database is not configured");
     companies = await getHomepageCompanyExamples();
   } catch (cause) {
     error = cause instanceof Error ? cause.message : String(cause);
@@ -41,17 +45,21 @@ export default async function HomePage() {
             <button type="submit">Explore company <span aria-hidden="true">↗</span></button>
           </form>
           <div className="studio-hero-links"><Link href="/contracts">Explore contract history <span aria-hidden="true">↗</span></Link><Link href="/locations">Explore by location <span aria-hidden="true">↗</span></Link></div>
-          <p className="studio-hero-footnote">Official sources first. Every claim retains its evidence. Signals are not predictions.</p>
+          <p className="studio-hero-footnote">Official sources first. Every claim retains its evidence. Signals are not predictions. {error ? <Link href="/public-records">Archived snapshot available · last updated Nov 2, 2026 ↗</Link> : null}</p>
         </div>
         <aside className="studio-monitor" aria-label="Company intelligence preview">
-          <div className="studio-monitor-top"><span><i className="studio-live-dot" /> INTELLIGENCE MONITOR</span><span>LIVE SOURCE VIEW</span></div>
+          <div className="studio-monitor-top"><span><i className="studio-live-dot" /> INTELLIGENCE MONITOR</span><span>{error ? "ARCHIVED SOURCE VIEW" : "LIVE SOURCE VIEW"}</span></div>
           <div className="studio-monitor-title"><span>DISCOVER / CHANGING COMPANIES</span><strong>From activity to insight.</strong><p>Follow the company. Trace the source. Understand the change.</p></div>
           <div className="studio-monitor-list">
             {companies.length ? companies.slice(0, 4).map((company, index) => <Link href={`/company/${company.slug}`} key={company.id} className="studio-monitor-row">
               <span className="studio-monitor-index">{String(index + 1).padStart(2, "0")}</span>
               <span className="studio-monitor-company"><strong>{company.canonical_name}</strong><small>{reported(company.location_label)} · {reported(company.industry_name)}</small></span>
               <span className="studio-monitor-change">{changeLabel(company.latest_change_type)} <span aria-hidden="true">↗</span></span>
-            </Link>) : <div className="studio-monitor-empty"><strong>No company snapshot available yet.</strong><span>When the database is connected, current source-backed companies will appear here.</span></div>}
+            </Link>) : archivedSources.companies.slice(0,4).map((company,index)=><Link href={`/public-records/company/${company.id}`} key={company.id} className="studio-monitor-row">
+              <span className="studio-monitor-index">{String(index+1).padStart(2,"0")}</span>
+              <span className="studio-monitor-company"><strong>{company.name}</strong><small>{company.hqCity}, {company.hqState} · {company.sector}</small></span>
+              <span className="studio-monitor-change">Archived ↗</span>
+            </Link>)}
           </div>
           <div className="studio-monitor-bottom"><div><span className="studio-monitor-icon">◎</span><span>Government contracts<br/><strong>Historical transactions</strong></span></div><div><span className="studio-monitor-icon">◫</span><span>Company change<br/><strong>Evidence &amp; locations</strong></span></div></div>
           <div className="studio-monitor-status"><span className="studio-live-dot" /> Coverage varies by source and geography <Link href="/coverage">Explore coverage ↗</Link></div>
@@ -75,7 +83,11 @@ export default async function HomePage() {
 
     <section className="studio-section studio-live-section">
       <div className="studio-section-title"><div><p className="studio-section-label">LIVE COMPANY INTELLIGENCE</p><h2>Start with the companies<br/><span>behind the signals.</span></h2></div><Link className="studio-outline-link" href="/companies">Explore all companies <span aria-hidden="true">↗</span></Link></div>
-      {error ? <div className="studio-public-mode"><OfficialContractsExplorer compact /><p className="studio-public-mode-note">Company intelligence is not connected to this deployment. <a href="/api/status/public">Check source status ↗</a></p></div> : companies.length ? <div className="studio-table-shell"><div className="studio-table-overline"><span><span className="studio-live-dot" /> SOURCE-BACKED COMPANY INDEX</span><span>Disclosed U.S. obligations only</span></div><div className="table-wrap"><table className="data-table studio-feature-table"><thead><tr><th>Company</th><th>Industry</th><th>Observed location</th><th>Latest change</th><th className="numeric">Government business</th><th aria-label="Open profile" /></tr></thead><tbody>{companies.map(company => <tr key={company.id}><td><Link className="primary-cell" href={`/company/${company.slug}`}>{company.canonical_name}</Link></td><td>{reported(company.industry_name)}</td><td>{reported(company.location_label)}<small>{company.location_basis}</small></td><td><span className="studio-data-pill">{changeLabel(company.latest_change_type)}</span></td><td className="numeric"><strong>{compactMoney(company.government_business)}</strong></td><td><Link aria-label={`View ${company.canonical_name}`} href={`/company/${company.slug}`}>↗</Link></td></tr>)}</tbody></table></div></div> : <OfficialContractsExplorer compact />}
+      {error ? <div className="studio-public-mode">
+        <p className="studio-public-mode-note"><strong>Database-free preview.</strong> Showing previously collected records while the live company database is offline. These are not live signals. <a href="/api/status/public">Connection status ↗</a></p>
+        <OfflineRecordsExplorer compact />
+        <OfficialContractsExplorer compact />
+      </div> : companies.length ? <div className="studio-table-shell"><div className="studio-table-overline"><span><span className="studio-live-dot" /> SOURCE-BACKED COMPANY INDEX</span><span>Disclosed U.S. obligations only</span></div><div className="table-wrap"><table className="data-table studio-feature-table"><thead><tr><th>Company</th><th>Industry</th><th>Observed location</th><th>Latest change</th><th className="numeric">Government business</th><th aria-label="Open profile" /></tr></thead><tbody>{companies.map(company => <tr key={company.id}><td><Link className="primary-cell" href={`/company/${company.slug}`}>{company.canonical_name}</Link></td><td>{reported(company.industry_name)}</td><td>{reported(company.location_label)}<small>{company.location_basis}</small></td><td><span className="studio-data-pill">{changeLabel(company.latest_change_type)}</span></td><td className="numeric"><strong>{compactMoney(company.government_business)}</strong></td><td><Link aria-label={`View ${company.canonical_name}`} href={`/company/${company.slug}`}>↗</Link></td></tr>)}</tbody></table></div></div> : <OfficialContractsExplorer compact />}
     </section>
     <section className="studio-endcap"><div><p className="studio-section-label">EXPLORE THE EVIDENCE</p><h2>Intelligence worth checking.<br/>Sources worth trusting.</h2><p>Company identities, operating locations and work locations are kept separate. Every signal is traceable to the records that support it.</p></div><Link href="/companies" className="studio-endcap-cta">Explore BusinessCurrent <span aria-hidden="true">↗</span></Link></section>
   </>;

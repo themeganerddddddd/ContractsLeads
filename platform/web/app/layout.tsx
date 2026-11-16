@@ -6,6 +6,7 @@ import "./globals.css";
 import "./studio.css";
 import "./studio-detail.css";
 import "./studio-fallback.css";
+import "./offline.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),

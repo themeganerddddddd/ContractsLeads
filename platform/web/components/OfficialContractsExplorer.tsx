@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { compactMoney, dateLabel } from "@/lib/format";
 import { searchPublicFederalAwards } from "@/lib/public-federal-awards";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 
 type RawParams = Record<string, string | string[] | undefined>;
 type Props = { searchParams?: RawParams; compact?: boolean };
@@ -41,7 +42,7 @@ export async function OfficialContractsExplorer({ searchParams = {}, compact = f
       <div><input id="official-recipient" name="recipient" defaultValue={recipient} placeholder="Search a federal contractor" /><button className="button primary" type="submit">Search awards</button><Link className="button secondary" href={base}>Clear</Link></div>
     </form> : null}
     {!result
-      ? <div className="official-source-note"><strong>Official contract feed is currently unavailable.</strong><p>The source request could not be completed. Existing company records have not been replaced with sample data.</p></div>
+      ? <div className="official-source-note"><strong>Official contract feed is currently unavailable.</strong><p>The source request could not be completed. The separately labeled, previously collected local archive remains available below.</p></div>
       : result.awards.length
         ? <>
           <div className="official-source-table-wrap"><table className="data-table official-source-table">
@@ -61,6 +62,7 @@ export async function OfficialContractsExplorer({ searchParams = {}, compact = f
           </div> : <div className="official-source-actions"><Link href="/contracts">Search official federal records ↗</Link></div>}
         </>
         : <div className="empty-panel"><strong>No matching public federal awards in the last 12 months.</strong><p>Try a different recipient name.</p></div>}
+    {!result ? <OfflineRecordsExplorer compact showCompanies={false} /> : null}
     <p className="official-source-disclaimer"><strong>Limited public-source mode.</strong> Company profiles, complete histories, watchlists and expansion/retention assessments require the BusinessCurrent PostgreSQL database. This feed is a separate direct-source view, not a substitute.</p>
   </section>;
 }

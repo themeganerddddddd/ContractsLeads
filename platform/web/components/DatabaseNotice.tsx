@@ -6,7 +6,7 @@ export function DatabaseNotice({ message: _message }: { message?: string }) {
     <section className="notice error-notice" role="status" aria-live="polite">
       <strong>Company intelligence data is not connected to this deployment</strong>
       <p>This view requires the BusinessCurrent database. No sample companies or predictions have been substituted. You can still explore federal awards through the separate official-source feed.</p>
-      <div className="official-source-actions"><Link href="/contracts">Browse official federal awards ↗</Link> · <Link href="/api/status/public">Check connection status ↗</Link></div>
+      <div className="official-source-actions"><Link href="/contracts">Browse official federal awards ↗</Link> · <Link href="/public-records">View archived company records ↗</Link> · <Link href="/api/status/public">Check connection status ↗</Link></div>
     </section>
   );
 }
