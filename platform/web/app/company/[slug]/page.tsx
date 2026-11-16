@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { DatabaseNotice } from "@/components/DatabaseNotice";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
+import { findArchivedCompany } from "@/lib/offline-snapshot";
 
 import { AwardTable } from "@/components/AwardTable";
 import { ContractHistoryChart } from "@/components/ContractHistoryChart";
@@ -24,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  if (!process.env.DATABASE_URL) return { title: "Archived company records", robots: { index: false } };
   try {
     const profile = await getCompanyProfile(slug);
     if (!profile) return { title: "Company intelligence", robots: { index: false } };
@@ -79,6 +83,14 @@ function Outlook({ kind, snapshot, intelligence }: { kind: "expansion" | "reloca
 
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  if (!process.env.DATABASE_URL) {
+    if (findArchivedCompany(slug)) redirect(`/public-records/company/${slug}`);
+    return <>
+      <section className="page-heading"><p className="eyebrow">Company history</p><h1>Archived company records</h1>
+        <p>The live company profile is stored in PostgreSQL, which is not configured on this deployment.</p></section>
+      <DatabaseNotice /><OfflineRecordsExplorer compact />
+    </>;
+  }
   const viewer = await resolveViewer();
   const [data, snapshot] = await Promise.all([getCompanyProfile(slug), getCompanySnapshotBySlug(slug, viewer.userId)]);
   if (!data) notFound();

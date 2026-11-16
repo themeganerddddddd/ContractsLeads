@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { AwardTable } from "@/components/AwardTable";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
+import { OfficialContractsExplorer } from "@/components/OfficialContractsExplorer";
+import { findArchivedCompany } from "@/lib/offline-snapshot";
 import { Pagination } from "@/components/Pagination";
 import { query } from "@/lib/db";
 
@@ -18,6 +20,7 @@ function scalar(value: string | string[] | undefined) {
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
+  if (!process.env.DATABASE_URL) return { title: "Official federal contract search", robots: { index: false } };
   try {
     const rows = await query<{ canonical_name: string; is_demo: boolean }>(
       "SELECT canonical_name,is_demo FROM companies WHERE slug=$1 AND NOT is_benchmark LIMIT 1", [slug]
@@ -36,6 +39,14 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
 export default async function CompanyContractsPage({ params, searchParams }: { params: Promise<Params>; searchParams: Promise<RawSearch> }) {
   const { slug } = await params;
+  if (!process.env.DATABASE_URL) {
+    const archived=findArchivedCompany(slug);
+    return <>
+      <section className="page-heading"><p className="eyebrow">Government contract history</p><h1>Source-linked federal awards</h1>
+        <p>The full company contract archive is unavailable while PostgreSQL is offline. The official source search remains available.</p></section>
+      <OfficialContractsExplorer searchParams={{recipient:archived?.legalName||slug.replaceAll("-"," ")}}/>
+    </>;
+  }
   const raw = await searchParams;
   const rawYear = scalar(raw.year);
   const year = rawYear && /^20\d{2}$/.test(rawYear) ? Number(rawYear) : null;

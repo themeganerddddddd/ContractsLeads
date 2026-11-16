@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DatabaseNotice } from "@/components/DatabaseNotice";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { DataNote } from "@/components/DataNote";
 import { PredictionPanel } from "@/components/PredictionPanel";
@@ -11,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  if (!process.env.DATABASE_URL) return {title:"Contract detail unavailable",robots:{index:false}};
   try {
     const profile = await getContractProfile(id);
     if (!profile) return { title: "Government contract", robots: { index: false } };
@@ -30,6 +33,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ContractPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!process.env.DATABASE_URL) return <>
+    <section className="page-heading"><p className="eyebrow">Government contract</p><h1>Contract detail temporarily unavailable</h1><p>The individual transaction record requires the company database; the static source archive remains available.</p></section>
+    <DatabaseNotice /><OfflineRecordsExplorer compact showCompanies={false}/>
+  </>;
   const data = await getContractProfile(id);
   if (!data) notFound();
   const a = data.award;
