@@ -1,6 +1,8 @@
-import Link from "next/link";
+"use client";
 
-/** Nationwide defaults are available without a database or location API. */
+import Link from "next/link";
+import { useState } from "react";
+
 export const US_STATES = [
   ["AL","Alabama"],["AK","Alaska"],["AZ","Arizona"],["AR","Arkansas"],["CA","California"],
   ["CO","Colorado"],["CT","Connecticut"],["DE","Delaware"],["DC","District of Columbia"],["FL","Florida"],
@@ -48,7 +50,7 @@ export function marketHref(path: string, values: MarketFilterValues) {
 type Props = {
   action: string;
   values: MarketFilterValues;
-  industries?: { slug: string; name: string }[];
+  industries?: { slug:string; name:string }[];
   knownCounties?: string[];
   otherStates?: string[];
   mode?: "radar" | "directory";
@@ -57,65 +59,106 @@ type Props = {
 export function MarketFilterBar({
   action, values, industries = [], knownCounties = [], otherStates = [], mode = "radar",
 }: Props) {
-  const country = values.country || "US";
-  const state = values.state || "";
-  const stateOptions = new Map<string,string>(US_STATES.map(([abbrev,label])=>[abbrev,label] as const));
-  if (country !== "US") for (const other of otherStates) {
-    if (other && !stateOptions.has(other)) stateOptions.set(other,other);
-  }
-  if (state && !stateOptions.has(state)) stateOptions.set(state,state);
-  const selectStates = country === "US"
-    ? US_STATES.map(([v,l])=>[v,l] as const)
-    : [...stateOptions].map(([v,l])=>[v,l] as const);
-  const countyOptions = Array.from(new Set(knownCounties.filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-  return <form className="market-filter-bar" action={action} method="get" role="search">
+  const [country, setCountry] = useState(values.country || "US");
+  const [state, setState] = useState(values.state || "");
+  const [county, setCounty] = useState(values.county || "");
+  const [keyword, setKeyword] = useState(values.q || "");
+  const [showAdvanced, setShowAdvanced] = useState(Boolean(
+    values.industry || values.governmentMin != null ||
+    (mode === "radar" && (values.rank !== "likelihood" || (values.recencyDays && values.recencyDays !== 180) || (values.horizon && values.horizon !== 180)))
+  ));
+  const otherStatesSet = new Set(US_STATES.map(([code]) => code));
+  const regionOptions = country === "US"
+    ? US_STATES.map(([code,label])=>({code,label}))
+    : otherStates.filter(s=>!otherStatesSet.has(s)).map(code=>({code,label:code}));
+  if(state && !regionOptions.some(r=>r.code===state))regionOptions.unshift({code:state,label:state});
+  const countyOptions = state===values.state ? [...new Set(knownCounties.filter(Boolean))].sort() : [];
+  const stateName = US_STATES.find(([code])=>code===state)?.[1] || state;
+  return <form className="market-filter-bar bc-market-form" method="get" action={action} role="search">
     <div className="market-filter-top">
-      <div className="market-filter-title"><span className="market-filter-icon">⌕</span><div><strong>Search the market</strong><small>National → state → county</small></div></div>
-      <p>County names use the reported company geography. Coverage varies by source.</p>
+      <div className="market-filter-title"><span className="market-filter-icon" aria-hidden="true">⌕</span><div>
+        <strong>Refine your search</strong>
+        <small>Find companies and signals by market</small>
+      </div></div>
+      <div className="bc-filter-summary" aria-label="Selected geography">
+        <span className="bc-filter-crumb">{country==="US"?"United States":country==="ALL"?"All countries":country}</span>
+        {state?<span className="bc-filter-crumb">{stateName}</span>:null}
+        {county?<span className="bc-filter-crumb">{county}</span>:null}
+      </div>
     </div>
     <div className="market-filter-fields">
-      <label className="market-field market-field-search"><span>Company / keyword</span><input name="q" type="search" defaultValue={values.q||""} placeholder={mode === "radar" ? "Search companies or legal names" : "Search a company"} autoComplete="off" /></label>
-      <label className="market-field"><span>Country</span><select name="country" defaultValue={country}>
-        <option value="US">United States</option><option value="ALL">All countries</option>
-        <option value="CA">Canada</option><option value="GB">United Kingdom</option><option value="FR">France</option><option value="DE">Germany</option>
-      </select></label>
-      <label className="market-field"><span>State / region</span><select name="state" defaultValue={state}>
-        <option value="">All states</option>
-        {selectStates.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-      </select></label>
-      <label className="market-field"><span>County / parish</span><input name="county" list="market-county-options" defaultValue={values.county||""} placeholder="All counties" autoComplete="off" />
-        <datalist id="market-county-options">{countyOptions.map(v=><option key={v} value={v}/>)}</datalist>
+      <label className="market-field market-field-search"><span>Search</span>
+        <input name="q" type="search" placeholder="Company or legal name" autoComplete="off" value={keyword}
+          onChange={(e)=>setKeyword(e.target.value)} />
       </label>
-      {mode === "directory" ? <label className="market-field market-field-sort"><span>Order by</span><select name="sort" defaultValue={values.sort||"government_desc"}>
-        <option value="government_desc">Government Business — largest</option>
-        <option value="obligations_12m_desc">12M net obligations</option>
-        <option value="latest_signal">Most recent signal</option>
-        <option value="company">Company name</option>
-      </select></label> : null}
-      {mode === "radar" ? <label className="market-field market-field-sort"><span>Rank by</span><select name="rank" defaultValue={values.rank||"likelihood"}>
-        <option value="likelihood">Most likely / strongest evidence</option>
-        <option value="evidence">Strongest evidence</option>
-        <option value="recent">Newest signals</option>
-      </select></label> : null}
-      <button type="submit" className="market-filter-submit">Apply filters <span aria-hidden="true">→</span></button>
+      <label className="market-field"><span>Country</span>
+        <select name="country" value={country} onChange={(e)=>{setCountry(e.target.value);setState("");setCounty("");}}>
+          <option value="US">United States</option>
+          <option value="ALL">All countries</option>
+          <option value="CA">Canada</option>
+          <option value="GB">United Kingdom</option>
+          <option value="FR">France</option>
+          <option value="DE">Germany</option>
+        </select>
+      </label>
+      <label className="market-field"><span>State / region</span>
+        <select name="state" value={state} onChange={(e)=>{setState(e.target.value);setCounty("");}}
+          aria-describedby="bc-geography-help">
+          <option value="">All states</option>
+          {regionOptions.map(({code,label})=><option key={code} value={code}>{label}</option>)}
+        </select>
+      </label>
+      <label className="market-field"><span>County / parish</span>
+        <input name="county" list="market-county-options" placeholder={state?"Any county / parish":"Choose a state first"}
+          value={county} onChange={e=>setCounty(e.target.value)} autoComplete="off" disabled={!state}/>
+        <datalist id="market-county-options">{countyOptions.map(value=><option key={value} value={value}/>)}</datalist>
+      </label>
+      <button type="submit" className="market-filter-submit">Search <span aria-hidden="true">↗</span></button>
     </div>
     <div className="market-filter-secondary">
-      {mode === "radar" ? <>
-        <label>Signal period <select name="recency" defaultValue={String(values.recencyDays||180)}>
-          <option value="30">30 days</option><option value="90">90 days</option><option value="180">180 days</option><option value="365">12 months</option>
-        </select></label>
-        <label>Model horizon <select name="horizon" defaultValue={String(values.horizon||180)}>
-          <option value="90">90 days</option><option value="180">180 days</option><option value="365">365 days</option>
-        </select></label>
-      </> : null}
-      {industries.length ? <label>Industry <select name="industry" defaultValue={values.industry||""}>
-        <option value="">All industries</option>
-        {industries.map(i=><option key={i.slug} value={i.slug}>{i.name}</option>)}
-      </select></label> : values.industry ? <input type="hidden" name="industry" value={values.industry}/> : null}
-      {values.city ? <input type="hidden" name="city" value={values.city} /> : null}
-      {values.governmentMin!=null ? <input type="hidden" name="government_min" value={String(values.governmentMin)}/> : null}
-      <span className="market-filter-geonote">County / Parish / Local Area · Type a county name to filter within the selected state.</span>
-      <Link className="market-filter-clear" href={action}>Reset all</Link>
+      <details className="market-filter-advanced" open={showAdvanced} onToggle={e=>setShowAdvanced(e.currentTarget.open)}>
+        <summary>Advanced filters <span className="bc-advanced-description">Industry · date · ranking</span></summary>
+        <div className="market-filter-advanced-body">
+          {mode === "radar" ? <>
+            <label>Rank results
+              <select name="rank" defaultValue={values.rank||"likelihood"}>
+                <option value="likelihood">Highest supported likelihood</option>
+                <option value="evidence">Strongest evidence</option>
+                <option value="recent">Most recent activity</option>
+              </select>
+            </label>
+            <label>Signal period
+              <select name="recency" defaultValue={String(values.recencyDays||180)}>
+                <option value="30">30 days</option><option value="90">90 days</option>
+                <option value="180">6 months</option><option value="365">12 months</option>
+              </select>
+            </label>
+            <label>Forecast horizon
+              <select name="horizon" defaultValue={String(values.horizon||180)}>
+                <option value="90">90 days</option><option value="180">6 months</option>
+                <option value="365">12 months</option>
+              </select>
+            </label>
+          </>: <label>Order results
+            <select name="sort" defaultValue={values.sort||"government_desc"}>
+              <option value="government_desc">Government Business — largest</option>
+              <option value="obligations_12m_desc">12M net obligations</option>
+              <option value="latest_signal">Latest signal</option>
+              <option value="company">Company name</option>
+            </select>
+          </label>}
+          {industries.length ? <label>Industry
+            <select name="industry" defaultValue={values.industry||""}>
+              <option value="">All industries</option>
+              {industries.map(i=><option key={i.slug} value={i.slug}>{i.name}</option>)}
+            </select>
+          </label> : values.industry ? <input type="hidden" name="industry" value={values.industry}/> : null}
+          {values.city ? <input type="hidden" name="city" value={values.city}/> : null}
+          {values.governmentMin!=null ? <input type="hidden" name="government_min" value={String(values.governmentMin)}/> : null}
+        </div>
+      </details>
+      <span id="bc-geography-help" className="market-filter-geonote">County / Parish / Local Area: select a state before narrowing to a county.</span>
+      <Link href={action} className="market-filter-clear">Clear filters</Link>
     </div>
   </form>;
 }
