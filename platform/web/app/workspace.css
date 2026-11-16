@@ -338,3 +338,58 @@ button, input, select { font-family: inherit; }
   .bc-home-context a { margin:0 0 0 7px; }
   .bc-home-quicklinks>div { flex-wrap:wrap; }
 }
+
+/* Extend the workspace's typographic and surface system to deep research pages. */
+.bc-main .page-heading,.bc-main .entity-heading { padding:29px 0 20px; }
+.bc-main .page-heading h1,.bc-main .entity-heading h1,
+.bc-main .business-change-hero h1 { color:#232f46; font-family:Inter,ui-sans-serif,system-ui,sans-serif; font-size:clamp(27px,2.8vw,38px); font-weight:810; line-height:1.19; letter-spacing:-.044em; }
+.bc-main .page-heading p,.bc-main .entity-heading p { max-width:790px; color:#798596; font-size:12px; line-height:1.85; }
+.bc-main .eyebrow { color:#7f8fa5; font-size:9px; font-weight:820; letter-spacing:.12em; }
+.bc-main .section-header h2,.bc-main .section-title,.bc-main .source-identifiers h3 { color:#334057; font-family:inherit; font-weight:770; letter-spacing:-.025em; }
+.bc-main .panel,.bc-main .search-panel,.bc-main .metrics-grid,.bc-main .detail-grid,
+.bc-main .table-wrap,.bc-main .empty-panel { border-color:#e1e7ee; box-shadow:none; border-radius:9px; }
+.bc-main .table-wrap {overflow-x:auto;}
+.bc-main .panel,.bc-main .search-panel {background:#fff;}
+.bc-main .data-table {border-collapse:collapse; background:#fff;}
+.bc-main .data-table th {padding:13px 14px; color:#8e9bac; background:#fafbfe; border-bottom:1px solid #e6ebf3; font-size:10px; font-weight:790;}
+.bc-main .data-table td {padding:14px; border-bottom:1px solid #eef1f5; color:#53637c; font-size:12px;}
+.bc-main .data-table tbody tr:hover td {background:#f9faff;}
+.bc-main .data-table .primary-cell {color:#4658d7; font-weight:760;}
+.bc-main .status-badge {border-radius:6px;font-size:10px;}
+.bc-main .button,.bc-main .table-action {border-radius:7px; font-weight:740;}
+.bc-main .button.primary,.bc-main button.primary {background:#4e5de7;border-color:#4e5de7;color:#fff;}
+.bc-main .button.primary:hover,.bc-main button.primary:hover {background:#3849c4;border-color:#3849c4;color:#fff;}
+.bc-main .button.secondary,.bc-main .button:not(.primary) {background:#fff;border-color:#dce3ed;color:#4e5d78;}
+.bc-main input:not([type="checkbox"]):not([type="radio"]),.bc-main select {border-radius:7px;}
+.bc-main .pagination {color:#71809a;font-size:11px;}
+.bc-main .pagination a,.bc-main .pagination button {border-color:#e0e6ee;border-radius:6px;color:#5565cc;}
+.bc-main .entity-heading {border-bottom:1px solid #e6eaf1;margin-bottom:17px;}
+.bc-main .entity-meta .meta-chip {background:#f1f4fb;color:#63718c;border-radius:6px;}
+.bc-main .metric-card {border-color:#e1e6f0;background:#fff;box-shadow:none;border-radius:9px;}
+.bc-main .metric-card strong {color:#34435b;}
+.bc-main .tabs {border-color:#e4e9f1;}
+.bc-main .tabs a {color:#6d7891;font-size:12px;}
+.bc-main .tabs a:hover {color:#4e5de7;}
+.bc-main .official-source-section {border:1px solid #e2e7ef;border-radius:10px;box-shadow:none;background:#fff;}
+.bc-main .official-source-header h2 {color:#29374c;letter-spacing:-.025em;font-weight:780;}
+.bc-main .official-source-table-wrap {border-radius:8px;border-color:#e2e7ef;}
+.bc-main .official-source-disclaimer {color:#79889c;background:#f8f9fc;border-color:#e6eaf2;font-size:11px;line-height:1.7;}
+.bc-main .terminal-archive-heading {border-bottom:1px solid #e9edf2;}
+.bc-main .terminal-archive-heading h2 {color:#2c3b52;}
+.bc-main .terminal-archive .market-filter-bar {background:#fff;}
+.bc-main .terminal-archive-section .terminal-table {min-width:760px;}
+.bc-main .terminal-archive-section .terminal-subheading {background:#fafbfe;}
+.bc-main .terminal-archive-footer {background:#fafbfe;border-color:#e5eaf0;}
+.bc-main .terminal-profile-heading h1,.bc-main .offline-profile-heading h1 {font-family:inherit;color:#27354c;font-weight:790;letter-spacing:-.045em;}
+.bc-main .offline-profile-details>div {border-color:#e3e8f0;}
+.bc-topbar-status-pip {background:#7986da;box-shadow:0 0 0 3px #eff0ff;}
+/* Keyboard access and minimum tap targets on mobile remain visible. */
+.bc-sidebar a:focus-visible,.bc-topbar a:focus-visible,.bc-main a:focus-visible,
+.bc-main button:focus-visible,.bc-main input:focus-visible,.bc-main select:focus-visible {
+  outline:2px solid #8d9bfa;outline-offset:3px;
+}
+@media(max-width:700px){
+  .bc-main .page-heading,.bc-main .entity-heading {padding:20px 0 15px;}
+  .bc-main .page-heading h1,.bc-main .entity-heading h1 {font-size:27px;}
+  .bc-main .data-table th,.bc-main .data-table td {padding:12px 11px;}
+}
