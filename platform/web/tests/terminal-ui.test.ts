@@ -23,7 +23,7 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(source).toContain("s.${scoreColumn}_score::numeric DESC NULLS LAST");
     const radar=read("components/PredictionScreener.tsx");
     expect(radar).toContain("Evidence strength is not a calibrated probability.");
-    expect(radar).toContain("No model data");
+    expect(radar).toContain("No live {copy.signal.toLowerCase()} rankings to display");
   });
   it("renders country, state, and county controls without database queries",()=>{
     const filter=read("components/MarketFilterBar.tsx");
