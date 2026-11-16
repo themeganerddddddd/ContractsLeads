@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CompanyTable } from "@/components/CompanyTable";
 import { MarketFilterBar } from "@/components/MarketFilterBar";
+import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
 import { getCompanyFilterOptions, parseCompanyScreenerInput, searchCompanySnapshots } from "@/lib/company-intelligence";
@@ -28,14 +29,14 @@ export async function CompanyDirectory({searchParams,locationFocus=false}:{
     <section className="terminal-heading">
       <div className="terminal-heading-main">
         <p className="terminal-eyebrow"><span className="terminal-greenline"/> BUSINESSCURRENT / NATIONAL COMPANY INDEX</p>
-        <h1>{locationFocus?"Explore companies by geography.":"Research companies, not cards."}</h1>
+        <h1>{locationFocus?"Company locations":"Company directory"}</h1>
         <p>{locationFocus
           ?"Search from the United States down to a state, county or parish. Reported company locations are not necessarily the locations of contract performance."
           :"Search by company or legal name and screen for government activity, industry and supported corporate changes. Scan the results like an institutional research database."}</p>
       </div>
       <div className="terminal-heading-right"><span className="terminal-scope-label">DEFAULT MARKET</span>
         <strong>{input.county?`${input.county}, ${input.state||"US"}`:input.state?`${input.state} / all counties`:input.country==="US"?"United States":input.country==="ALL"?"All countries":input.country}</strong>
-        <span className="terminal-status-badge">{offline?"Source not connected":"Company data connected"}</span></div>
+</div>
     </section>
     <nav className="terminal-radar-tabs terminal-directory-tabs" aria-label="Research areas">
       <Link href="/companies" className={!locationFocus?"is-current":""} aria-current={!locationFocus?"page":undefined}>Company index</Link>
@@ -53,14 +54,7 @@ export async function CompanyDirectory({searchParams,locationFocus=false}:{
         </div>
         {!offline ? <div className="terminal-result-meta"><strong>{(result?.visibleTotal||0).toLocaleString()}</strong><span>visible matches</span></div> : null}
       </div>
-      {offline ? <div className="terminal-ranking-placeholder" role="status">
-        <span className="terminal-ranking-placeholder-icon" aria-hidden="true">◌</span>
-        <div className="terminal-ranking-placeholder-content">
-          <strong>Company index temporarily unavailable</strong>
-          <p>Connection to the nationwide company dataset is offline. The archived source library remains available separately; it is not a substitute for national search coverage.</p>
-        </div>
-        <Link href="/public-records" className="terminal-ranking-source-link">Source library <span aria-hidden="true">↗</span></Link>
-      </div> : <>
+      {offline ? <RankingsEmptyState variant="companies"/> : <>
         {result?.resultLimited?<PaywallNotice title={`Showing ${result.visibleTotal.toLocaleString()} companies`}>Additional company records and full historical analysis depend on your plan.</PaywallNotice>:null}
         <CompanyTable rows={result?.rows||[]} canTrack={Boolean(viewer?.user)}/>
         {result?<Pagination page={result.page} pageSize={result.pageSize} total={result.visibleTotal} params={raw}/>:null}
