@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { MarketFilterBar, marketHref } from "@/components/MarketFilterBar";
+import { MarketFilterBar } from "@/components/MarketFilterBar";
 import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -13,23 +13,24 @@ import {
   type PredictionKind,
 } from "@/lib/company-intelligence";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
+import { marketHref, type MarketFilterValues } from "@/lib/market-filters";
 import { resolveViewer } from "@/lib/plan";
 
 type RawParams = Record<string,string|string[]|undefined>;
 type Config = { index: string; title: string; headline: string; purpose: string; assessment: "expansion"|"relocation"|"contraction"; signal: string };
 const CONTENT: Record<PredictionKind,Config> = {
   expansion: {
-    index:"01",title:"Expansion Radar",headline:"Expansion intelligence",
+    index:"01",title:"Expansion Intelligence",headline:"Expansion intelligence",
     purpose:"Surface companies showing verified indications of investment, additional capacity or a new location. Explore the evidence before making an outreach decision.",
     assessment:"expansion",signal:"Expansion",
   },
   moves: {
-    index:"02",title:"Movement Radar",headline:"Movement intelligence",
+    index:"02",title:"Movement Intelligence",headline:"Movement intelligence",
     purpose:"Assess source-backed footprint and relocation indications. An additional operating site does not automatically mean a company is relocating.",
     assessment:"relocation",signal:"Movement",
   },
   contraction: {
-    index:"03",title:"Retention Radar",headline:"Retention intelligence",
+    index:"03",title:"Retention Intelligence",headline:"Retention intelligence",
     purpose:"Prioritize retention outreach using supported contraction, closure and workforce-change indicators—not an isolated contract reduction.",
     assessment:"contraction",signal:"Retention",
   },
@@ -73,7 +74,7 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
   </section>;
   return <div className="terminal-table-scroll"><table className="terminal-table terminal-ranking-table">
     <thead><tr>
-      <th scope="col">Rank</th><th scope="col">Company</th><th scope="col">Observed geography</th>
+      <th scope="col">Rank</th><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Observed geography</th>
       <th scope="col">Likelihood / indication</th><th scope="col">Key evidence</th>
       {kind==="moves"?<th scope="col">Potential destination</th>:<th scope="col">Government business</th>}
       <th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
@@ -89,7 +90,8 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
       return <tr key={row.id}>
         <td className="terminal-rank">#{String((page-1)*25+index+1).padStart(2,"0")}</td>
         <td className="terminal-company"><Link href={`/company/${row.slug}`}>{row.canonical_name}</Link>
-          <small>{reported(row.industry_name)}</small></td>
+          <small>{row.legal_name !== row.canonical_name ? row.legal_name : "Company dossier"}</small></td>
+        <td>{reported(row.industry_name)}</td>
         <td><strong>{reported(row.location_label)}</strong><small>{row.location_basis}</small></td>
         <td><div className="terminal-indication">
           {calibrated?
@@ -107,11 +109,11 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
   </table></div>;
 }
 
-function Tabs({kind,values}:{kind:PredictionKind;values:Parameters<typeof marketHref>[1]}){
+function Tabs({kind,values}:{kind:PredictionKind;values:MarketFilterValues}){
   const tabs: {kind:PredictionKind;href:string;label:string;index:string}[]=[
-    {kind:"expansion",href:"/predicted-expansion",label:"Expansion",index:"01"},
-    {kind:"moves",href:"/predicted-moves",label:"Movement",index:"02"},
-    {kind:"contraction",href:"/predicted-contraction",label:"Retention",index:"03"},
+    {kind:"expansion",href:"/predicted-expansion",label:"Expansion intelligence",index:"01"},
+    {kind:"moves",href:"/predicted-moves",label:"Movement intelligence",index:"02"},
+    {kind:"contraction",href:"/predicted-contraction",label:"Retention intelligence",index:"03"},
   ];
   return <nav className="terminal-radar-tabs" aria-label="Intelligence categories">
     {tabs.map(t=><Link key={t.kind} href={marketHref(t.href,values)} className={kind===t.kind?"is-current":""}
@@ -168,7 +170,7 @@ export async function PredictionScreener({kind,searchParams,dashboard=false}:{
         <div><p className="terminal-eyebrow">{copy.index} / RANKED {copy.signal.toUpperCase()} INTELLIGENCE</p>
         <h2>{dashboard ? "Expansion watchlist" : title + " · ranked companies"}</h2>
         <p>{unavailable
-          ?"Ranked companies will appear here once the intelligence source is connected."
+          ?"No unverified company or likelihood data is substituted while the source is disconnected."
           :"Ranked by validated likelihood when available, then descriptive source-evidence strength. Evidence strength is not a calibrated probability."}</p></div>
         {!unavailable ? <div className="terminal-result-meta">
           <strong>{(data?.visibleTotal||0).toLocaleString()}</strong>
@@ -183,8 +185,8 @@ export async function PredictionScreener({kind,searchParams,dashboard=false}:{
         </>}
     </section>
     <footer className="terminal-method-note">
-      <span>◈ Evidence-first methodology</span>
-      <p>Ranking is by calibrated model probability only when the model is active and validated; otherwise it is an evidence-priority order. Location is the best supported company geography—not a predicted destination. <Link href="/methodology">Read methodology ↗</Link></p>
+      <span>Evidence standard</span>
+      <p>Probability appears only for an active, validated model; otherwise ranking reflects source-evidence strength. <Link href="/methodology">Methodology</Link></p>
     </footer>
   </div>;
 }

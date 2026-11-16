@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
-import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { findArchivedCompany } from "@/lib/offline-snapshot";
 
 import { AwardTable } from "@/components/AwardTable";
@@ -88,7 +87,13 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
     return <>
       <section className="page-heading"><p className="eyebrow">Company history</p><h1>Archived company records</h1>
         <p>The live company profile is stored in PostgreSQL, which is not configured on this deployment.</p></section>
-      <DatabaseNotice /><OfflineRecordsExplorer compact />
+      <DatabaseNotice />
+      <section className="bc-profile-unavailable">
+        <span>Company dossier unavailable</span>
+        <h2>No unverified profile has been substituted.</h2>
+        <p>If this company exists in the database, its identity, locations, signals, and source timeline will return when the connection is restored.</p>
+        <div><Link href="/companies">Back to company search</Link><Link href="/public-records">Browse the archived source library</Link></div>
+      </section>
     </>;
   }
   const viewer = await resolveViewer();

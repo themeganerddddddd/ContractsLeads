@@ -110,12 +110,12 @@ describe("location-first business change", () => {
     const market = readFileSync(resolve(root,"components/MarketFilterBar.tsx"),"utf8");
     expect(market).toContain('name="q"');
     expect(market).toContain('name="county"');
-    expect(page).toContain("GOVERNMENT CONTRACT HISTORY");
+    expect(page).toContain("Government contracts");
     expect(page).not.toContain("Largest recent awards");
     expect(header).toContain("BusinessCurrent");
     expect(header).toContain('["Companies", "/companies"]');
     expect(header).toContain('["Locations", "/locations"]');
-    expect(header).toContain('["Expansion Radar", "/predicted-expansion"]');
+    expect(header).toContain('["Expansion Intelligence", "/predicted-expansion"]');
     expect(header).toContain('["Government Business", "/search"]');
     expect(header).toContain("primaryLinks");
     expect(header).toContain("moreLinks");

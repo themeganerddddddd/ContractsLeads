@@ -8,24 +8,23 @@ export default function HomePage({searchParams}:{searchParams:Promise<RawParams>
   return <>
     <section className="bc-home-intro">
       <div className="bc-home-intro-main">
-        <p className="bc-home-kicker"><span className="bc-kicker-mark"/> BUSINESSCURRENT <span className="bc-home-kicker-divider">/</span> INTELLIGENCE WORKSPACE</p>
-        <h1>Know which companies <span>are changing.</span></h1>
-        <p>Prioritize opportunities and risks with evidence-backed expansion, movement and retention research. Start with the United States, then narrow to a state or county.</p>
+        <p className="bc-home-kicker"><span className="bc-kicker-mark"/> COMPANY CHANGE INTELLIGENCE</p>
+        <h1>Company change, ranked by evidence.</h1>
+        <p>Screen expansion, movement, and retention signals across the United States. Every assessment stays connected to its source record and coverage limits.</p>
       </div>
       <div className="bc-home-context">
-        <span className="bc-home-context-label">WORKSPACE SCOPE</span>
-        <strong>United States</strong>
-        <span>Nationwide research · county-level filters</span>
-        <Link href="/coverage">View coverage notes ↗</Link>
+        <span className="bc-home-context-label">DEFAULT MARKET</span>
+        <strong>United States</strong><span>State and county filters available</span>
+        <Link href="/coverage">Review coverage</Link>
       </div>
     </section>
     <PredictionScreener kind="expansion" searchParams={searchParams} dashboard />
     <div className="bc-home-quicklinks">
-      <div><span className="bc-kicker-mark"/><strong>Continue your research</strong><span className="bc-home-quicklinks-description">Search source data or review the methodology behind each signal.</span></div>
+      <div><span className="bc-kicker-mark"/><strong>Source-backed research</strong><span className="bc-home-quicklinks-description">Go deeper without losing the workspace context.</span></div>
       <nav aria-label="Other research tools">
-        <Link href="/companies">Company profiles <span aria-hidden="true">↗</span></Link>
-        <Link href="/contracts">GOVERNMENT CONTRACT HISTORY <span aria-hidden="true">↗</span></Link>
-        <Link href="/methodology">Methodology <span aria-hidden="true">↗</span></Link>
+        <Link href="/companies">Company directory</Link>
+        <Link href="/contracts">Government contracts</Link>
+        <Link href="/methodology">Methodology</Link>
       </nav>
     </div>
   </>;

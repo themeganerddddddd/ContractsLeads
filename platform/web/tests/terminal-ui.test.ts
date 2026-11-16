@@ -41,7 +41,7 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(directory).not.toContain("OfflineRecordsExplorer");
     expect(radar).toContain("RankingsEmptyState");
     expect(directory).toContain("RankingsEmptyState");
-    expect(read("components/RankingsEmptyState.tsx")).toContain('href="/contracts"');
+    expect(read("components/RankingsEmptyState.tsx")).toContain('next: "/contracts"');
     expect(read("app/public-records/page.tsx")).toContain("OfflineRecordsExplorer");
   });
   it("uses ranked tables rather than company cards on main screens and one dropdown arrow",()=>{
@@ -51,9 +51,9 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(read("components/OfflineRecordsExplorer.tsx")).toContain("terminal-archive-table");
     const header=read("components/Header.tsx");
     expect(header).toContain("<summary>More</summary>");
-    expect(header).toContain("bc-sidebar-nav");
-    expect(read("app/layout.tsx")).toContain("WorkspaceTopbar");
+    expect(header).toContain("bc-primary-nav");
+    expect(read("app/layout.tsx")).not.toContain("WorkspaceTopbar");
     expect(header).not.toContain('aria-hidden="true">⌄');
-    expect(read("app/terminal.css")).toContain('.terminal-more summary::after');
+    expect(read("app/product.css")).toContain('.bc-more > summary::after');
   });
 });

@@ -10,7 +10,7 @@ describe("BusinessCurrent public product", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
     expect(layout).toContain("BusinessCurrent — Business change intelligence, nationwide");
-    for (const label of ["Companies", "Locations", "Expansion Radar", "Movement Radar", "Retention Radar", "Government Contracts"]) {
+    for (const label of ["Overview", "Expansion Intelligence", "Movement Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
     for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology", "Plans", "Account"]) {
@@ -19,7 +19,7 @@ describe("BusinessCurrent public product", () => {
     expect(header).not.toContain("Federal Ledger");
   });
 
-  it("covers the sellable homepage and preserves supporting legacy experiences", () => {
+  it("covers the sellable homepage and preserves supporting research experiences", () => {
     expect(read("app/page.tsx")).toContain('PredictionScreener kind="expansion"');
     expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
     expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
@@ -34,6 +34,8 @@ describe("BusinessCurrent public product", () => {
     expect(read("app/search/page.tsx")).toContain("Government Business");
     expect(read("components/CompanyDirectory.tsx")).toContain("Search by company or legal name");
     expect(read("components/MarketFilterBar.tsx")).toContain("Government Business — largest");
+    expect(read("app/layout.tsx")).toContain('import "./product.css"');
+    expect(read("app/layout.tsx")).not.toContain("WorkspaceTopbar");
   });
 
   it("keeps company and establishment profiles distinct and mobile styles explicit", () => {

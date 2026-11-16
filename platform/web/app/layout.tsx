@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { WorkspaceTopbar } from "@/components/WorkspaceTopbar";
 import { publicAppUrl } from "@/lib/config";
 import "./globals.css";
-import "./studio.css";
-import "./studio-detail.css";
-import "./studio-fallback.css";
-import "./offline.css";
-import "./terminal.css";
-import "./workspace.css";
+import "./product.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
@@ -31,7 +25,6 @@ export default function RootLayout({
         <div className="bc-app-shell">
           <Header />
           <div className="bc-app-content">
-            <WorkspaceTopbar />
             <main className="page-shell bc-main">{children}</main>
             <Footer />
           </div>

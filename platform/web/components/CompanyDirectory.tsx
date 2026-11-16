@@ -6,6 +6,7 @@ import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
 import { getCompanyFilterOptions, parseCompanyScreenerInput, searchCompanySnapshots } from "@/lib/company-intelligence";
 import { resolveViewer } from "@/lib/plan";
+import { marketHref } from "@/lib/market-filters";
 
 type RawParams=Record<string,string|string[]|undefined>;
 export async function CompanyDirectory({searchParams,locationFocus=false}:{
@@ -39,10 +40,11 @@ export async function CompanyDirectory({searchParams,locationFocus=false}:{
 </div>
     </section>
     <nav className="terminal-radar-tabs terminal-directory-tabs" aria-label="Research areas">
-      <Link href="/companies" className={!locationFocus?"is-current":""} aria-current={!locationFocus?"page":undefined}>Company index</Link>
-      <Link href="/locations" className={locationFocus?"is-current":""} aria-current={locationFocus?"page":undefined}>Locations</Link>
-      <Link href="/predicted-expansion">Expansion ↗</Link><Link href="/predicted-contraction">Retention ↗</Link>
-      <Link href="/contracts">Contracts ↗</Link>
+      <Link href={marketHref("/companies",values)} className={!locationFocus?"is-current":""} aria-current={!locationFocus?"page":undefined}>Company index</Link>
+      <Link href={marketHref("/locations",values)} className={locationFocus?"is-current":""} aria-current={locationFocus?"page":undefined}>Locations</Link>
+      <Link href={marketHref("/predicted-expansion",values)}>Expansion intelligence</Link>
+      <Link href={marketHref("/predicted-moves",values)}>Movement intelligence</Link>
+      <Link href={marketHref("/predicted-contraction",values)}>Retention intelligence</Link>
     </nav>
     <MarketFilterBar action={path} values={values} mode="directory" industries={options?.industries}
       knownCounties={options?.counties||[]} otherStates={options?.states}/>
