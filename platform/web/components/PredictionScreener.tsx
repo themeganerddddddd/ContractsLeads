@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { DatabaseNotice } from "@/components/DatabaseNotice";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
 import { indicationLabel } from "@/lib/change-intelligence";
@@ -114,6 +115,20 @@ export async function PredictionScreener({
   const raw = await searchParams;
   const input = parsePredictionInput(raw);
   const copy = CONTENT[kind];
+  if (!process.env.DATABASE_URL) return <>
+    <nav className="studio-radar-tabs" aria-label="Company signal categories">
+      <Link href="/predicted-expansion">↗ Expansion</Link><Link href="/predicted-moves">⇄ Movement</Link><Link href="/predicted-contraction">◈ Retention</Link>
+    </nav>
+    <section className="page-heading prediction-heading">
+      <p className="eyebrow">BUSINESSCURRENT / TEMPORARY SOURCE ARCHIVE</p>
+      <h1>{copy.title}</h1><p>{copy.purpose}</p>
+      <div className="prediction-safety-note"><strong>Signal rankings unavailable</strong>
+        <span>The model and evidence tables are offline. No scores, calibrated probabilities, expansion claims, relocation destinations or retention risks are being inferred from the archived federal contracts.</span>
+      </div>
+    </section>
+    <OfflineRecordsExplorer compact />
+    <p className="official-source-disclaimer">The archived records are historical evidence only, not {copy.assessment} signals. Full radar filtering and verified location-level assessments return when the company database is restored.</p>
+  </>;
   try {
     const [viewer, options] = await Promise.all([
       resolveViewer(),
@@ -311,6 +326,7 @@ export async function PredictionScreener({
           <h1>{copy.title}</h1>
         </section>
         <DatabaseNotice message={cause instanceof Error ? cause.message : String(cause)} />
+        <OfflineRecordsExplorer compact />
       </>
     );
   }

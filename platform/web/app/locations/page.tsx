@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CompanyTable } from "@/components/CompanyTable";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { MetricCard } from "@/components/MetricCard";
 import { Pagination } from "@/components/Pagination";
 import {
@@ -26,6 +27,12 @@ export default async function LocationsPage({
   searchParams: Promise<RawParams>;
 }) {
   const raw = await searchParams;
+  if (!process.env.DATABASE_URL) return <>
+    <section className="page-heading"><p className="eyebrow">Archived local company registry</p>
+      <h1>Locations</h1><p>The nationwide geographic screener requires PostgreSQL. The existing Montgomery County source archive remains browsable without making database requests.</p>
+    </section>
+    <OfflineRecordsExplorer query={typeof raw.city==="string" ? raw.city : typeof raw.q==="string" ? raw.q : ""} showAwards={false}/>
+  </>;
   const input = parseCompanyScreenerInput({
     ...raw,
     country: raw.country || "US",
@@ -165,6 +172,7 @@ export default async function LocationsPage({
           <h1>Locations</h1>
         </section>
         <DatabaseNotice message={cause instanceof Error ? cause.message : String(cause)} />
+        <OfflineRecordsExplorer compact showAwards={false} />
       </>
     );
   }
