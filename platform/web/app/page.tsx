@@ -82,7 +82,7 @@ export default async function HomePage() {
     </section>
 
     <section className="studio-section studio-live-section">
-      <div className="studio-section-title"><div><p className="studio-section-label">LIVE COMPANY INTELLIGENCE</p><h2>Start with the companies<br/><span>behind the signals.</span></h2></div><Link className="studio-outline-link" href="/companies">Explore all companies <span aria-hidden="true">↗</span></Link></div>
+      <div className="studio-section-title"><div><p className="studio-section-label">{error ? "HISTORICAL COMPANY ARCHIVE" : "LIVE COMPANY INTELLIGENCE"}</p><h2>{error ? <>Explore existing companies<br/><span>and source records.</span></> : <>Start with the companies<br/><span>behind the signals.</span></>}</h2></div><Link className="studio-outline-link" href="/companies">Explore all companies <span aria-hidden="true">↗</span></Link></div>
       {error ? <div className="studio-public-mode">
         <p className="studio-public-mode-note"><strong>Database-free preview.</strong> Showing previously collected records while the live company database is offline. These are not live signals. <a href="/api/status/public">Connection status ↗</a></p>
         <OfflineRecordsExplorer compact />

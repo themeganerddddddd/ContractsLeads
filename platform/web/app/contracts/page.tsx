@@ -1,6 +1,5 @@
 import SearchPage from "@/app/search/page";
 import { OfficialContractsExplorer } from "@/components/OfficialContractsExplorer";
-import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
 import { getPublicDataReadiness } from "@/lib/public-data-readiness";
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -11,9 +10,6 @@ export const metadata = { title: "Government Contracts", description: "Search U.
 export default async function ContractsPage({ searchParams }: { searchParams: Promise<RawParams> }) {
   const raw = await searchParams;
   const readiness = await getPublicDataReadiness();
-  if (readiness !== "ready") return <>
-    <OfficialContractsExplorer searchParams={raw} />
-    <OfflineRecordsExplorer compact showCompanies={false} />
-  </>;
+  if (readiness !== "ready") return <OfficialContractsExplorer searchParams={raw} />;
   return SearchPage({ searchParams: Promise.resolve({ ...raw, mode: "contracts" }) });
 }

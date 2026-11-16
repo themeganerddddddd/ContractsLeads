@@ -32,7 +32,7 @@ export default async function SearchPage({
       <p>The live multinational database is unavailable. The official USAspending endpoint can still be queried directly, and our small dated local archive works without any external service.</p>
     </section>
     {input.mode === "contracts" ? <OfficialContractsExplorer searchParams={raw} /> : null}
-    <OfflineRecordsExplorer query={typeof raw.q === "string" ? raw.q : ""} showAwards={input.mode!=="contracts"} />
+    {input.mode !== "contracts" ? <OfflineRecordsExplorer query={typeof raw.q === "string" ? raw.q : ""} /> : null}
   </>;
   try {
     const plan = await resolvePlan();

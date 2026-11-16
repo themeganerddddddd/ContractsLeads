@@ -1,4 +1,5 @@
 import { getPublicDataReadiness } from "@/lib/public-data-readiness";
+import { archivedSources } from "@/lib/offline-snapshot";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ export async function GET() {
     company_data: healthy ? "available" : "unavailable",
     status,
     official_source_fallback: "USAspending.gov",
+    archived_fallback: { available: true, last_updated: archivedSources.lastUpdated, scope: archivedSources.scope, companies: archivedSources.companies.length, award_actions: archivedSources.awards.length },
     company_intelligence_available: healthy,
   }, { status: healthy ? 200 : 503, headers: { "Cache-Control": "no-store" } });
 }
