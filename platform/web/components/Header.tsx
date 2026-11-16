@@ -20,12 +20,6 @@ const moreLinks = [
 
 const paths = {
   dashboard: "/",
-  expansion: "/predicted-expansion",
-  movement: "/predicted-moves",
-  retention: "/predicted-contraction",
-  companies: "/companies",
-  locations: "/locations",
-  contracts: "/contracts",
 } as const;
 
 function NavGlyph({ name }: { name: string }) {
@@ -65,15 +59,15 @@ export function Header() {
       </div>
       <div className="bc-sidebar-group">
         <span className="bc-nav-group-title">Intelligence</span>
-        {link("Expansion Radar", paths.expansion, "expansion")}
-        {link("Movement Radar", paths.movement, "movement")}
-        {link("Retention Radar", paths.retention, "retention")}
+        {link(primaryLinks[1][0], primaryLinks[1][1], "expansion")}
+        {link(primaryLinks[2][0], primaryLinks[2][1], "movement")}
+        {link(primaryLinks[3][0], primaryLinks[3][1], "retention")}
       </div>
       <div className="bc-sidebar-group">
         <span className="bc-nav-group-title">Discover</span>
-        {link("Companies", paths.companies, "companies")}
-        {link("Locations", paths.locations, "locations")}
-        {link("Government Contracts", paths.contracts, "contracts")}
+        {link(primaryLinks[0][0], primaryLinks[0][1], "companies")}
+        {link(primaryLinks[5][0], primaryLinks[5][1], "locations")}
+        {link(primaryLinks[4][0], primaryLinks[4][1], "contracts")}
       </div>
       <div className="bc-sidebar-group bc-sidebar-group-more">
         <details className="more-menu utility-menu terminal-more bc-more">

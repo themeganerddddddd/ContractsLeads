@@ -23,7 +23,7 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(source).toContain("s.${scoreColumn}_score::numeric DESC NULLS LAST");
     const radar=read("components/PredictionScreener.tsx");
     expect(radar).toContain("Evidence strength is not a calibrated probability.");
-    expect(radar).toContain("No live {copy.signal.toLowerCase()} rankings to display");
+    expect(radar).toContain("<RankingsEmptyState variant={kind}/>");
   });
   it("renders country, state, and county controls without database queries",()=>{
     const filter=read("components/MarketFilterBar.tsx");
@@ -39,9 +39,9 @@ describe("location-first institutional intelligence terminal",()=>{
     const directory=read("components/CompanyDirectory.tsx");
     expect(radar).not.toContain("OfflineRecordsExplorer");
     expect(directory).not.toContain("OfflineRecordsExplorer");
-    expect(radar).toContain("terminal-ranking-placeholder");
-    expect(directory).toContain("terminal-ranking-placeholder");
-    expect(radar).toContain('href="/public-records"');
+    expect(radar).toContain("RankingsEmptyState");
+    expect(directory).toContain("RankingsEmptyState");
+    expect(read("components/RankingsEmptyState.tsx")).toContain('href="/contracts"');
     expect(read("app/public-records/page.tsx")).toContain("OfflineRecordsExplorer");
   });
   it("uses ranked tables rather than company cards on main screens and one dropdown arrow",()=>{
@@ -51,6 +51,8 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(read("components/OfflineRecordsExplorer.tsx")).toContain("terminal-archive-table");
     const header=read("components/Header.tsx");
     expect(header).toContain("<summary>More</summary>");
+    expect(header).toContain("bc-sidebar-nav");
+    expect(read("app/layout.tsx")).toContain("WorkspaceTopbar");
     expect(header).not.toContain('aria-hidden="true">⌄');
     expect(read("app/terminal.css")).toContain('.terminal-more summary::after');
   });

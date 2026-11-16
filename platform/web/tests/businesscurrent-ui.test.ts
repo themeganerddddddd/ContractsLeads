@@ -21,7 +21,7 @@ describe("BusinessCurrent public product", () => {
 
   it("covers the sellable homepage and preserves supporting legacy experiences", () => {
     expect(read("app/page.tsx")).toContain('PredictionScreener kind="expansion"');
-    expect(read("components/PredictionScreener.tsx")).toContain("Find the next expansion.");
+    expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
     expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
     expect(read("app/page.tsx")).not.toContain("studio-product-grid");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
