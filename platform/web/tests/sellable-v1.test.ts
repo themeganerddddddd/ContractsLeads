@@ -42,9 +42,10 @@ describe("sellable BusinessCurrent V1", () => {
     expect(source).toContain("($3::text IS NULL OR recipient_county=$3)");
     const locations = read("app/locations/page.tsx");
     // The production geographic screener remains nationally filterable; a clearly labeled local archive is only a database-offline fallback.
-    expect(locations).toContain("getCompanyFilterOptions(input.country, input.state, input.county)");
-    expect(locations).toContain("if (!process.env.DATABASE_URL)");
-    expect(locations).toContain("OfflineRecordsExplorer");
+    expect(locations).toContain('CompanyDirectory searchParams={searchParams} locationFocus');
+    const directory = read("components/CompanyDirectory.tsx");
+    expect(directory).toContain("getCompanyFilterOptions(input.country");
+    expect(directory).toContain("OfflineRecordsExplorer");
     expect(locations).not.toContain("featured markets");
   });
 

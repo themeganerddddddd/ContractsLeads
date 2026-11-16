@@ -10,5 +10,8 @@ export const metadata: Metadata = {
 export default async function PublicRecordsPage({searchParams}:{searchParams:Promise<RawParams>}) {
   const raw=await searchParams;
   const q=Array.isArray(raw.q)?raw.q[0]:raw.q;
-  return <OfflineRecordsExplorer query={q||""}/>;
+  const state=Array.isArray(raw.state)?raw.state[0]:raw.state;
+  const county=Array.isArray(raw.county)?raw.county[0]:raw.county;
+  const country=Array.isArray(raw.country)?raw.country[0]:raw.country;
+  return <OfflineRecordsExplorer query={q||""} state={state||""} county={county||""} country={country||"US"}/>;
 }

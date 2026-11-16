@@ -106,9 +106,10 @@ describe("location-first business change", () => {
   it("presents BusinessCurrent as a nationwide business-change product", () => {
     const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
     const header = readFileSync(resolve(root, "components/Header.tsx"), "utf8");
-    expect(page).toContain("Know which companies");
-    expect(page).toContain('name="q"');
-    expect(page).toContain("Explore government business histories, follow corporate signals");
+    expect(page).toContain('PredictionScreener kind="expansion"');
+    const market = readFileSync(resolve(root,"components/MarketFilterBar.tsx"),"utf8");
+    expect(market).toContain('name="q"');
+    expect(market).toContain('name="county"');
     expect(page).toContain("GOVERNMENT CONTRACT HISTORY");
     expect(page).not.toContain("Largest recent awards");
     expect(header).toContain("BusinessCurrent");

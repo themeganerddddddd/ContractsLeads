@@ -20,19 +20,20 @@ describe("BusinessCurrent public product", () => {
   });
 
   it("covers the sellable homepage and preserves supporting legacy experiences", () => {
-    expect(read("app/page.tsx")).toContain("Find the companies that are changing before everyone else does.");
-    expect(read("app/page.tsx")).toContain("Know which companies");
-    expect(read("app/page.tsx")).toContain("LIVE COMPANY INTELLIGENCE");
+    expect(read("app/page.tsx")).toContain('PredictionScreener kind="expansion"');
+    expect(read("components/PredictionScreener.tsx")).toContain("Find the next expansion.");
+    expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
+    expect(read("app/page.tsx")).not.toContain("studio-product-grid");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
-    expect(read("app/locations/page.tsx")).toContain("County / Parish / Local Area");
+    expect(read("components/MarketFilterBar.tsx")).toContain("County / Parish / Local Area");
     expect(read("app/tracked-companies/page.tsx")).toContain("Sources with errors");
     expect(read("app/alerts/page.tsx")).toContain("Evidence changed");
     expect(read("app/data-coverage/page.tsx")).toContain("50 states + DC");
     expect(read("app/methodology/page.tsx")).toContain("at least 5% of that award’s reference value or at least $1 million USD");
     expect(read("app/search/page.tsx")).toContain("Government Business");
-    expect(read("app/companies/page.tsx")).toContain("Search by company or legal name");
-    expect(read("app/companies/page.tsx")).toContain("Government Business — largest");
+    expect(read("components/CompanyDirectory.tsx")).toContain("Search by company or legal name");
+    expect(read("components/MarketFilterBar.tsx")).toContain("Government Business — largest");
   });
 
   it("keeps company and establishment profiles distinct and mobile styles explicit", () => {
