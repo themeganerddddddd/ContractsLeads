@@ -13,7 +13,8 @@
       "verificationDate": "2026-10-07",
       "uei": "NMHFLDYJJ4C5",
       "website": "https://www.lockheedmartin.com/",
-      "sourceUrl": "https://www.lockheedmartin.com/en-us/who-we-are.html"
+      "sourceUrl": "https://www.lockheedmartin.com/en-us/who-we-are.html",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "hughes-network-systems",
@@ -26,7 +27,8 @@
       "verificationDate": "2026-10-07",
       "uei": "G1PMX8473K14",
       "website": "https://www.hughes.com/",
-      "sourceUrl": "https://www.hughes.com/who-we-are/contact-us"
+      "sourceUrl": "https://www.hughes.com/who-we-are/contact-us",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "westat",
@@ -39,7 +41,8 @@
       "verificationDate": "2026-10-07",
       "uei": "NVUWAFWQ57S5",
       "website": "https://www.westat.com/",
-      "sourceUrl": "https://www.westat.com/contact-us"
+      "sourceUrl": "https://www.westat.com/contact-us",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "abt-global",
@@ -52,7 +55,8 @@
       "verificationDate": "2026-10-07",
       "uei": "C9S1NLQ67626",
       "website": "https://www.abtglobal.com/",
-      "sourceUrl": "https://www.abtglobal.com/contact-us"
+      "sourceUrl": "https://www.abtglobal.com/contact-us",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "x-energy",
@@ -65,7 +69,8 @@
       "verificationDate": "2026-10-07",
       "uei": "",
       "website": "https://x-energy.com/",
-      "sourceUrl": "https://x-energy.com/contact"
+      "sourceUrl": "https://x-energy.com/contact",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "united-therapeutics",
@@ -78,7 +83,8 @@
       "verificationDate": "2026-10-07",
       "uei": "KK5FBFA43JS7",
       "website": "https://www.unither.com/",
-      "sourceUrl": "https://www.unither.com/contact-us"
+      "sourceUrl": "https://www.unither.com/contact-us",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "bae-systems-tss",
@@ -91,7 +97,8 @@
       "verificationDate": "2026-10-08",
       "uei": "LX3BSV6NNW58",
       "website": "https://www.baesystems.com/",
-      "sourceUrl": "https://www.gsaelibrary.gsa.gov/ElibMain/contractorInfo.do?contractNumber=47QRCA25DU620&contractorName=BAE+SYSTEMS+TECHNOLOGY+SOLUTIONS+%26+SERVICES+INC.&executeQuery=YES"
+      "sourceUrl": "https://www.gsaelibrary.gsa.gov/ElibMain/contractorInfo.do?contractNumber=47QRCA25DU620&contractorName=BAE+SYSTEMS+TECHNOLOGY+SOLUTIONS+%26+SERVICES+INC.&executeQuery=YES",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "bae-systems-inc-rockville",
@@ -104,7 +111,8 @@
       "verificationDate": "2026-10-08",
       "uei": "",
       "website": "https://www.baesystems.com/",
-      "sourceUrl": "https://www.war.gov/News/Contracts/Contract/Article/4618190/contracts-for-oct-2-2026/"
+      "sourceUrl": "https://www.war.gov/News/Contracts/Contract/Article/4618190/contracts-for-oct-2-2026/",
+      "hqCounty": "Montgomery County"
     },
     {
       "id": "amentum-services",
@@ -117,7 +125,8 @@
       "verificationDate": "2026-10-08",
       "uei": "QEMLRQA7PLG4",
       "website": "https://www.amentum.com/",
-      "sourceUrl": "https://www.amentum.com/news/amentum-to-relocate-headquarters-to-virginia/"
+      "sourceUrl": "https://www.amentum.com/news/amentum-to-relocate-headquarters-to-virginia/",
+      "hqCounty": ""
     }
   ],
   "awards": [
@@ -130,7 +139,9 @@
       "description": "6M19",
       "awardId": "HHSD2002003016950002",
       "amount": -38210.1,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950002_7523_HHSD200200301695I_7523/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950002_7523_HHSD200200301695I_7523/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-ba1f619c62e7a689",
@@ -141,7 +152,9 @@
       "description": "IMT DBA ADMIN SUPPORT EXT",
       "awardId": "140RR027F0015",
       "amount": 163869.65,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_140RR027F0015_1406_GS35F545GA_4732/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_140RR027F0015_1406_GS35F545GA_4732/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-8b39f7f9a7f44798",
@@ -152,7 +165,9 @@
       "description": "FUNDAMENTALS OF HIV PREVENTION",
       "awardId": "HHSD2002003016950005",
       "amount": -120.68,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950005_7523_HHSD200200301695I_7523/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950005_7523_HHSD200200301695I_7523/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-7ef7b56e556844de",
@@ -163,7 +178,9 @@
       "description": "RAPID HIV TESTING IN CLINICAL STTING",
       "awardId": "HHSD2002003016950006",
       "amount": 0,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950006_7523_HHSD200200301695I_7523/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950006_7523_HHSD200200301695I_7523/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-77e55a97944765fa",
@@ -174,7 +191,9 @@
       "description": "6M19",
       "awardId": "HHSD2002003016950004",
       "amount": -5427.47,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950004_7523_HHSD200200301695I_7523/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950004_7523_HHSD200200301695I_7523/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-484a2d2dc9b9fb51",
@@ -185,7 +204,9 @@
       "description": "6M19",
       "awardId": "HHSD2002010372080005",
       "amount": -123029.51,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002010372080005_7523_HHSD200201037208I_7523/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002010372080005_7523_HHSD200201037208I_7523/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-2ff70a474f63694a",
@@ -196,7 +217,9 @@
       "description": "HIV AWARENESS DAY PROGRAMS",
       "awardId": "HHSD2002003016950007",
       "amount": -150.66,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950007_7523_HHSD200200301695I_7523/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSD2002003016950007_7523_HHSD200200301695I_7523/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-ea8b87033a892c60",
@@ -207,7 +230,9 @@
       "description": "IT SUBSCRIPTION SERVICES",
       "awardId": "75N97025P00007",
       "amount": 187965,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75N97025P00007_7529_-NONE-_-NONE-/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75N97025P00007_7529_-NONE-_-NONE-/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-e6d4ba9498f7e8c4",
@@ -218,7 +243,9 @@
       "description": "Lockheed Martin Corp., Grand Prairie, Texas, was awarded a $10,439,315 cost-plus-incentive-fee contract to provide Phased Array Tracking to Intercept of Target (PATRIOT) Advanced Capability-3 guidance processor unit redesign, Seeker Block V flight test support",
       "awardId": "",
       "amount": 10439315,
-      "sourceUrl": "https://www.war.gov/News/Contracts/Contract/Article/4638054/contracts-for-oct-30-2026/"
+      "sourceUrl": "https://www.war.gov/News/Contracts/Contract/Article/4638054/contracts-for-oct-30-2026/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-e61318471b58350d",
@@ -229,7 +256,9 @@
       "description": "MAINTENANCE SERVICES ON THE ELECTRICAL SWITCHGEAR SYSTEM.",
       "awardId": "15BNAS27F00000027",
       "amount": 116258,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_15BNAS27F00000027_1540_15BNAS25D00000146_1540/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_15BNAS27F00000027_1540_15BNAS25D00000146_1540/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-e52a4fd1ea36b055",
@@ -240,7 +269,9 @@
       "description": "RSA NETWITNESS DECODER AND THE RSA SECURID SERVER AUTHENTICATOR- ADD DOJ CLAUSE DOJ-05 \"SECURITY OF DEPARTMENT INFORMATION AND SYSTEMS (OCT 2023)\" - CLOSEOUT",
       "awardId": "15PTDS23F00000010",
       "amount": 0,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_15PTDS23F00000010_1550_NNG15SD80B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_15PTDS23F00000010_1550_NNG15SD80B_8000/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-e3a937a5ff0ea789",
@@ -251,7 +282,9 @@
       "description": "NETIQ DIRECTORY RESOURCE ADMINISTRATOR (DRA) SUPPORT SERVICES - EXERCISING OPTION PERIOD 4",
       "awardId": "75H70423C00001",
       "amount": 39155.39,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75H70423C00001_7527_-NONE-_-NONE-/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75H70423C00001_7527_-NONE-_-NONE-/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-e0897c40e0730f74",
@@ -262,7 +295,9 @@
       "description": "CISCO SMARTNET MAINTENANCE SUPPORT RENEWAL [6-MONTHS] - OBLIGATE FUNDS IN THE AMOUNT OF $276,202.22",
       "awardId": "2099AC27F00007",
       "amount": 276202.22,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_2099AC27F00007_2099_NNG15SC71B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_2099AC27F00007_2099_NNG15SC71B_8000/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-da7dcfaccf526ab2",
@@ -273,7 +308,9 @@
       "description": "THE PURPOSE OF MODIFICATION IS TO INCORPORATE TRAVEL INTO THE REVISED PWS. ADD AND FUND CLIN 9000 FOR TRAVEL IN THE AMOUNT OF $10,000, AND DESIGNATE AN ALTERNATE COR.",
       "awardId": "1305M224F0508",
       "amount": 10000,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_1305M224F0508_1330_1305M423DNEEA0004_1330/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_1305M224F0508_1330_1305M423DNEEA0004_1330/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-da6022765f264399",
@@ -284,7 +321,9 @@
       "description": "FY27 UDO INITIATIVE",
       "awardId": "75P00125P00004",
       "amount": -4.45,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75P00125P00004_7570_-NONE-_-NONE-/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75P00125P00004_7570_-NONE-_-NONE-/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-c4be05bc535851c9",
@@ -295,7 +334,9 @@
       "description": "EO 14398 -ANTI-TRYPSIN TESTING",
       "awardId": "36C25525P0074",
       "amount": 60244,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_36C25525P0074_3600_-NONE-_-NONE-/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_36C25525P0074_3600_-NONE-_-NONE-/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-beec5c7578cc8765",
@@ -306,7 +347,9 @@
       "description": "SOLARWINDS LICENSING MAINTENANCE OY3",
       "awardId": "75F40124F80007",
       "amount": 259776.26,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75F40124F80007_7524_NNG15SC71B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75F40124F80007_7524_NNG15SC71B_8000/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-b4bac5338fe219eb",
@@ -317,7 +360,9 @@
       "description": "TAS  75 0600  TAS  GENEXP SVC",
       "awardId": "HHSF223201010970P",
       "amount": -0.82,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSF223201010970P_7524_-NONE-_-NONE-/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_HHSF223201010970P_7524_-NONE-_-NONE-/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-b0863013d2dc5ccd",
@@ -328,7 +373,9 @@
       "description": "Lockheed Martin, Mission Systems and Training, Baltimore, Maryland, is awarded a $13,444,766 cost-plus-award-fee order (N6278626F1000) against the previously awarded basic ordering agreement (N00024-19-G-2319) to provide engineering and management services for USS Cleveland (LCS 31) post shakedown a",
       "awardId": "",
       "amount": 13444766,
-      "sourceUrl": "https://www.war.gov/News/Contracts/Contract/Article/4638054/contracts-for-oct-30-2026/"
+      "sourceUrl": "https://www.war.gov/News/Contracts/Contract/Article/4638054/contracts-for-oct-30-2026/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-9a71570a82b257b7",
@@ -339,7 +386,9 @@
       "description": "POSIT SOFTWARE BUNDLE",
       "awardId": "7571TE27F80015",
       "amount": 1131235.59,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_7571TE27F80015_7571_NNG15SD38B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_7571TE27F80015_7571_NNG15SD38B_8000/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-8eb022ddde94f374",
@@ -350,7 +399,9 @@
       "description": "PROGRAM MANAGEMENT, ADMINISTRATIVE, AND CLERICAL SUPPORT SERVICES FOR OJP/OJJDP- CLOSEOUT",
       "awardId": "15PJDP23F00000001",
       "amount": 0,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_15PJDP23F00000001_1550_15PADA21A00000048_1550/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_15PJDP23F00000001_1550_15PADA21A00000048_1550/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-8b52b2af03fc8bba",
@@ -361,7 +412,9 @@
       "description": "DATA CENTER COLOCATION SERVICES",
       "awardId": "49100427F0007",
       "amount": 407784.47,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_49100427F0007_4900_NNG15SD80B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_49100427F0007_4900_NNG15SD80B_8000/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     },
     {
       "id": "moco-7dec9e781ca8ae25",
@@ -372,7 +425,9 @@
       "description": "POSIT SOFTWARE LICENSING SUBSCRIPTION",
       "awardId": "7571TE27F80021",
       "amount": 60968.9,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_7571TE27F80021_7571_NNG15SD61B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_7571TE27F80021_7571_NNG15SD61B_8000/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-7d9c6d15ba70dd7d",
@@ -383,7 +438,9 @@
       "description": "5615 FISHERS LANE PARKING",
       "awardId": "75P00122C00011",
       "amount": 129438,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75P00122C00011_7570_-NONE-_-NONE-/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_75P00122C00011_7570_-NONE-_-NONE-/",
+      "recipientState": "",
+      "recipientCounty": ""
     },
     {
       "id": "moco-7cc52546066e364a",
@@ -394,7 +451,9 @@
       "description": "CISCO FIRE POWER THREAT DEFENSE",
       "awardId": "2099CE26F00014",
       "amount": 0,
-      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_2099CE26F00014_2099_NNG15SC71B_8000/"
+      "sourceUrl": "https://www.usaspending.gov/award/CONT_AWD_2099CE26F00014_2099_NNG15SC71B_8000/",
+      "recipientState": "MD",
+      "recipientCounty": "Montgomery County"
     }
   ]
 }

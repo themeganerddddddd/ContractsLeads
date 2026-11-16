@@ -25,6 +25,7 @@ export type CompanyScreenerInput = {
 };
 
 export type PredictionInput = {
+  q?: string;
   industry?: string;
   country?: string;
   state?: string;
@@ -55,7 +56,7 @@ export function parseCompanyScreenerInput(raw: RawParams): CompanyScreenerInput 
   return {
     q: one(raw.q)?.trim() || undefined,
     industry: one(raw.industry)?.trim() || undefined,
-    country: one(raw.country)?.trim().toUpperCase() === "ALL" ? undefined : (one(raw.country)?.trim().toUpperCase() || "US"),
+    country: one(raw.country)?.trim().toUpperCase() || "US",
     state: one(raw.state)?.trim().toUpperCase() || undefined,
     county: one(raw.county)?.trim() || undefined,
     city: one(raw.city)?.trim() || undefined,
@@ -77,8 +78,9 @@ export function parsePredictionInput(raw: RawParams): PredictionInput {
   const horizon = optionalNumber(one(raw.horizon));
   const recencyDays = optionalNumber(one(raw.recency));
   return {
+    q: one(raw.q)?.trim().slice(0,100) || undefined,
     industry: one(raw.industry)?.trim() || undefined,
-    country: one(raw.country)?.trim().toUpperCase() === "ALL" ? undefined : (one(raw.country)?.trim().toUpperCase() || "US"),
+    country: one(raw.country)?.trim().toUpperCase() || "US",
     state: one(raw.state)?.trim().toUpperCase() || undefined,
     county: one(raw.county)?.trim() || undefined,
     city: one(raw.city)?.trim() || undefined,

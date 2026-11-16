@@ -57,7 +57,7 @@ export function MarketFilterBar({
 }: Props) {
   const country = values.country || "US";
   const state = values.state || "";
-  const stateOptions = new Map<string,string>(US_STATES.map(([abbrev,label])=>[abbrev,label]));
+  const stateOptions = new Map<string,string>(US_STATES.map(([abbrev,label])=>[abbrev,label] as const));
   if (country !== "US") for (const other of otherStates) {
     if (other && !stateOptions.has(other)) stateOptions.set(other,other);
   }

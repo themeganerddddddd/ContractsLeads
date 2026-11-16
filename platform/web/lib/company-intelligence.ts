@@ -238,7 +238,7 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
 
 function applyCommonFilters(filters: SqlFilters, input: CompanyScreenerInput | PredictionInput) {
   if (input.industry) filters.add("s.industry_slug=?", input.industry);
-  if (input.country)
+  if (input.country && input.country !== "ALL")
     filters.add("upper(s.country_code)=ANY(?::text[])", countryVariants(input.country));
   if (input.state) filters.add("upper(s.location_state)=?", input.state);
   if (input.county)
@@ -352,6 +352,10 @@ export async function searchPredictionCompanies(
 ): Promise<Omit<CompanyScreenerResult, "rows"> & { rows: PredictionCompanyRow[] }> {
   const filters = new SqlFilters(userId);
   applyCommonFilters(filters, input);
+  if (input.q) filters.add(
+    "(s.canonical_name ILIKE '%' || ? || '%' OR s.legal_name ILIKE '%' || ? || '%')",
+    input.q
+  );
   const config = PREDICTION_CONFIG[kind];
   const scoreColumn = kind === "moves" ? "relocation" : kind;
   filters.clauses.push(`s.${scoreColumn}_score IS NOT NULL`);
