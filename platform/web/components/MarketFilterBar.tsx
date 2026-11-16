@@ -25,6 +25,7 @@ export type MarketFilterValues = {
   recencyDays?: number;
   horizon?: number;
   rank?: string;
+  sort?: string;
   governmentMin?: number;
 };
 
@@ -37,6 +38,7 @@ export function marketHref(path: string, values: MarketFilterValues) {
   if (values.q) params.set("q", values.q);
   if (values.industry) params.set("industry", values.industry);
   if (values.rank && values.rank !== "likelihood") params.set("rank", values.rank);
+  if (values.sort && values.sort !== "government_desc") params.set("sort", values.sort);
   if (values.recencyDays && values.recencyDays !== 180) params.set("recency", String(values.recencyDays));
   if (values.horizon && values.horizon !== 180) params.set("horizon", String(values.horizon));
   if (values.governmentMin != null) params.set("government_min", String(values.governmentMin));
@@ -84,6 +86,12 @@ export function MarketFilterBar({
       <label className="market-field"><span>County / parish</span><input name="county" list="market-county-options" defaultValue={values.county||""} placeholder="All counties" autoComplete="off" />
         <datalist id="market-county-options">{countyOptions.map(v=><option key={v} value={v}/>)}</datalist>
       </label>
+      {mode === "directory" ? <label className="market-field market-field-sort"><span>Order by</span><select name="sort" defaultValue={values.sort||"government_desc"}>
+        <option value="government_desc">Government Business — largest</option>
+        <option value="obligations_12m_desc">12M net obligations</option>
+        <option value="latest_signal">Most recent signal</option>
+        <option value="company">Company name</option>
+      </select></label> : null}
       {mode === "radar" ? <label className="market-field market-field-sort"><span>Rank by</span><select name="rank" defaultValue={values.rank||"likelihood"}>
         <option value="likelihood">Most likely / strongest evidence</option>
         <option value="evidence">Strongest evidence</option>
@@ -106,7 +114,7 @@ export function MarketFilterBar({
       </select></label> : values.industry ? <input type="hidden" name="industry" value={values.industry}/> : null}
       {values.city ? <input type="hidden" name="city" value={values.city} /> : null}
       {values.governmentMin!=null ? <input type="hidden" name="government_min" value={String(values.governmentMin)}/> : null}
-      <span className="market-filter-geonote">Select a state, then type a county name; available matches appear after filtering.</span>
+      <span className="market-filter-geonote">County / Parish / Local Area · Type a county name to filter within the selected state.</span>
       <Link className="market-filter-clear" href={action}>Reset all</Link>
     </div>
   </form>;
