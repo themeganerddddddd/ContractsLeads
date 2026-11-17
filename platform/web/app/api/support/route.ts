@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const category = String(data.get("category") || "");
     const captcha = String(data.get("cf-turnstile-response") || "");
     if (!CATEGORIES.has(category) || email.length > 254 ||
-      !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
       message.length < 12 || message.length > 4000 || !captcha || captcha.length > 4096) {
       return back(request, "error");
     }
