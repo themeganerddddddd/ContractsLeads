@@ -50,7 +50,7 @@ export default async function SearchPage({
     return (
       <>
         <section className="page-heading">
-          <p className="eyebrow">{input.mode === "companies" ? "BusinessCurrent company directory" : "Government Business"}</p>
+          <p className="eyebrow">{input.mode === "companies" ? "FirmQuarry company directory" : "Government Business"}</p>
           <h1>{input.mode === "companies" ? "Search companies" : "Search government business"}</h1>
           <p>
             {input.mode === "companies"
