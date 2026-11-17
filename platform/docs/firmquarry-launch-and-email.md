@@ -7,7 +7,7 @@ The domain `firmquarry.com` is registered in the Vercel `west-tech` team. Its Ve
 - MX priority 0, `mx1.forwardemail.net`
 - MX priority 0, `mx2.forwardemail.net`
 
-**Inbound email is NOT active yet:** a Forward Email forwarding-rule TXT record is still required. To avoid publishing the private Gmail recipient in readable public DNS, obtain an encrypted record via https://forwardemail.net/en/encrypt, entering `forward-email=support:<private Gmail address>`. Add only the encrypted returned TXT value at the root (use a Vercel TXT record) after verifying the provider documentation. Do not commit either plaintext recipient or encrypted TXT to Git. After adding, verify Forward Email's checks and test delivery from an independent sender before setting `NEXT_PUBLIC_SUPPORT_EMAIL=support@firmquarry.com` in Vercel Production. Outbound messages/replies from a branded address require separately configured SMTP or mailbox.
+**DNS forwarding configuration installed:** The founder generated an encrypted `forward-email=` value, and that exact root TXT record was added to the Vercel DNS zone. Vercel DNS reads confirm both MX records and the encrypted TXT exist; no other MX record conflicts. **Live forwarding/delivery has not yet been tested.** Test by sending to `support@firmquarry.com` from an independent email account and confirming receipt in the intended Gmail inbox. Do not commit or display the private recipient or encrypted TXT value in repository files. After verification, set `NEXT_PUBLIC_SUPPORT_EMAIL=support@firmquarry.com` in Vercel Production when the site is ready. Outbound messages/replies from a branded address require separately configured SMTP or mailbox.
 
 
 **Domain owned by founder:** `firmquarry.com`  
