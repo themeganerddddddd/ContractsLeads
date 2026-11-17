@@ -44,6 +44,19 @@ describe("FirmQuarry public product", () => {
     expect(read("app/layout.tsx")).not.toContain("WorkspaceTopbar");
   });
 
+  it("positions the public homepage around expansion, contraction and relocation forecasts", () => {
+    const page = read("app/page.tsx");
+    expect(page).toContain("Know when a company is likely to expand, contract, or move.");
+    expect(page).toContain("Unearth their next move.");
+    expect(page).toContain('href: "/predicted-expansion"');
+    expect(page).toContain('href: "/predicted-contraction"');
+    expect(page).toContain('href: "/predicted-moves"');
+    expect(page).toContain('>Start for free <');
+    expect(page).toContain('>View pricing plans <');
+    expect(page).toContain("predicted likelihoods appear only when supported by validated models");
+    expect(page).not.toContain("fq-plan-row");
+  });
+
   it("keeps company and establishment profiles distinct and mobile styles explicit", () => {
     const company = read("app/company/[slug]/page.tsx");
     const establishment = read("app/establishment/[id]/page.tsx");
