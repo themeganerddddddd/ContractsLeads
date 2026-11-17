@@ -97,7 +97,7 @@ describe("location-first business change", () => {
     expect(company).toContain("Company and locations stay distinct");
     expect(company).toContain("Supported operating locations");
     expect(company).toContain("EstablishmentIntelligencePanel");
-    expect(company.match(/<a href="#/g)).toHaveLength(5);
+    expect(company.match(/<a href="#/g)).toHaveLength(6);
     expect(establishment).toContain("Physical business location");
     expect(establishment).toContain("Outcome ≠ indication ≠ signal");
     expect(establishment).toContain("Address history");
@@ -106,7 +106,7 @@ describe("location-first business change", () => {
   it("presents BusinessCurrent as a nationwide business-change product", () => {
     const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
     const header = readFileSync(resolve(root, "components/Header.tsx"), "utf8");
-    expect(page).toContain('PredictionScreener kind="expansion"');
+    expect(page).toContain('ResearchHome');
     const market = readFileSync(resolve(root,"components/MarketFilterBar.tsx"),"utf8");
     expect(market).toContain('name="q"');
     expect(market).toContain('name="county"');
