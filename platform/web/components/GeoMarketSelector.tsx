@@ -19,7 +19,7 @@ export function GeoMarketSelector({state:initialState="",county:initialCounty=""
     const params=new URLSearchParams();
     if(nextState)params.set("state",nextState);
     if(nextCounty && nextState)params.set("county",nextCounty);
-    router.push("/"+(params.size?"?"+params.toString():""));
+    router.push("/workspace"+(params.size?"?"+params.toString():""));
   }
   async function locate(prompt:boolean){
     if(!navigator.geolocation || !window.isSecureContext){setStatus("Location unavailable. Showing the United States.");return;}
