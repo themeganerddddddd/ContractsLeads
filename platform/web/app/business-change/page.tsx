@@ -73,7 +73,7 @@ function MapPanel({ rows }: { rows: BusinessChangeRow[] }) {
     row.location_precision === "exact_address" && Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)),
   );
   if (!geocoded.length) {
-    return <aside className="business-change-map empty-map"><p className="eyebrow">Public operating locations only</p><h2>Map</h2><p>No precise public locations are available for these results.</p><p>BusinessCurrent does not place approximate locations on a street-level map. County- and city-level evidence is intentionally not shown as a street-level pin.</p></aside>;
+    return <aside className="business-change-map empty-map"><p className="eyebrow">Public operating locations only</p><h2>Map</h2><p>No precise public locations are available for these results.</p><p>FirmQuarry does not place approximate locations on a street-level map. County- and city-level evidence is intentionally not shown as a street-level pin.</p></aside>;
   }
   const latitudes = geocoded.map((row) => Number(row.latitude));
   const longitudes = geocoded.map((row) => Number(row.longitude));
@@ -109,7 +109,7 @@ export default async function BusinessChangePage({ searchParams }: { searchParam
     const result = await searchBusinessChange(input);
     return <>
       <section className="business-change-hero">
-        <div><p className="eyebrow">BusinessCurrent Radar</p><h1>Business Change Radar</h1><p>See businesses opening, growing, moving, shrinking, closing, and forming in your market—then inspect the official evidence behind each record.</p></div>
+        <div><p className="eyebrow">FirmQuarry Radar</p><h1>Business Change Radar</h1><p>See businesses opening, growing, moving, shrinking, closing, and forming in your market—then inspect the official evidence behind each record.</p></div>
         <Link className="button secondary" href="/data-coverage">View source coverage</Link>
       </section>
 
@@ -147,6 +147,6 @@ export default async function BusinessChangePage({ searchParams }: { searchParam
       {result.total > result.pageSize ? <nav className="pagination" aria-label="Result pages">{input.page > 1 ? <Link href={`${tabHref(raw, input.tab)}&page=${input.page - 1}`}>← Previous</Link> : <span /> }<span>Page {input.page}</span>{input.page * input.pageSize < result.total ? <Link href={`${tabHref(raw, input.tab)}&page=${input.page + 1}`}>Next →</Link> : <span />}</nav> : null}
     </>;
   } catch (cause) {
-    return <><section className="page-heading"><p className="eyebrow">BusinessCurrent Radar</p><h1>Business Change Radar</h1><p>Business-change data is temporarily unavailable. Coverage varies by source and geography.</p></section><DatabaseNotice message={cause instanceof Error ? cause.message : String(cause)} /></>;
+    return <><section className="page-heading"><p className="eyebrow">FirmQuarry Radar</p><h1>Business Change Radar</h1><p>Business-change data is temporarily unavailable. Coverage varies by source and geography.</p></section><DatabaseNotice message={cause instanceof Error ? cause.message : String(cause)} /></>;
   }
 }
