@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ResearchTopbar } from "@/components/ResearchTopbar";
+import { SupportLauncher } from "@/components/SupportLauncher";
 import { publicAppUrl } from "@/lib/config";
 import "./globals.css";
 import "./product.css";
@@ -31,6 +32,7 @@ export default function RootLayout({
             <ResearchTopbar />
             <main className="page-shell bc-main">{children}</main>
             <Footer />
+            <SupportLauncher />
           </div>
         </div>
       </body>
