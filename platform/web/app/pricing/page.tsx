@@ -7,7 +7,7 @@ import { authProviderAvailability, billingEnabled } from "@/lib/config";
 import { resolveViewer } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Plans", description: "BusinessCurrent plans for company intelligence, screening, alerts, tracking, and exports." };
+export const metadata = { title: "Plans", description: "FirmQuarry plans for company intelligence, screening, alerts, tracking, and exports." };
 
 type RawParams = Record<string, string | string[] | undefined>;
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
@@ -42,7 +42,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
     {checkout === "cancelled" ? <section className="checkout-state"><h2>Checkout cancelled</h2><p>No charge was made. Your current plan is unchanged.</p></section> : null}
     {validCheckoutPlan && checkout !== "success" && viewer.plan === "free" && checkoutAvailable ? <section className="checkout-resume"><p>Continuing to {displayPlan[validCheckoutPlan]} checkout…</p><BillingButton plan={validCheckoutPlan} billing={billing} autoStart>Continue to secure checkout</BillingButton></section> : null}
 
-    <section className="pricing-grid" aria-label="BusinessCurrent plans">
+    <section className="pricing-grid" aria-label="FirmQuarry plans">
       {plans.map((plan) => <article id={plan.slug} className={`price-card ${plan.featured ? "featured" : ""} ${viewer.plan === plan.slug ? "current" : ""}`} key={plan.slug}>
         {plan.featured ? <span className="plan-badge">Most Popular</span> : null}
         {viewer.plan === plan.slug ? <span className="current-badge">Current plan</span> : null}
