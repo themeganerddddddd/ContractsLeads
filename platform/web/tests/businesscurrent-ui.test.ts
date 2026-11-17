@@ -13,17 +13,23 @@ describe("FirmQuarry public product", () => {
     for (const label of ["Overview", "Expansion Intelligence", "Movement Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
-    for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology", "Plans", "Account"]) {
+    for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology"]) {
       expect(header).toContain(`\"${label}\"`);
     }
+    expect(header).toContain("My Account");
+    expect(header).toContain("Help &amp; Feedback");
+    expect(header).not.toContain('["Plans", "/pricing"]');
+    expect(header).not.toContain("Owner overview");
     expect(header).not.toContain("Federal Ledger");
   });
 
   it("covers the sellable homepage and preserves supporting research experiences", () => {
-    expect(read("app/page.tsx")).toContain("ResearchHome");
+    expect(read("app/workspace/page.tsx")).toContain("ResearchHome");
+    expect(read("app/page.tsx")).toContain("ProviderSignInButton");
+    expect(read("app/page.tsx")).toContain('href="/pricing"');
     expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
     expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
-    expect(read("app/page.tsx")).not.toContain("studio-product-grid");
+    expect(read("app/workspace/page.tsx")).not.toContain("studio-product-grid");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
     expect(read("components/MarketFilterBar.tsx")).toContain("County / Parish / Local Area");
