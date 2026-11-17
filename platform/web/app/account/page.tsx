@@ -31,7 +31,7 @@ export default async function AccountPage() {
         <div className="account-card"><span>Signed in as</span><h2>{viewer.user.name}</h2><p>{viewer.user.email}</p><AccountSignOutButton /></div>
         <div className="account-card"><span>Current plan</span><h2>{displayPlan[viewer.plan]}</h2><p>{viewer.plan === "free" ? "Upgrade for full result sets, deeper history, and paid workspace features." : "Your active paid access is reflected across FirmQuarry."}</p><p><strong>Subscription status:</strong> {viewer.subscriptionStatus ? displayStatus[viewer.subscriptionStatus] || viewer.subscriptionStatus.replaceAll("_", " ") : "Free access"}</p>{viewer.hasBillingAccount ? <BillingPortalButton /> : <Link className="button primary" href="/pricing">See plans</Link>}</div>
       </div>
-      <div className="account-links"><Link href="/saved-searches">Saved searches</Link><Link href="/tracked-companies">Tracked companies</Link><Link href="/alerts">Alerts</Link><Link href="/companies">Company screener</Link><Link href="/support">Help &amp; feedback</Link></div>
+      <div className="account-links"><Link href="/saved-searches">Saved searches</Link><Link href="/tracked-companies">Tracked companies</Link><Link href="/alerts">Alerts</Link><Link href="/companies">Company screener</Link><Link href="/support">Help &amp; feedback</Link>{viewer.user && process.env.OWNER_EMAIL?.trim().toLowerCase() === viewer.user.email.toLowerCase() ? <Link href="/admin">Owner overview</Link> : null}</div>
     </>}
   </section>;
 }
