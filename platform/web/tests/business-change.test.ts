@@ -95,7 +95,8 @@ describe("location-first business change", () => {
     const establishment = readFileSync(resolve(root, "app/establishment/[id]/page.tsx"), "utf8");
     expect(company).toContain(">Locations</a>");
     expect(company).toContain("Company and locations stay distinct");
-    expect(company).toContain("No supported establishment data");
+    expect(company).toContain("Supported operating locations");
+    expect(company).toContain("EstablishmentIntelligencePanel");
     expect(company.match(/<a href="#/g)).toHaveLength(5);
     expect(establishment).toContain("Physical business location");
     expect(establishment).toContain("Outcome ≠ indication ≠ signal");
@@ -105,14 +106,15 @@ describe("location-first business change", () => {
   it("presents BusinessCurrent as a nationwide business-change product", () => {
     const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
     const header = readFileSync(resolve(root, "components/Header.tsx"), "utf8");
-    expect(page).toContain("Business change intelligence, nationwide.");
+    expect(page).toContain("Company intelligence built around change");
     expect(page).toContain('name="q"');
-    expect(page).toContain("city, county, state, or ZIP");
+    expect(page).toContain("Search companies and locations");
     expect(page).toContain("Government Business");
     expect(page).not.toContain("Largest recent awards");
     expect(header).toContain("BusinessCurrent");
-    expect(header).toContain('["Radar", "/business-change"]');
-    expect(header).toContain('["Markets", "/locations"]');
+    expect(header).toContain('["Companies", "/companies"]');
+    expect(header).toContain('["Locations", "/locations"]');
+    expect(header).toContain('["Predicted Expansion", "/predicted-expansion"]');
     expect(header).toContain('["Government Business", "/search"]');
     expect(header).toContain("primaryLinks");
     expect(header).toContain("moreLinks");

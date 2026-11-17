@@ -7,8 +7,6 @@ const productionRequired = [
   "INTERNAL_HEALTH_TOKEN",
 ] as const;
 
-const oauthRequired = ["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"] as const;
-
 const billingRequired = [
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
@@ -35,10 +33,10 @@ export function validateRuntimeConfig(
     );
   }
   if (env.AUTH_ENABLED === "true") {
-    const missingOauth = oauthRequired.filter((name) => !env[name]?.trim());
-    if (missingOauth.length) {
+    const providers = authProviderAvailability(env);
+    if (!providers.google && !providers.github) {
       throw new Error(
-        `Enabled authentication is missing configuration: ${missingOauth.join(", ")}`,
+        "Enabled authentication requires a complete Google or GitHub provider configuration",
       );
     }
   }
@@ -87,6 +85,23 @@ export function billingEnabled(env: RuntimeEnvironment = process.env): boolean {
 
 export function authEnabled(env: RuntimeEnvironment = process.env): boolean {
   return env.AUTH_ENABLED === "true";
+}
+
+export function authProviderAvailability(
+  env: RuntimeEnvironment = process.env,
+): { google: boolean; github: boolean } {
+  return {
+    google: Boolean(
+      env.AUTH_ENABLED === "true" &&
+        env.AUTH_GOOGLE_ID?.trim() &&
+        env.AUTH_GOOGLE_SECRET?.trim(),
+    ),
+    github: Boolean(
+      env.AUTH_ENABLED === "true" &&
+        env.AUTH_GITHUB_ID?.trim() &&
+        env.AUTH_GITHUB_SECRET?.trim(),
+    ),
+  };
 }
 
 export function alertEmailEnabled(env: RuntimeEnvironment = process.env): boolean {

@@ -66,11 +66,14 @@ export async function getCompanyProfile(slug: string) {
   if (!company) return null;
   const [metrics, awards, agencies, locations, annual, industries, events, predictions, momentum, identifiers, globalMetrics, movements, earlyIndicators, tracking, intelligenceTimeline, changeIntelligence, establishmentIntelligence] = await Promise.all([
     query<any>(
-      `SELECT sum(COALESCE(a.total_obligated,0))::text AS total_activity,count(DISTINCT a.id)::text AS award_count,
-       count(t.id)::text AS transaction_count,count(DISTINCT a.awarding_agency)::text AS agency_count,
+      `SELECT COALESCE(sum(t.obligation),0)::text AS total_activity,
+       COALESCE(sum(t.obligation) FILTER (WHERE t.action_date>=current_date-interval '365 days'),0)::text AS obligations_12m,
+       count(t.id)::text AS transaction_count,count(DISTINCT a.id)::text AS award_count,
+       count(DISTINCT a.awarding_agency)::text AS agency_count,
        count(DISTINCT concat_ws('|',a.performance_state,a.performance_county_fips,a.performance_city))::text AS location_count,
        max(a.award_date)::text AS latest_award
-       FROM awards a LEFT JOIN transactions t ON t.award_id=a.id WHERE a.recipient_company_id=$1 AND NOT a.is_benchmark`,
+       FROM awards a LEFT JOIN transactions t ON t.award_id=a.id AND NOT t.is_benchmark AND NOT t.is_demo
+       WHERE a.recipient_company_id=$1 AND NOT a.is_benchmark AND NOT a.is_demo`,
       [company.id]
     ),
     query<any>(
@@ -81,14 +84,22 @@ export async function getCompanyProfile(slug: string) {
       [company.id]
     ),
     query<any>(
-      `SELECT awarding_agency AS name,count(*)::text AS award_count,sum(COALESCE(total_obligated,0))::text AS activity
-       FROM awards WHERE recipient_company_id=$1 AND NOT is_benchmark GROUP BY awarding_agency ORDER BY activity DESC NULLS LAST LIMIT 10`,
+      `SELECT a.awarding_agency AS name,count(DISTINCT a.id)::text AS award_count,
+       COALESCE(sum(t.obligation),0)::text AS activity
+       FROM awards a JOIN transactions t ON t.award_id=a.id
+       WHERE a.recipient_company_id=$1 AND NOT a.is_benchmark AND NOT a.is_demo
+         AND NOT t.is_benchmark AND NOT t.is_demo
+       GROUP BY a.awarding_agency ORDER BY sum(t.obligation) DESC NULLS LAST LIMIT 10`,
       [company.id]
     ),
     query<any>(
-      `SELECT performance_state,performance_county,performance_city,count(*)::text AS award_count,
-       sum(COALESCE(total_obligated,0))::text AS activity FROM awards WHERE recipient_company_id=$1 AND NOT is_benchmark
-       GROUP BY performance_state,performance_county,performance_city ORDER BY activity DESC NULLS LAST LIMIT 10`,
+      `SELECT a.performance_state,a.performance_county,a.performance_city,count(DISTINCT a.id)::text AS award_count,
+       COALESCE(sum(t.obligation),0)::text AS activity
+       FROM awards a JOIN transactions t ON t.award_id=a.id
+       WHERE a.recipient_company_id=$1 AND NOT a.is_benchmark AND NOT a.is_demo
+         AND NOT t.is_benchmark AND NOT t.is_demo
+       GROUP BY a.performance_state,a.performance_county,a.performance_city
+       ORDER BY sum(t.obligation) DESC NULLS LAST LIMIT 10`,
       [company.id]
     ),
     query<any>(
@@ -123,9 +134,11 @@ export async function getCompanyProfile(slug: string) {
        FROM entity_identifiers WHERE company_id=$1 ORDER BY is_verified DESC,identifier_system`, [company.id]
     ),
     query<any>(
-      `SELECT source_country,count(DISTINCT process_id)::text AS process_count,
-       count(*)::text AS event_count,max(event_at)::text AS latest_event
-       FROM procurement_events WHERE company_id=$1 GROUP BY source_country ORDER BY source_country`, [company.id]
+      `SELECT p.source_country,p.currency,COALESCE(sum(p.value_native),0)::text AS disclosed_value,
+       count(*)::text AS process_count,max(COALESCE(p.award_date,p.published_at::date))::text AS latest_activity
+       FROM procurement_process_suppliers ps JOIN procurement_processes p ON p.id=ps.process_id
+       WHERE ps.company_id=$1 AND NOT p.is_demo
+       GROUP BY p.source_country,p.currency ORDER BY p.source_country,p.currency`, [company.id]
     ),
     getCompanyMovements(company.id),
     getCompanyEarlyIndicators(company.id),

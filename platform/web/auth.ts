@@ -1,23 +1,32 @@
 import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 
-import { authEnabled, publicAppUrl } from "@/lib/config";
+import { authProviderAvailability, publicAppUrl } from "@/lib/config";
 
-const githubConfigured = Boolean(
-  authEnabled() &&
-    process.env.AUTH_GITHUB_ID &&
-    process.env.AUTH_GITHUB_SECRET,
-);
+const configured = authProviderAvailability();
+
+const providers = [];
+if (configured.google) {
+  providers.push(
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID!,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    }),
+  );
+}
+if (configured.github) {
+  providers.push(
+    GitHub({
+      clientId: process.env.AUTH_GITHUB_ID!,
+      clientSecret: process.env.AUTH_GITHUB_SECRET!,
+    }),
+  );
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: githubConfigured
-    ? [
-        GitHub({
-          clientId: process.env.AUTH_GITHUB_ID!,
-          clientSecret: process.env.AUTH_GITHUB_SECRET!,
-        }),
-      ]
-    : [],
+  providers,
+  pages: { signIn: "/sign-in" },
   session: { strategy: "jwt" },
   secret:
     process.env.AUTH_SECRET ||

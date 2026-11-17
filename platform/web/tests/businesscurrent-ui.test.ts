@@ -10,26 +10,28 @@ describe("BusinessCurrent public product", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
     expect(layout).toContain("BusinessCurrent — Business change intelligence, nationwide");
-    for (const label of ["Radar", "Companies", "Markets", "Tracking", "Alerts"]) {
+    for (const label of ["Companies", "Locations", "Predicted Expansion", "Predicted Moves", "Predicted Contraction"]) {
       expect(header).toContain(`\"${label}\"`);
     }
-    for (const label of ["Government Business", "Industries", "Agencies", "Saved searches", "Data Coverage", "Methodology", "Plans"]) {
+    for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology", "Plans", "Account"]) {
       expect(header).toContain(`\"${label}\"`);
     }
     expect(header).not.toContain("Federal Ledger");
   });
 
-  it("covers the homepage, radar, markets, tracking, alerts, coverage, and government-business experience", () => {
-    expect(read("app/page.tsx")).toContain("Evidence, not guesses");
+  it("covers the sellable homepage and preserves supporting legacy experiences", () => {
+    expect(read("app/page.tsx")).toContain("Find the companies that are changing before everyone else does.");
+    expect(read("app/page.tsx")).toContain("Live company intelligence");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
-    expect(read("app/locations/page.tsx")).toContain("City, county, state, or ZIP");
+    expect(read("app/locations/page.tsx")).toContain("County / Parish / Local Area");
     expect(read("app/tracked-companies/page.tsx")).toContain("Sources with errors");
     expect(read("app/alerts/page.tsx")).toContain("Evidence changed");
     expect(read("app/data-coverage/page.tsx")).toContain("50 states + DC");
     expect(read("app/methodology/page.tsx")).toContain("at least 5% of that award’s reference value or at least $1 million USD");
     expect(read("app/search/page.tsx")).toContain("Government Business");
-    expect(read("app/companies/page.tsx")).toContain('mode: "companies"');
+    expect(read("app/companies/page.tsx")).toContain("Search by company or legal name");
+    expect(read("app/companies/page.tsx")).toContain("Government Business — largest");
   });
 
   it("keeps company and establishment profiles distinct and mobile styles explicit", () => {

@@ -11,6 +11,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const urls: MetadataRoute.Sitemap = [
     "",
     "/companies",
+    "/predicted-expansion",
+    "/predicted-moves",
+    "/predicted-contraction",
     "/contracts",
     "/movements",
     "/indicators",
@@ -26,6 +29,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/industries",
     "/agencies",
     "/pricing",
+    "/sign-in",
+    "/account",
+    "/terms",
+    "/privacy",
   ].map((path) => ({ url: `${base}${path}`, changeFrequency: "daily" }));
 
   try {
