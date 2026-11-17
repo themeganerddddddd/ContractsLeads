@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
-describe("BusinessCurrent public product", () => {
+describe("FirmQuarry public product", () => {
   it("uses the public brand and required primary navigation", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
-    expect(layout).toContain("BusinessCurrent — Business change intelligence, nationwide");
+    expect(layout).toContain("FirmQuarry — Business change intelligence, nationwide");
     for (const label of ["Overview", "Expansion Intelligence", "Movement Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
