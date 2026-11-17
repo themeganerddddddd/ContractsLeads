@@ -104,7 +104,7 @@ describe("location-first business change", () => {
   });
 
   it("presents FirmQuarry as a nationwide business-change product", () => {
-    const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
+    const page = readFileSync(resolve(root, "app/workspace/page.tsx"), "utf8");
     const header = readFileSync(resolve(root, "components/Header.tsx"), "utf8");
     expect(page).toContain('ResearchHome');
     const market = readFileSync(resolve(root,"components/MarketFilterBar.tsx"),"utf8");
