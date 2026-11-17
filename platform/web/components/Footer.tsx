@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export function Footer() {
-  const contactEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+  const contactEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@firmquarry.com";
   return (
     <footer className="site-footer bc-footer">
       <div className="bc-footer-statement">
