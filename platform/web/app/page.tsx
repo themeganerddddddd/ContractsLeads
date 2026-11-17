@@ -24,6 +24,16 @@ export default async function HomePage({searchParams}:{searchParams:Promise<RawP
     searchPredictionCompanies("contraction",values,viewer.plan,viewer.userId),
     searchPredictionCompanies("moves",values,viewer.plan,viewer.userId)]);
    signals=[...expansion.rows.map(r=>signal(r,"expansion")),...contraction.rows.map(r=>signal(r,"contraction")),...movement.rows.map(r=>signal(r,"movement"))];
+   // Attraction considers companies outside the target, but only with a supported destination.
+   // This is a bounded first-page research sample, not an exhaustive national candidate universe.
+   if(values.state){
+     const national=await searchPredictionCompanies("expansion",{...values,state:undefined,county:undefined,page:1},viewer.plan,viewer.userId);
+     const seen=new Set(signals.filter(s=>s.type==="expansion").map(s=>s.id));
+     for(const item of national.rows){
+       const prospect=signal(item,"expansion");
+       if(prospect.verifiedDestination && !seen.has(prospect.id)){signals.push(prospect);seen.add(prospect.id);}
+     }
+   }
    hasDatabase=true;
  }catch{hasDatabase=false;}
  return <ResearchHome values={values} signals={signals} hasDatabase={hasDatabase}/>;
