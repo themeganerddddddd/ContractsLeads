@@ -110,7 +110,7 @@ describe("location-first business change", () => {
     const market = readFileSync(resolve(root,"components/MarketFilterBar.tsx"),"utf8");
     expect(market).toContain('name="q"');
     expect(market).toContain('name="county"');
-    expect(page).toContain("Government contracts");
+    expect(readFileSync(resolve(root,"components/ResearchHome.tsx"),"utf8")).toContain("New deals");
     expect(page).not.toContain("Largest recent awards");
     expect(header).toContain("BusinessCurrent");
     expect(header).toContain('["Companies", "/companies"]');
