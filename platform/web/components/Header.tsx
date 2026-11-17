@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const primaryLinks = [
-  ["Overview", "/"],
+  ["Overview", "/workspace"],
   ["Expansion Intelligence", "/predicted-expansion"],
   ["Movement Intelligence", "/predicted-moves"],
   ["Retention Intelligence", "/predicted-contraction"],
@@ -20,7 +20,7 @@ const primaryLinks = [
 const moreLinks = [
   { label: "Research", links: [["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Business changes", "/business-change"], ["Public source archive", "/public-records"]] },
   { label: "Workspace", links: [["Saved", "/saved-searches"], ["Alerts", "/alerts"], ["Coverage", "/coverage"]] },
-  { label: "Account", links: [["Methodology", "/methodology"], ["Plans", "/pricing"], ["Account", "/account"], ["Help & feedback", "/support"]] },
+  { label: "About the data", links: [["Methodology", "/methodology"]] },
 ] as const;
 
 const relatedRoutes: Record<string, string[]> = {
@@ -58,6 +58,11 @@ export function Header() {
           ))}
         </div>
       </details>
+      <div className="fq-sidebar-account">
+        <span className="fq-sidebar-account-label">YOUR WORKSPACE</span>
+        <Link href="/account" className={isCurrent("/account") ? "fq-sidebar-selected" : ""} aria-current={isCurrent("/account") ? "page" : undefined}>My Account</Link>
+        <Link href="/support" className={isCurrent("/support") ? "fq-sidebar-selected" : ""} aria-current={isCurrent("/support") ? "page" : undefined}>Help &amp; Feedback</Link>
+      </div>
     </nav>
   );
 
