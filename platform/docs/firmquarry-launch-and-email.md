@@ -1,119 +1,63 @@
-# FirmQuarry rebrand, support inbox, and safe launch checklist
+# FirmQuarry — rebrand, email and release notes
 
-## Actual DNS setup — Nov 17, 2026
+## Domain and business email
 
-The domain `firmquarry.com` is registered in the Vercel `west-tech` team. Its Vercel DNS was verified with no prior MX records. The following two MX records have been added to the root without changing web-hosting records:
+- **Domain:** `firmquarry.com`, purchased through Vercel in the `west-tech` team.
+- **Customer support:** `support@firmquarry.com`, forwarded to the founder's existing personal Gmail inbox via [Forward Email](https://forwardemail.net).
+- **Verified by the founder on November 17, 2026:** a test message reached the Gmail inbox.
+- **Current Vercel DNS:** root MX `mx1.forwardemail.net` and `mx2.forwardemail.net` (both priority 0), and one encrypted root `forward-email=` TXT record.
+- **Privacy:** do not expose or commit the private destination or encrypted forwarding value. The public address is displayed by default in the code.
+- **Important:** forwarding receives messages only. Gmail replies will use the Gmail address unless a separately authenticated sending identity/mailbox is configured. Keep personal Gmail as default for unrelated messages.
 
-- MX priority 0, `mx1.forwardemail.net`
-- MX priority 0, `mx2.forwardemail.net`
+## New navigation and pages (November 17, 2026)
 
-**DNS forwarding configuration installed:** The founder generated an encrypted `forward-email=` value, and that exact root TXT record was added to the Vercel DNS zone. Vercel DNS reads confirm both MX records and the encrypted TXT exist; no other MX record conflicts. **Live forwarding/delivery has not yet been tested.** Test by sending to `support@firmquarry.com` from an independent email account and confirming receipt in the intended Gmail inbox. Do not commit or display the private recipient or encrypted TXT value in repository files. After verification, set `NEXT_PUBLIC_SUPPORT_EMAIL=support@firmquarry.com` in Vercel Production when the site is ready. Outbound messages/replies from a branded address require separately configured SMTP or mailbox.
+- `/` — **public marketing homepage** with premium explanation of the product, truthful capability cards, a sign-in panel (Google/GitHub buttons only when configured), and conspicuous links to `/pricing`. Offers public exploration if sign-in is not ready.
+- `/workspace` — **existing research overview**, preserved from the former `/` implementation. State/county market selection and automatic location navigation now keep visitors on `/workspace`.
+- `/pricing` — existing public Free/Starter/Pro/Analyst subscription plans. It is deliberately **not linked from the research sidebar**; it appears in the public home/header and via My Account.
+- `/sign-in` — public sign-in page, reachable from the public header. Account provider availability remains configuration-gated.
+- Research sidebar — **My Account** with **Help & Feedback directly underneath**. Pricing no longer appears in sidebar menus. The former floating help pill has been removed.
+- `/support` — centered two-column support layout with a usable form. When the Resend/Turnstile service is not configured, submitting opens a **prefilled email draft** to `support@firmquarry.com` in the visitor's mail app. The visitor reviews and sends it; no backend-delivery claim is made. When the verified backend is configured, it submits through `/api/support`.
+- `/account` — single place for user profile, account subscription status and self-service billing. No separate private owner dashboard; `/admin` was deleted.
 
+## Activating automatic support form delivery (optional)
 
-**Domain owned by founder:** `firmquarry.com`  
-**Public product brand:** FirmQuarry  
-**Contact address to activate:** `support@firmquarry.com` (do not display until it receives mail)
+The support page already provides an email-draft fallback. To send feedback automatically from the web form instead:
 
-## 1. Receive mail without publishing a personal Gmail address
+1. Verify an outbound **sending subdomain** (for example `notify.firmquarry.com`) in Resend, preserving the existing inbound MX records on the root domain.
+2. Configure Cloudflare Turnstile for the final site hostname.
+3. Set Vercel environment variables:
+   ```env
+   SUPPORT_INBOX_EMAIL=<private destination; server only>
+   RESEND_FROM_EMAIL=FirmQuarry <feedback@notify.firmquarry.com>
+   RESEND_API_KEY=<server-only API key>
+   TURNSTILE_SECRET_KEY=<server-only Turnstile secret>
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=<public Turnstile site key>
+   ```
+4. Redeploy and submit an independent test. Verify receipt before advertising automated form delivery. The backend validates same-origin POST, message size, honeypot and Turnstile, and does not persist tickets in the database.
 
-Recommended low-cost approach: **route `support@firmquarry.com` to an existing Gmail inbox**.
-Check whether the domain's current DNS host/registrar offers email forwarding first.
-If using Cloudflare Email Routing, the domain's authoritative nameservers must be at
-Cloudflare: import/verify existing website DNS records *before changing nameservers*,
-then open Cloudflare dashboard → Email Routing, verify the Gmail destination, and
-create the `support@` routing rule. Test from a second inbox and verify delivery.
+Do not paste live secrets into repository files or chat.
 
-Forwarding is **receiving only**. Replies typed in ordinary Gmail will otherwise be
-sent from the personal Gmail account, revealing it to customers. To reply from
-`support@firmquarry.com`, use a real custom-domain mailbox (e.g. Google Workspace,
-Zoho Mail) or configure Gmail's "Send mail as" with a **legitimate SMTP provider**
-that authenticates the domain. Do not rely on Gmail's own mail servers to spoof the
-domain; verify SPF, DKIM, and DMARC. Avoid combining competing apex MX records
-from different mailbox providers.
+## Accounts, Stripe, and release gates
 
-Configure this public variable after receiving test succeeds:
-```
-NEXT_PUBLIC_SUPPORT_EMAIL=support@firmquarry.com
-```
-Set optional sales address only once its inbox/forwarding is tested:
-```
-NEXT_PUBLIC_SALES_EMAIL=hello@firmquarry.com
-```
+Authentication and billing exist in the commercialization branch but are not activated by the rebrand.
 
-## 2. Enable the Help & feedback form
+- Attach `firmquarry.com` to the correct Vercel production project, verify HTTPS and DNS, **then** set `NEXT_PUBLIC_APP_URL=https://firmquarry.com`.
+- Update authorized callback URLs at the selected OAuth providers (`https://firmquarry.com/api/auth/callback/google` and/or `github`), configure `AUTH_SECRET`, keys and `AUTH_ENABLED=true`, and test with the real database.
+- Configure signed Stripe webhook `https://firmquarry.com/api/billing/webhook` and the required plan price IDs. Keep `BILLING_ENABLED=false` until checkout, entitlements, cancellations and legal/tax items are reviewed.
+- Do not use development mock modes in production.
+- Resolve the known Next.js 16.4.2 security issue and verify the Neon database before production promotion.
+- This work stacks on PR #6, which stacks on PR #5. Merge and test in dependency order, and do not auto-promote this draft PR to Production.
+- Redirect the old site with permanent redirects only after the new domain and routes function and canonical URLs/search indexes are reviewed.
 
-The site includes a dedicated `/support` page plus a persistent help launcher.
-The web form is **disabled until all** five server-side/client config values are set
-and deployed. This is deliberate: the UI must not claim a message was sent when
-email or anti-spam delivery isn't ready.
+## Release verification
 
-- Create an account on Resend (or compatible sending API); verify a **sending
-  subdomain** such as `notify.firmquarry.com`. This avoids clashes with
-  Cloudflare's **incoming** mail MX records on `firmquarry.com`.
-- Add provider-provided DKIM/SPF/TXT records for the sending subdomain.
-- Create a Cloudflare Turnstile site for `firmquarry.com`; get its site and secret keys.
-- Configure Vercel environment variables **server-side**:
-  ```
-  SUPPORT_INBOX_EMAIL=<private Gmail destination or tested support inbox>
-  RESEND_FROM_EMAIL=FirmQuarry <feedback@notify.firmquarry.com>
-  RESEND_API_KEY=<secret>
-  TURNSTILE_SECRET_KEY=<secret>
-  NEXT_PUBLIC_TURNSTILE_SITE_KEY=<public key>
-  ```
-- Redeploy so the values take effect. Submit a genuine feedback message, confirm it
-  arrives, and reply to it using the real firmquarry.com identity.
-- The form currently sends messages to email, **not a database support inbox**.
-  Keep feedback in the email inbox and add ticket persistence later if needed.
-
-The server validates same-origin POST, field sizes, categories, honeypot, and
-Cloudflare Turnstile before sending via Resend. It never exposes secrets to clients.
-
-## 3. Accounts, billing, and owner dashboard
-
-Existing Auth.js Google/GitHub sign-in and Stripe subscriptions come from the
-stacked commercialization branch, not this rebrand. They are **not activated by
-renaming the UI**.
-
-- Set `NEXT_PUBLIC_APP_URL=https://firmquarry.com` in the **Production**
-  environment **only when domain DNS and Vercel project association are ready**.
-  This controls metadata, sitemap, redirects, and Stripe checkout URLs.
-- Update Google/GitHub OAuth authorized callback URIs for the new host, including
-  `https://firmquarry.com/api/auth/callback/google` or `/github` as appropriate.
-- Configure `AUTH_ENABLED=true`, provider secrets, and `AUTH_SECRET` only after
-  testing with a live database. Never use DEV_AUTH/DEV_STRIPE in production.
-- After verifying checkout/webhooks and legal/tax review, configure Stripe's
-  **signed webhook endpoint** `https://firmquarry.com/api/billing/webhook`,
-  all required Stripe price IDs and `BILLING_ENABLED=true`. Keep billing off
-  until then.
-- To enable `/admin`, set `OWNER_EMAIL` to the **exact email** used by your Google
-  or GitHub login; the page is inaccessible without a genuine authenticated
-  owner session. It shows real account/subscription counts only when the database
-  is connected; Stripe remains the actual source of truth for revenue.
-- If the database is disconnected, admin shows an unavailable notice, never zero.
-  Feedback messages are emailed, so they are not counted in admin yet.
-
-## 4. Production release gate
-
-This branch builds upon **PR #6**, itself based on **PR #5**. Before changing
-Production, resolve the known Next.js 16.4.2 security issue, restore/verify
-Neon, validate Auth/Stripe, run tests, and review legal terms/privacy. PR #5 then
-PR #6 must be merged in order; review the FirmQuarry branch afterward.
-
-Do **not** silently redirect the old site until the new site works. Once both
-domains are verifiably controlled, attach `firmquarry.com` to Vercel Production,
-verify DNS and HTTPS, test the launch and then add a permanent 301 redirect from
-the old primary domain. Never point a domain you do not control to the project.
-
-Update third-party URLs (Google Search Console, Stripe, Google OAuth,
-sitemaps, external marketing profiles) to `firmquarry.com`.
-
-## 5. Checks after production configuration
-
-1. Open `https://firmquarry.com`; header, footer, titles and OG metadata say FirmQuarry.
-2. `/robots.txt` and `/sitemap.xml` have firmquarry.com URLs.
-3. A visitor without a login can use the free tier.
-4. A real customer can sign in, buy, see entitlement, manage billing and cancel.
-5. Support button works from all pages and sends verified feedback to the owner.
-6. Owner login can access `/admin`; other visitors receive 404.
-7. Stripe Dashboard payment totals agree with database entitlements.
-8. Previous-domain redirects retain path and don't produce canonical duplicates.
+1. Root home is public, shows honest sign-in availability and linked plan pricing.
+2. Research overview is at `/workspace`, with market filters preserving that path.
+3. Sidebar shows My Account immediately above Help & Feedback; never Plans.
+4. `/support` is centered and opens a usable draft when the automated service is absent; live form works when configured.
+5. `/admin` no longer exists.
+6. `/pricing` and `/sign-in` use public navigation with paths back to research.
+7. All customer-facing pages say FirmQuarry; original brand isn't displayed.
+8. Real sign-in and payments work only after production configuration and verification.
+9. Public website, search metadata, canonical URL and robots/sitemap all use `firmquarry.com`.
+10. CI unit tests, typecheck and production build pass before release.
