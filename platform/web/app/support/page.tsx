@@ -11,7 +11,7 @@ type SupportParams = { status?: string | string[] };
 export default async function SupportPage({ searchParams }: { searchParams: Promise<SupportParams> }) {
   const raw = await searchParams;
   const status = Array.isArray(raw.status) ? raw.status[0] : raw.status;
-  const supportAddress = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+  const supportAddress = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@firmquarry.com";
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
   const formReady = Boolean(
     siteKey &&
