@@ -64,6 +64,6 @@ export async function OfficialContractsExplorer({ searchParams = {}, compact = f
         : <div className="empty-panel"><strong>No matching public federal awards in the last 12 months.</strong><p>Try a different recipient name.</p></div>}
     {!result && !compact ? <OfflineRecordsExplorer compact showCompanies={false} /> : null}
     {result && !compact ? <p className="offline-footnote">You can also <Link href="/public-records">browse previously collected records</Link> when the live source is unavailable.</p> : null}
-    <p className="official-source-disclaimer"><strong>Limited public-source mode.</strong> Company profiles, complete histories, watchlists and expansion/retention assessments require the BusinessCurrent PostgreSQL database. This feed is a separate direct-source view, not a substitute.</p>
+    <p className="official-source-disclaimer"><strong>Limited public-source mode.</strong> Company profiles, complete histories, watchlists and expansion/retention assessments require the FirmQuarry PostgreSQL database. This feed is a separate direct-source view, not a substitute.</p>
   </section>;
 }

@@ -45,7 +45,7 @@ export function CheckoutActivationStatus({ intendedPlan }: { intendedPlan: strin
   }, []);
 
   if (plan !== "free") {
-    return <section className="checkout-state checkout-success" role="status"><p className="eyebrow">Subscription active</p><h2>Welcome to BusinessCurrent {planNames[plan] || plan}.</h2><p>Your paid access is active. Continue directly to the company screener.</p><Link className="button primary" href="/companies">Search companies</Link></section>;
+    return <section className="checkout-state checkout-success" role="status"><p className="eyebrow">Subscription active</p><h2>Welcome to FirmQuarry {planNames[plan] || plan}.</h2><p>Your paid access is active. Continue directly to the company screener.</p><Link className="button primary" href="/companies">Search companies</Link></section>;
   }
   return <section className="checkout-state" role="status"><p className="eyebrow">Checkout completed</p><h2>{checking ? "Activating your subscription…" : "We’re still confirming your subscription."}</h2><p>Stripe may take a moment to deliver the signed billing event. This page will not claim paid access until your {planNames[intendedPlan] || intendedPlan} entitlement is recorded.</p>{checking ? <span className="activation-pulse" aria-hidden="true" /> : <p><Link href="/account">Check your account</Link> or refresh this page in a moment.</p>}</section>;
 }

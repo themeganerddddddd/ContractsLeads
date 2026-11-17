@@ -29,7 +29,7 @@ export async function CompanyDirectory({searchParams,locationFocus=false}:{
   return <div className="terminal-view terminal-directory">
     <section className="terminal-heading">
       <div className="terminal-heading-main">
-        <p className="terminal-eyebrow"><span className="terminal-greenline"/> BUSINESSCURRENT / NATIONAL COMPANY INDEX</p>
+        <p className="terminal-eyebrow"><span className="terminal-greenline"/> FIRMQUARRY / NATIONAL COMPANY INDEX</p>
         <h1>{locationFocus?"Company locations":"Company directory"}</h1>
         <p>{locationFocus
           ?"Search from the United States down to a state, county or parish. Reported company locations are not necessarily the locations of contract performance."

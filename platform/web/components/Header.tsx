@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const primaryLinks = [
-  ["Overview", "/"],
+  ["Overview", "/workspace"],
   ["Expansion Intelligence", "/predicted-expansion"],
   ["Movement Intelligence", "/predicted-moves"],
   ["Retention Intelligence", "/predicted-contraction"],
@@ -20,7 +20,7 @@ const primaryLinks = [
 const moreLinks = [
   { label: "Research", links: [["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Business changes", "/business-change"], ["Public source archive", "/public-records"]] },
   { label: "Workspace", links: [["Saved", "/saved-searches"], ["Alerts", "/alerts"], ["Coverage", "/coverage"]] },
-  { label: "Account", links: [["Methodology", "/methodology"], ["Plans", "/pricing"], ["Account", "/account"]] },
+  { label: "About the data", links: [["Methodology", "/methodology"]] },
 ] as const;
 
 const relatedRoutes: Record<string, string[]> = {
@@ -58,15 +58,20 @@ export function Header() {
           ))}
         </div>
       </details>
+      <div className="fq-sidebar-account">
+        <span className="fq-sidebar-account-label">YOUR WORKSPACE</span>
+        <Link href="/account" className={isCurrent("/account") ? "fq-sidebar-selected" : ""} aria-current={isCurrent("/account") ? "page" : undefined}>My Account</Link>
+        <Link href="/support" className={isCurrent("/support") ? "fq-sidebar-selected" : ""} aria-current={isCurrent("/support") ? "page" : undefined}>Help &amp; Feedback</Link>
+      </div>
     </nav>
   );
 
   return (
     <header className="bc-global-header">
       <div className="bc-global-bar">
-        <Link href="/" className="bc-brand" aria-label="BusinessCurrent home">
+        <Link href="/" className="bc-brand" aria-label="FirmQuarry home">
           <span className="bc-brand-symbol" aria-hidden="true"><span/><span/><span/><span/></span>
-          <span className="bc-brand-type"><strong>BusinessCurrent</strong><small>COMPANY INTELLIGENCE</small></span>
+          <span className="bc-brand-type"><strong>FirmQuarry</strong><small>COMPANY INTELLIGENCE</small></span>
         </Link>
 
         <form className="bc-global-search" action="/companies" method="get" role="search">
@@ -77,7 +82,7 @@ export function Header() {
 
         <div className="bc-global-actions">
           <Link href="/coverage"><span className="bc-live-dot" aria-hidden="true"/>Coverage</Link>
-          <Link href="/account" className="bc-account-link" aria-label="Account and settings"><span aria-hidden="true">BC</span><b>Account</b></Link>
+          <Link href="/account" className="bc-account-link" aria-label="Account and settings"><span aria-hidden="true">FQ</span><b>Account</b></Link>
           <button className="bc-menu-button" type="button" aria-expanded={menuOpen} aria-controls="bc-mobile-menu" onClick={() => setMenuOpen(value => !value)}>
             <span aria-hidden="true"/><span aria-hidden="true"/><span aria-hidden="true"/><b>{menuOpen ? "Close" : "Menu"}</b>
           </button>

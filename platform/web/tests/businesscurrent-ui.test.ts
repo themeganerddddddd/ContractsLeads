@@ -5,25 +5,31 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
-describe("BusinessCurrent public product", () => {
+describe("FirmQuarry public product", () => {
   it("uses the public brand and required primary navigation", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
-    expect(layout).toContain("BusinessCurrent — Business change intelligence, nationwide");
+    expect(layout).toContain("FirmQuarry — Business change intelligence, nationwide");
     for (const label of ["Overview", "Expansion Intelligence", "Movement Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
-    for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology", "Plans", "Account"]) {
+    for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology"]) {
       expect(header).toContain(`\"${label}\"`);
     }
+    expect(header).toContain("My Account");
+    expect(header).toContain("Help &amp; Feedback");
+    expect(header).not.toContain('["Plans", "/pricing"]');
+    expect(header).not.toContain("Owner overview");
     expect(header).not.toContain("Federal Ledger");
   });
 
   it("covers the sellable homepage and preserves supporting research experiences", () => {
-    expect(read("app/page.tsx")).toContain("ResearchHome");
+    expect(read("app/workspace/page.tsx")).toContain("ResearchHome");
+    expect(read("app/page.tsx")).toContain("ProviderSignInButton");
+    expect(read("app/page.tsx")).toContain('href="/pricing"');
     expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
     expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
-    expect(read("app/page.tsx")).not.toContain("studio-product-grid");
+    expect(read("app/workspace/page.tsx")).not.toContain("studio-product-grid");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
     expect(read("components/MarketFilterBar.tsx")).toContain("County / Parish / Local Area");
@@ -36,6 +42,19 @@ describe("BusinessCurrent public product", () => {
     expect(read("components/MarketFilterBar.tsx")).toContain("Government Business — largest");
     expect(read("app/layout.tsx")).toContain('import "./product.css"');
     expect(read("app/layout.tsx")).not.toContain("WorkspaceTopbar");
+  });
+
+  it("positions the public homepage around expansion, contraction and relocation forecasts", () => {
+    const page = read("app/page.tsx");
+    expect(page).toContain("Know when a company is likely to expand, contract, or move.");
+    expect(page).toContain("Unearth their next move.");
+    expect(page).toContain('href: "/predicted-expansion"');
+    expect(page).toContain('href: "/predicted-contraction"');
+    expect(page).toContain('href: "/predicted-moves"');
+    expect(page).toContain('>Start for free <');
+    expect(page).toContain('>View pricing plans <');
+    expect(page).toContain("predicted likelihoods appear only when supported by validated models");
+    expect(page).not.toContain("fq-plan-row");
   });
 
   it("keeps company and establishment profiles distinct and mobile styles explicit", () => {

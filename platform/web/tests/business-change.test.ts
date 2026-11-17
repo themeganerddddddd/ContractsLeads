@@ -103,8 +103,8 @@ describe("location-first business change", () => {
     expect(establishment).toContain("Address history");
   });
 
-  it("presents BusinessCurrent as a nationwide business-change product", () => {
-    const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
+  it("presents FirmQuarry as a nationwide business-change product", () => {
+    const page = readFileSync(resolve(root, "app/workspace/page.tsx"), "utf8");
     const header = readFileSync(resolve(root, "components/Header.tsx"), "utf8");
     expect(page).toContain('ResearchHome');
     const market = readFileSync(resolve(root,"components/MarketFilterBar.tsx"),"utf8");
@@ -112,7 +112,7 @@ describe("location-first business change", () => {
     expect(market).toContain('name="county"');
     expect(readFileSync(resolve(root,"components/ResearchHome.tsx"),"utf8")).toContain("New deals");
     expect(page).not.toContain("Largest recent awards");
-    expect(header).toContain("BusinessCurrent");
+    expect(header).toContain("FirmQuarry");
     expect(header).toContain('["Companies", "/companies"]');
     expect(header).toContain('["Locations", "/locations"]');
     expect(header).toContain('["Expansion Intelligence", "/predicted-expansion"]');

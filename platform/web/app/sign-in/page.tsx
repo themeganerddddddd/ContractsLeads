@@ -7,7 +7,7 @@ type RawParams = Record<string, string | string[] | undefined>;
 
 export const metadata = {
   title: "Sign in",
-  description: "Sign in to BusinessCurrent to save, track, subscribe, and manage your account.",
+  description: "Sign in to FirmQuarry to save, track, subscribe, and manage your account.",
 };
 
 function safeNext(value: string | string[] | undefined) {
@@ -30,11 +30,11 @@ export default async function SignInPage({
     <section className="auth-shell">
       <div className="auth-card">
         <Link className="auth-brand" href="/">
-          <span className="brand-mark" aria-hidden="true">BC</span>
-          BusinessCurrent
+          <span className="brand-mark" aria-hidden="true">FQ</span>
+          FirmQuarry
         </Link>
         <p className="eyebrow">Your company intelligence workspace</p>
-        <h1>Sign in to BusinessCurrent</h1>
+        <h1>Sign in to FirmQuarry</h1>
         <p>
           Save searches, track companies, manage alerts, and continue to your
           subscription without losing your place.

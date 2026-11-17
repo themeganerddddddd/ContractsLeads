@@ -19,7 +19,7 @@ export function GeoMarketSelector({state:initialState="",county:initialCounty=""
     const params=new URLSearchParams();
     if(nextState)params.set("state",nextState);
     if(nextCounty && nextState)params.set("county",nextCounty);
-    router.push("/"+(params.size?"?"+params.toString():""));
+    router.push("/workspace"+(params.size?"?"+params.toString():""));
   }
   async function locate(prompt:boolean){
     if(!navigator.geolocation || !window.isSecureContext){setStatus("Location unavailable. Showing the United States.");return;}
@@ -60,7 +60,7 @@ export function GeoMarketSelector({state:initialState="",county:initialCounty=""
       <label>County / parish<input value={county} disabled={!state} onChange={e=>setCounty(e.target.value)} placeholder={state?"County or parish":"Select a state"}/></label>
       <button className="bc-outline-btn" type="submit">Set market</button>
       <button className="bc-geo-detect" type="button" disabled={busy} onClick={()=>void locate(true)}>{busy?"Locating…":"⌾ Use my location"}</button>
-      <small role={status?"status":undefined}>{status||"Your browser shares coordinates once with the U.S. Census Geocoder to resolve a county; BusinessCurrent does not store them."}</small>
+      <small role={status?"status":undefined}>{status||"Your browser shares coordinates once with the U.S. Census Geocoder to resolve a county; FirmQuarry does not store them."}</small>
     </form>
   </section>;
 }
