@@ -157,3 +157,20 @@
 @media(max-width:990px){.bc-app-shell{display:block}.bc-global-header{position:sticky;top:0;width:100%;height:auto;max-height:none;display:block;background:#112d40;overflow:visible}.bc-global-bar{display:flex;flex-direction:row;align-items:center;justify-content:space-between;padding:9px 18px;height:60px}.bc-brand{padding:0}.bc-global-actions{margin-left:auto}.bc-global-actions>a{display:none}.bc-menu-button{display:grid;position:relative;border-color:#577b86;background:transparent;color:white}.bc-primary-strip{display:none}.bc-mobile-panel.is-open{display:block;background:#173d50;border-color:#255265}.bc-mobile-nav>a{color:#d7e6eb;border-color:#32596a}.bc-mobile-nav>a.is-current{color:white}.bc-mobile-nav .bc-more>summary{color:white}.bc-mobile-nav .bc-more-panel{background:#1d4354}.bc-app-content{width:100%}.bc-research-topbar{position:relative;top:auto;grid-template-columns:1fr auto;padding:13px 20px;height:auto}.bc-topbar-brand{display:none}.bc-research-topbar form{grid-column:1}.bc-desk-columns,.bc-desk-lower{grid-template-columns:1fr}.bc-desk-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.bc-global-search{display:none}}
 @media(max-width:700px){.page-shell.bc-main{padding:20px 15px 48px}.bc-research-topbar{grid-template-columns:1fr;padding:12px 15px;gap:10px}.bc-topbar-actions{display:none}.bc-desk-heading{flex-direction:column;align-items:start}.bc-desk-heading h1{font-size:32px}.bc-geo-identity{padding:17px}.bc-geo-controls{flex-wrap:wrap}.bc-geo-controls label{flex:1 1 130px}.bc-geo-controls button{flex:1}.bc-desk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bc-desk-stats>div{border-bottom:1px solid #325365}.bc-desk-stats strong{font-size:20px}.bc-desk-main,.bc-desk-card{padding:18px}.bc-desk-rail{grid-template-columns:1fr}.bc-home-signal{grid-template-columns:36px minmax(0,1fr) 12px}.bc-signal-side{grid-column:2;grid-row:2;text-align:left}.bc-home-signal>span{grid-column:3;grid-row:1}.bc-segmented{align-items:stretch;overflow-x:hidden}.bc-segmented button{min-width:0;padding:10px 6px;white-space:normal;line-height:1.3}.bc-screener-launch{flex-direction:column;align-items:start}.bc-criteria-window{min-height:0;max-height:calc(100vh - 20px)}.bc-criteria-header{padding:18px}.bc-criteria-header h2{font-size:21px}.bc-criteria-form{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(240px,1fr) auto auto}.bc-criteria-nav{display:flex;overflow-x:auto;padding:7px;border-right:0;border-bottom:1px solid #dce5e7}.bc-criteria-nav button{flex:0 0 auto;white-space:nowrap}.bc-criteria-body{padding:20px;min-height:150px}.bc-criteria-summary{border-left:0;border-top:1px solid #e1e9ea;padding:15px 20px;max-height:140px;overflow-y:auto}.bc-criteria-summary h3{display:none}.bc-criteria-summary>small{margin-top:8px}.bc-map-grid{grid-template-columns:1fr}.bc-company-map{padding:16px}.bc-map-frame{min-height:220px}.bc-map-frame iframe{height:230px}}
 @media(prefers-reduced-motion:reduce){.bc-desk *,.bc-criteria-window *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* FirmQuarry persistent support entry point; page content remains unobstructed. */
+.bc-support-launcher {
+  position: fixed; right: 20px; bottom: 20px; z-index: 50;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 42px; padding: 9px 16px; border-radius: 999px;
+  background: #0f3040; color: #fff; border: 1px solid #9ac3ba;
+  box-shadow: 0 7px 26px rgba(14, 40, 49, .20);
+  font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.bc-support-launcher:hover, .bc-support-launcher:focus-visible {
+  color: #fff; background: #205766; text-decoration: none;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  .bc-support-launcher { right: 12px; bottom: 12px; padding: 8px 12px; }
+}
