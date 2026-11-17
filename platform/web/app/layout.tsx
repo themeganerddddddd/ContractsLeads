@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
-import { ResearchTopbar } from "@/components/ResearchTopbar";
-import { SupportLauncher } from "@/components/SupportLauncher";
+import { SiteShell } from "@/components/SiteShell";
 import { publicAppUrl } from "@/lib/config";
 import "./globals.css";
 import "./product.css";
 import "./research-product.css";
+import "./firmquarry-public.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
@@ -26,15 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <div className="bc-app-shell">
-          <Header />
-          <div className="bc-app-content">
-            <ResearchTopbar />
-            <main className="page-shell bc-main">{children}</main>
-            <Footer />
-            <SupportLauncher />
-          </div>
-        </div>
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );
