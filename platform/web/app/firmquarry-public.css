@@ -178,3 +178,15 @@
 .fq-support-form{padding:21px}
 .fq-support-right{grid-template-columns:1fr}
 }
+
+
+/* Prediction-first positioning: keep the promise prominent without implying certainty. */
+.fq-hero-lead strong{display:block;margin-bottom:8px;color:#e8fcf8;font-size:clamp(18px,1.55vw,21px);font-weight:760;line-height:1.45;letter-spacing:-.018em}
+.fq-start-card{display:flex;flex-direction:column;gap:0;padding:32px 30px}
+.fq-start-card-overline{color:#097579;font-size:10px;letter-spacing:.16em;font-weight:870}
+.fq-start-card h3{margin:15px 0 11px;color:#153c4c;font:500 clamp(28px,2.5vw,36px)/1.16 Georgia,"Times New Roman",serif;letter-spacing:-.045em}
+.fq-start-card p{margin:0 0 13px;color:#57757d;font-size:13px;line-height:1.75}
+.fq-plan-summary.fq-start-card>.fq-button{margin:12px 0 0;min-height:48px}
+.fq-start-card .fq-button-secondary{color:#0b6770;border-color:#bad5d3;background:#f5fbfa}
+.fq-start-card .fq-button-secondary:hover{color:#084e57;background:#e4f3f0;border-color:#8abbb6}
+.fq-plan-summary.fq-start-card>.fq-plan-note{margin:17px 0 0}
