@@ -42,7 +42,7 @@ export function ContractHistoryChart({ annual }: { annual: AnnualPoint[] }) {
           const y = value >= 0 ? baseline - barHeight : baseline;
           const labelY = value >= 0 ? Math.max(18, y - 9) : Math.min(247, y + barHeight + 18);
           return <g key={point.year}>
-            <rect x={x} y={y} rx="4" width={barWidth} height={Math.max(1, barHeight)} className={value < 0 ? "studio-bar negative" : "studio-bar positive"}><title>{point.year}: {compactMoney(value)} net obligations</title></rect>
+            <rect x={x} y={y} rx="4" width={barWidth} height={Math.max(1, barHeight)} className={value < 0 ? "studio-bar negative" : "studio-bar positive"}><title>{`${point.year}: ${compactMoney(value)} net obligations`}</title></rect>
             <text className="studio-chart-value" x={x + barWidth / 2} y={labelY} textAnchor="middle">{compactMoney(value)}</text>
             <text className="studio-chart-year" x={x + barWidth / 2} y="269" textAnchor="middle">{point.year}</text>
           </g>;

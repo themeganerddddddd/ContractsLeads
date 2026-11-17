@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {useState} from "react";
 import {GeoMarketSelector} from "@/components/GeoMarketSelector";
+import {US_STATES} from "@/components/MarketFilterBar";
 import type {MarketFilterValues} from "@/lib/market-filters";
 import {marketHref} from "@/lib/market-filters";
 
@@ -15,7 +16,8 @@ export function ResearchHome({values,signals,hasDatabase}:{values:MarketFilterVa
  const inbound=signals.filter(r=>r.type==="expansion" && !inScope(r) && Boolean(r.verifiedDestination) && (!values.state||r.destinationState===values.state));
  const contraction=signals.filter(r=>r.type==="contraction"&&inScope(r));
  const rows=tab==="Local expansion"?local:tab==="Inbound attraction"?inbound:contraction;
- const target=values.county?values.county+", "+values.state:values.state||"United States";
+ const stateName=US_STATES.find(([code])=>code===values.state)?.[1]||values.state;
+ const target=values.county?values.county+", "+stateName:stateName||"United States";
  const path=tab==="Contraction risk"?"/predicted-contraction":tab==="Inbound attraction"?"/attraction":"/predicted-expansion";
  return <div className="bc-desk">
   <div className="bc-desk-heading"><div><span className="bc-microcopy">YOUR RESEARCH WORKSPACE / MARKET INTELLIGENCE</span><h1>Good morning. <span>Your market, in focus.</span></h1><p>Follow companies, capital activity and documented change signals relevant to your target geography.</p></div><Link href="/companies" className="bc-outline-btn">Company search ↗</Link></div>
@@ -29,7 +31,7 @@ export function ResearchHome({values,signals,hasDatabase}:{values:MarketFilterVa
   <div className="bc-desk-columns">
    <section className="bc-desk-main"><div className="bc-panel-head"><div><span className="bc-microcopy">MARKET OPPORTUNITY</span><h2>Companies worth investigating</h2><p>Source-linked signals within your selected market. No inferred destinations are substituted.</p></div><Link href={marketHref(path,values)}>Open screener ↗</Link></div>
     <div className="bc-segmented" role="group" aria-label="Opportunity category">{(["Local expansion","Inbound attraction","Contraction risk"] as Tab[]).map(t=><button key={t} aria-pressed={t===tab} type="button" className={t===tab?"is-selected":""} onClick={()=>setTab(t)}>{t}</button>)}</div>
-    {rows.length?<div className="bc-home-signal-rows">{rows.slice(0,7).map(row=><Link href={"/company/"+row.slug} key={row.type+row.id} className="bc-home-signal"><div className="bc-home-logo" aria-hidden="true">{row.name.split(" ").map(w=>w[0]).slice(0,2).join("")}</div><div><strong>{row.name}</strong><small>{row.sector} · {row.location}</small></div><div className="bc-signal-side">{row.probability?<strong>{Math.round(Number(row.probability)*100)}% validated</strong>:<strong>Evidence {row.score||"n/a"}</strong>}<small>{row.signalDate||"Date not reported"}</small></div><span aria-hidden="true">↗</span></Link>)}</div>:
+    {rows.length?<div className="bc-home-signal-rows">{rows.slice(0,7).map(row=><Link href={"/company/"+row.slug} key={row.type+row.id} className="bc-home-signal"><div className="bc-home-logo" aria-hidden="true">{row.name.split(" ").map(w=>w[0]).slice(0,2).join("")}</div><div><strong>{row.name}</strong><small>{row.sector} · {row.location}</small></div><div className="bc-signal-side">{row.probability?<strong>{Math.round(Number(row.probability)*100)}% validated</strong>:<strong>{row.score!=null?`Evidence ${Math.round(Number(row.score))}/100`:"Evidence not rated"}</strong>}<small>{row.signalDate||"Date not reported"}</small></div><span aria-hidden="true">↗</span></Link>)}</div>:
     <div className="bc-empty-market"><strong>{hasDatabase?"No supported matches in the current view.":"Company intelligence is not currently connected."}</strong><p>{hasDatabase?"Broaden your market or open the screener. An empty result is not evidence that no activity occurred.":"The live PostgreSQL connection is required for ranked company opportunities. No fictional companies are displayed."}</p><Link href={marketHref(path,values)}>Open advanced search ↗</Link></div>}
     <div className="bc-panel-bottom"><span>{hasDatabase?"Showing up to seven source-backed matches":"Coverage unavailable"}</span><Link href={marketHref(path,values)}>View all matching companies →</Link></div>
    </section>

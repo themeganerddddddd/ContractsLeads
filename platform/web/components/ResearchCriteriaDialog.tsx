@@ -1,6 +1,6 @@
 
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,type KeyboardEvent as ReactKeyboardEvent} from "react";
 import {US_STATES} from "@/components/MarketFilterBar";
 
 type Mode="companies"|"deals"|"expansion"|"attraction"|"contraction"|"moves";
@@ -22,27 +22,37 @@ export function ResearchCriteriaDialog({mode,action,initial={},industries=[]}:{m
   const [minValue,setMinValue]=useState(initial.governmentMin?.toString()||"");
   const [sort,setSort]=useState(initial.sort||"government_desc");
   const launch=useRef<HTMLButtonElement>(null);
+  const dialog=useRef<HTMLElement>(null);
   useEffect(()=>{
     if(!open)return;
     const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape"){setOpen(false);launch.current?.focus();}};
     window.addEventListener("keydown",onKey);
-    return()=>window.removeEventListener("keydown",onKey);
+    const frame=requestAnimationFrame(()=>dialog.current?.querySelector<HTMLElement>("[data-initial-focus]")?.focus());
+    return()=>{cancelAnimationFrame(frame);window.removeEventListener("keydown",onKey);};
   },[open]);
   const isDeal=mode==="deals";
   const isCompany=mode==="companies";
   const geographicScope=county?county+", "+(state||"US"):state?(allStates.find(s=>s[0]===state)?.[1]||state):"United States";
   const active=[country==="US"?"United States":country,state||"",county||"",industry||"",query?'"'+query+'"':""].filter(Boolean);
+  function keepFocusInside(event:ReactKeyboardEvent<HTMLElement>){
+    if(event.key!=="Tab")return;
+    const controls=Array.from(dialog.current?.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')||[]).filter(control=>control.getClientRects().length>0);
+    if(!controls.length)return;
+    const first=controls[0],last=controls[controls.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  }
   return <>
     <div className="bc-screener-launch">
       <div><span className="bc-microcopy">RESEARCH SCREENER</span><strong>{labels[mode]}</strong>
         <p>{isDeal?"Find verified capital events and corporate transactions where sources exist. Government contracts are shown separately.":"Build a structured search, review the criteria, and examine source-linked company results."}</p></div>
-      <button type="button" ref={launch} className="bc-solid-btn" onClick={()=>setOpen(true)}>＋ New search</button>
+      <button type="button" ref={launch} className="bc-solid-btn" onClick={event=>{launch.current=event.currentTarget;setOpen(true);}}>＋ New search</button>
     </div>
     <div className="bc-criteria-current"><span>Current search</span><strong>{geographicScope}</strong>{query?<span> · {query}</span>:null}
-    <button type="button" onClick={()=>setOpen(true)}>Edit criteria ↗</button></div>
-    {open?<div className="bc-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
-      <section className="bc-criteria-window" role="dialog" aria-modal="true" aria-label={labels[mode]+" criteria"}>
-        <div className="bc-criteria-header"><div><span className="bc-microcopy">BUSINESSCURRENT / ADVANCED SEARCH</span><h2>{labels[mode]} criteria</h2><p>Define a search before opening the results table.</p></div><button type="button" aria-label="Close search criteria" onClick={()=>{setOpen(false);launch.current?.focus();}}>✕</button></div>
+    <button type="button" onClick={event=>{launch.current=event.currentTarget;setOpen(true);}}>Edit criteria ↗</button></div>
+    {open?<div className="bc-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget){setOpen(false);launch.current?.focus();}}}>
+      <section ref={dialog} className="bc-criteria-window" role="dialog" aria-modal="true" aria-label={labels[mode]+" criteria"} onKeyDown={keepFocusInside}>
+        <div className="bc-criteria-header"><div><span className="bc-microcopy">BUSINESSCURRENT / ADVANCED SEARCH</span><h2>{labels[mode]} criteria</h2><p>Define a search before opening the results table.</p></div><button type="button" data-initial-focus aria-label="Close search criteria" onClick={()=>{setOpen(false);launch.current?.focus();}}>✕</button></div>
         <form method="get" action={action} className="bc-criteria-form">
           <input type="hidden" name={isDeal?"recipient":"q"} value={query}/><input type="hidden" name="country" value={country}/><input type="hidden" name="state" value={state}/><input type="hidden" name="county" value={county}/><input type="hidden" name="industry" value={industry}/><input type="hidden" name="sort" value={sort}/><input type="hidden" name="rank" value={rank}/><input type="hidden" name="recency" value={period}/><input type="hidden" name="horizon" value={horizon}/><input type="hidden" name="government_min" value={minValue}/>
           <aside className="bc-criteria-nav" aria-label="Filter categories">
@@ -50,7 +60,7 @@ export function ResearchCriteriaDialog({mode,action,initial={},industries=[]}:{m
           </aside>
           <div className="bc-criteria-body">
             {section==="Company & activity"?<div className="bc-criteria-fields"><h3>Company & activity</h3><p>Start broad, then narrow to the companies or activity you want to research.</p>
-              <label>Company or keyword<input autoFocus type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search a company or legal name"/></label>
+              <label>Company or keyword<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search a company or legal name"/></label>
               {!isDeal?<label>Industry<select value={industry} onChange={e=>setIndustry(e.target.value)}><option value="">All industries</option>{industries.map(i=><option key={i.slug} value={i.slug}>{i.name}</option>)}</select></label>:<div className="bc-criteria-info">Corporate funding and M&A require independently verified transaction coverage. Public federal awards are not automatically treated as financing deals.</div>}
               {isCompany?<label>Sort by<select value={sort} onChange={e=>setSort(e.target.value)}><option value="government_desc">Government business</option><option value="latest_signal">Recent signal</option><option value="latest_change">Recent corporate change</option><option value="obligations_12m_desc">Last 12 months obligations</option><option value="company">Company name</option></select></label>:null}
             </div>:null}
@@ -73,7 +83,7 @@ export function ResearchCriteriaDialog({mode,action,initial={},industries=[]}:{m
           </div>
           <aside className="bc-criteria-summary"><span className="bc-microcopy">SEARCH SUMMARY</span><h3>What you're looking for</h3><strong>{labels[mode]}</strong><p>{geographicScope}</p><div>{active.map((v,i)=><span key={i}>{v}</span>)}</div>
             <small>Results only include the records covered by connected sources and your account's access. No data is generated for empty searches.</small></aside>
-          <footer className="bc-criteria-footer"><button type="button" className="bc-outline-btn" onClick={()=>setOpen(false)}>Cancel</button><button type="submit" className="bc-solid-btn">Show results →</button></footer>
+          <footer className="bc-criteria-footer"><button type="button" className="bc-outline-btn" onClick={()=>{setOpen(false);launch.current?.focus();}}>Cancel</button><button type="submit" className="bc-solid-btn">Show results →</button></footer>
         </form>
       </section>
     </div>:null}
