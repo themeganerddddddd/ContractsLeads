@@ -7,7 +7,7 @@ import { parseCompanyScreenerInput, parsePredictionInput } from "@/lib/company-s
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
-describe("sellable BusinessCurrent V1", () => {
+describe("sellable FirmQuarry V1", () => {
   it("parses professional company filters and defaults to money-first sorting", () => {
     expect(parseCompanyScreenerInput({ q: "  Peraton ", country: "us", state: "va", government_min: "1000000", obligations_12m_min: "250000", known_locations: "2", tracked: "true" })).toMatchObject({
       q: "Peraton",
@@ -92,7 +92,7 @@ describe("sellable BusinessCurrent V1", () => {
   it("uses the configured public contact without a placeholder fallback", () => {
     for (const path of ["components/Footer.tsx", "app/terms/page.tsx", "app/privacy/page.tsx"]) {
       const source = read(path);
-      expect(source).toContain("NEXT_PUBLIC_SALES_EMAIL");
+      expect(source).toContain("NEXT_PUBLIC_SUPPORT_EMAIL");
       expect(source).not.toContain("sales@example.test");
       expect(source).not.toContain("developer@example.test");
     }
