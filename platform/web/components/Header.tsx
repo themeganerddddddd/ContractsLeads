@@ -10,6 +10,9 @@ const primaryLinks = [
   ["Movement Intelligence", "/predicted-moves"],
   ["Retention Intelligence", "/predicted-contraction"],
   ["Companies", "/companies"],
+  ["New Deals", "/deals"],
+  ["Attraction", "/attraction"],
+  ["My Portfolio", "/tracked-companies"],
   ["Locations", "/locations"],
   ["Government Contracts", "/contracts"],
 ] as const;
