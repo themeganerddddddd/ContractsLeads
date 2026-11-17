@@ -1,51 +1,40 @@
-import Link from "next/link";
 
-import { DatabaseNotice } from "@/components/DatabaseNotice";
-import { getHomepageCompanyExamples } from "@/lib/company-intelligence";
-import { compactMoney, reported } from "@/lib/format";
-
-export const dynamic = "force-dynamic";
-
-function changeLabel(value: string | null) {
-  const labels: Record<string, string> = { expansion: "Expansion", growth: "Growing", relocation: "Moving", contraction: "Contraction", closure_distress: "Closing risk" };
-  return value ? labels[value] || value.replaceAll("_", " ") : "No recent change";
+import {ResearchHome,type HomeSignal} from "@/components/ResearchHome";
+import {parsePredictionInput,searchPredictionCompanies,type PredictionCompanyRow} from "@/lib/company-intelligence";
+import {resolveViewer} from "@/lib/plan";
+type RawParams=Record<string,string|string[]|undefined>;
+export const dynamic="force-dynamic";
+function signal(row:PredictionCompanyRow,type:HomeSignal["type"]):HomeSignal {
+ const components=type==="expansion"?row.expansion_components:type==="movement"?row.relocation_components:row.contraction_components;
+ const supported=components?.destination_claim_supported===true && components.destination && typeof components.destination==="object" ? components.destination as Record<string,unknown>:null;
+ const score=type==="expansion"?row.expansion_score:type==="movement"?row.relocation_score:row.contraction_score;
+ const date=type==="expansion"?row.expansion_date:type==="movement"?row.relocation_date:row.contraction_date;
+ const validated=row.probability_eligible===true && row.model_status==="active" && row.prediction_sufficiency==="sufficient" && row.probability!=null;
+ return {id:row.id,name:row.canonical_name,slug:row.slug,sector:row.industry_name||"Industry not reported",location:row.location_label||"Not reported",
+   observedState:row.location_state||"",observedCounty:row.location_county||"",signalDate:date||"",
+   score,probability:validated?row.probability:null,verifiedDestination:supported?Object.values(supported).filter(Boolean).join(", "):null,destinationState:typeof supported?.state==="string"?supported.state.toUpperCase():null,type};
 }
-
-export default async function HomePage() {
-  let companies: Awaited<ReturnType<typeof getHomepageCompanyExamples>> = [];
-  let error = "";
-  try {
-    companies = await getHomepageCompanyExamples();
-  } catch (cause) {
-    error = cause instanceof Error ? cause.message : String(cause);
-  }
-  return <>
-    <section className="sellable-hero">
-      <div className="sellable-hero-copy">
-        <p className="eyebrow">Company intelligence built around change</p>
-        <h1>Find the companies that are changing before everyone else does.</h1>
-        <p>Search companies and locations, track commercial activity, and identify expansion, relocation, and contraction signals from source-backed public data.</p>
-        <form action="/companies" method="get" className="hero-company-search">
-          <label htmlFor="home-company-search">Search companies</label>
-          <div><input id="home-company-search" name="q" placeholder="Search a company…" autoComplete="organization" /><button className="button primary" type="submit">Search</button></div>
-        </form>
-        <div className="hero-actions"><Link className="button primary" href="/companies">Search companies</Link><Link className="button secondary" href="/locations">Explore locations</Link><Link className="text-action" href="/pricing">View plans →</Link></div>
-      </div>
-      <aside className="hero-proof-card">
-        <p className="eyebrow">Operational intelligence</p>
-        <h2>Understand what changed—and why.</h2>
-        <ul><li>Company and legal-name discovery</li><li>Location semantics kept explicit</li><li>Government obligations, not estimated revenue</li><li>Evidence signals never relabeled as probability</li></ul>
-        <Link href="/methodology">How BusinessCurrent works →</Link>
-      </aside>
-    </section>
-
-    <section className="section live-company-example">
-      <div className="section-header"><div><p className="eyebrow">Live company intelligence</p><h2>Start with the companies that matter commercially.</h2><p>These examples come from the current database. Disclosed government-business values are net U.S. obligations—not company revenue.</p></div><Link href="/companies">Open the company screener →</Link></div>
-      {error ? <DatabaseNotice message={error} /> : <div className="table-wrap"><table className="data-table home-company-table"><thead><tr><th>Company</th><th>Industry</th><th>Location</th><th>Change</th><th>Government Business</th></tr></thead><tbody>{companies.map((company) => <tr key={company.id}><td><Link className="primary-cell" href={`/company/${company.slug}`}>{company.canonical_name}</Link></td><td>{reported(company.industry_name)}</td><td>{reported(company.location_label)}<small>{company.location_basis}</small></td><td>{changeLabel(company.latest_change_type)}</td><td className="numeric"><strong>{compactMoney(company.government_business)}</strong></td></tr>)}</tbody></table></div>}
-    </section>
-
-    <section className="section positioning-panel"><div><p className="eyebrow">A clearer way to screen</p><h2>Company intelligence built around change.</h2><p>Search companies, understand where they operate, see source-backed commercial activity, and identify signals of expansion, relocation, and contraction.</p></div><div className="positioning-links"><Link href="/predicted-expansion">Expansion signals</Link><Link href="/predicted-moves">Move signals</Link><Link href="/predicted-contraction">Contraction signals</Link></div></section>
-
-    <section className="section trust-grid"><article><h3>Source backed</h3><p>Official links and evidence dates remain visible from signal through profile.</p></article><article><h3>Coverage aware</h3><p>Unavailable or partial coverage stays explicit instead of becoming false certainty.</p></article><article><h3>Location precise</h3><p>Verified headquarters, operating locations, and observed recipient addresses remain distinct.</p></article></section>
-  </>;
+export default async function HomePage({searchParams}:{searchParams:Promise<RawParams>}){
+ const raw=await searchParams;const values=parsePredictionInput(raw);
+ let signals:HomeSignal[]=[];let hasDatabase=false;
+ if(process.env.DATABASE_URL)try{
+   const viewer=await resolveViewer();
+   const [expansion,contraction,movement]=await Promise.all([
+    searchPredictionCompanies("expansion",values,viewer.plan,viewer.userId),
+    searchPredictionCompanies("contraction",values,viewer.plan,viewer.userId),
+    searchPredictionCompanies("moves",values,viewer.plan,viewer.userId)]);
+   signals=[...expansion.rows.map(r=>signal(r,"expansion")),...contraction.rows.map(r=>signal(r,"contraction")),...movement.rows.map(r=>signal(r,"movement"))];
+   // Attraction considers companies outside the target, but only with a supported destination.
+   // This is a bounded first-page research sample, not an exhaustive national candidate universe.
+   if(values.state){
+     const national=await searchPredictionCompanies("expansion",{...values,state:undefined,county:undefined,page:1},viewer.plan,viewer.userId);
+     const seen=new Set(signals.filter(s=>s.type==="expansion").map(s=>s.id));
+     for(const item of national.rows){
+       const prospect=signal(item,"expansion");
+       if(prospect.verifiedDestination && !seen.has(prospect.id)){signals.push(prospect);seen.add(prospect.id);}
+     }
+   }
+   hasDatabase=true;
+ }catch{hasDatabase=false;}
+ return <ResearchHome values={values} signals={signals} hasDatabase={hasDatabase}/>;
 }

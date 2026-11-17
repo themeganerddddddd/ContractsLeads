@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AwardTable } from "@/components/AwardTable";
 import { DatabaseNotice } from "@/components/DatabaseNotice";
+import { OfflineRecordsExplorer } from "@/components/OfflineRecordsExplorer";
+import { OfficialContractsExplorer } from "@/components/OfficialContractsExplorer";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
 import { SaveSearchButton } from "@/components/SaveSearchButton";
@@ -25,6 +27,13 @@ export default async function SearchPage({
 }) {
   const raw = await searchParams;
   const input = parseSearchInput(raw);
+  if (!process.env.DATABASE_URL) return <>
+    <section className="page-heading"><p className="eyebrow">Government Business</p><h1>Public-source search</h1>
+      <p>The live multinational database is unavailable. The official USAspending endpoint can still be queried directly, and our small dated local archive works without any external service.</p>
+    </section>
+    {input.mode === "contracts" ? <OfficialContractsExplorer searchParams={raw} /> : null}
+    {input.mode !== "contracts" ? <OfflineRecordsExplorer query={typeof raw.q === "string" ? raw.q : ""} /> : null}
+  </>;
   try {
     const plan = await resolvePlan();
     const [options, result] = await Promise.all([
@@ -183,6 +192,7 @@ export default async function SearchPage({
           <h1>{input.mode === "companies" ? "Search companies" : "Search government business"}</h1>
         </section>
         <DatabaseNotice message={message} />
+        <OfflineRecordsExplorer query={typeof raw.q === "string" ? raw.q : ""} compact />
       </>
     );
   }

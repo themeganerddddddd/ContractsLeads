@@ -41,7 +41,11 @@ describe("sellable BusinessCurrent V1", () => {
     expect(source).toContain("$2::text IS NOT NULL AND recipient_state=$2");
     expect(source).toContain("($3::text IS NULL OR recipient_county=$3)");
     const locations = read("app/locations/page.tsx");
-    expect(locations).not.toContain("Montgomery County");
+    // The production geographic screener remains nationally filterable; a clearly labeled local archive is only a database-offline fallback.
+    expect(locations).toContain('CompanyDirectory searchParams={searchParams} locationFocus');
+    const directory = read("components/CompanyDirectory.tsx");
+    expect(directory).toContain("getCompanyFilterOptions(input.country");
+    expect(directory).toContain("RankingsEmptyState");
     expect(locations).not.toContain("featured markets");
   });
 

@@ -104,7 +104,7 @@ export default async function BusinessChangePage({ searchParams }: { searchParam
   const raw = await searchParams;
   const input = parseBusinessChangeInput(raw);
   const requestedView = Array.isArray(raw.view) ? raw.view[0] : raw.view;
-  const view = requestedView === "table" ? "table" : "cards";
+  const view = requestedView === "cards" ? "cards" : "table";
   try {
     const result = await searchBusinessChange(input);
     return <>

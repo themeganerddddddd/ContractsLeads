@@ -1,5 +1,7 @@
 import { DatabaseNotice } from "@/components/DatabaseNotice";
 import { MetricCard } from "@/components/MetricCard";
+import { CompanyGeographicOutlook } from "@/components/CompanyGeographicOutlook";
+import { getCompanySnapshotBySlug } from "@/lib/company-intelligence";
 import { TrackedCompanyCard } from "@/components/TrackedCompanyCard";
 import { getTrackedCompanies, getTrackingOverview, parseTrackingInput, type RawTrackingParams } from "@/lib/tracking";
 
@@ -11,9 +13,13 @@ export default async function TrackedCompaniesPage({ searchParams }: { searchPar
   const input = parseTrackingInput(raw);
   try {
     const [result, overview] = await Promise.all([getTrackedCompanies(input), getTrackingOverview()]);
+    const focus = result.rows.find((row: {slug?:string})=>Boolean(row.slug));
+    const snapshot = focus?.slug ? await getCompanySnapshotBySlug(focus.slug).catch(()=>null) : null;
     return <>
       <section className="page-heading"><p className="eyebrow">BusinessCurrent workspace</p><h1>Tracking</h1><p>Monitor selected businesses across supported change evidence and government activity. Market and industry tracking are represented in the data model and will join this workspace as coverage expands.</p></section>
       <div className="metrics-grid workspace-metrics"><MetricCard label="Active" value={Number(overview.active_targets || 0).toLocaleString()} note={`${Number(overview.monitor_targets || 0).toLocaleString()} tracked businesses`} /><MetricCard label="High priority" value={Number(overview.high_priority || 0).toLocaleString()} note="active monitoring targets" /><MetricCard label="New signals" value={Number(overview.new_alerts || 0).toLocaleString()} note="unread public monitoring events" /><MetricCard label="Source issues" value={Number(overview.sources_with_errors || 0).toLocaleString()} note="Sources with errors in the current monitoring state" /></div>
+      <div className="bc-portfolio-geography"><div className="bc-panel-head"><div><p className="bc-microcopy">YOUR COMPANY PORTFOLIO / GEOGRAPHIC INTELLIGENCE</p><h2>Portfolio geographic outlook</h2><p>{focus?"Review evidence for a tracked company below. Choose another company to explore its individual destination outlook.":"Monitor a company to reveal verified geographic opportunities in this portfolio."}</p></div></div>
+      <CompanyGeographicOutlook company={focus?.canonical_name||"a selected company"} compact expansion={{components:snapshot?.expansion_components,score:snapshot?.expansion_score,explanation:snapshot?.expansion_explanation,date:snapshot?.expansion_date}} relocation={{components:snapshot?.relocation_components,score:snapshot?.relocation_score,explanation:snapshot?.relocation_explanation,date:snapshot?.relocation_date}} contraction={{components:snapshot?.contraction_components,score:snapshot?.contraction_score,explanation:snapshot?.contraction_explanation,date:snapshot?.contraction_date}} /></div>
       <form className="search-panel tracking-filter" action="/tracked-companies" method="get"><div className="advanced-grid">
         <label>Industry<select name="industry" defaultValue={input.industry || ""}><option value="">All industries</option>{result.industries.map((row) => <option key={row.slug} value={row.slug}>{row.name}</option>)}</select></label>
         <label>Observed recipient state<select name="state" defaultValue={input.state || ""}><option value="">All states</option>{result.states.map((row) => <option key={row.value} value={row.value}>{row.value}</option>)}</select></label>

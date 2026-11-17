@@ -10,7 +10,7 @@ describe("BusinessCurrent public product", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
     expect(layout).toContain("BusinessCurrent — Business change intelligence, nationwide");
-    for (const label of ["Companies", "Locations", "Predicted Expansion", "Predicted Moves", "Predicted Contraction"]) {
+    for (const label of ["Overview", "Expansion Intelligence", "Movement Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
     for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology", "Plans", "Account"]) {
@@ -19,19 +19,23 @@ describe("BusinessCurrent public product", () => {
     expect(header).not.toContain("Federal Ledger");
   });
 
-  it("covers the sellable homepage and preserves supporting legacy experiences", () => {
-    expect(read("app/page.tsx")).toContain("Find the companies that are changing before everyone else does.");
-    expect(read("app/page.tsx")).toContain("Live company intelligence");
+  it("covers the sellable homepage and preserves supporting research experiences", () => {
+    expect(read("app/page.tsx")).toContain("ResearchHome");
+    expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
+    expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
+    expect(read("app/page.tsx")).not.toContain("studio-product-grid");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
-    expect(read("app/locations/page.tsx")).toContain("County / Parish / Local Area");
+    expect(read("components/MarketFilterBar.tsx")).toContain("County / Parish / Local Area");
     expect(read("app/tracked-companies/page.tsx")).toContain("Sources with errors");
     expect(read("app/alerts/page.tsx")).toContain("Evidence changed");
     expect(read("app/data-coverage/page.tsx")).toContain("50 states + DC");
     expect(read("app/methodology/page.tsx")).toContain("at least 5% of that award’s reference value or at least $1 million USD");
     expect(read("app/search/page.tsx")).toContain("Government Business");
-    expect(read("app/companies/page.tsx")).toContain("Search by company or legal name");
-    expect(read("app/companies/page.tsx")).toContain("Government Business — largest");
+    expect(read("components/CompanyDirectory.tsx")).toContain("Search by company or legal name");
+    expect(read("components/MarketFilterBar.tsx")).toContain("Government Business — largest");
+    expect(read("app/layout.tsx")).toContain('import "./product.css"');
+    expect(read("app/layout.tsx")).not.toContain("WorkspaceTopbar");
   });
 
   it("keeps company and establishment profiles distinct and mobile styles explicit", () => {
@@ -39,7 +43,7 @@ describe("BusinessCurrent public product", () => {
     const establishment = read("app/establishment/[id]/page.tsx");
     const css = read("app/globals.css");
     expect(company).toContain("Company and locations stay distinct");
-    expect(company.match(/<a href=\"#/g)).toHaveLength(5);
+    expect(company.match(/<a href=\"#/g)).toHaveLength(6);
     expect(establishment).toContain("Physical business location");
     expect(css).toContain("@media(max-width:860px)");
     expect(css).toContain("@media(max-width:600px)");
@@ -51,7 +55,9 @@ describe("BusinessCurrent public product", () => {
     const company = read("app/company/[slug]/page.tsx");
     const timeline = read("components/CompanyIntelligenceTimeline.tsx");
     const contract = read("app/contract/[id]/page.tsx");
-    expect(company).toContain("Annual net U.S. obligations");
+    expect(read("components/ContractHistoryChart.tsx")).toContain("Annual net U.S. obligations");
+    expect(company).toContain("ContractHistoryChart");
+    expect(read("app/company/[slug]/contracts/page.tsx")).toContain("Federal contract history");
     expect(timeline).toContain("Minor contract modification");
     expect(timeline).toContain("material-adjustment");
     for (const label of ["Exact obligation", "Current total", "Potential total", "Modification", "Action type", "Source"]) {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BillingButton } from "@/components/BillingButton";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { CheckoutActivationStatus } from "@/components/CheckoutActivationStatus";
+import { authProviderAvailability, billingEnabled } from "@/lib/config";
 import { resolveViewer } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
@@ -26,17 +27,20 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
   const billing = one(raw.billing) === "annual" ? "annual" : "monthly";
   const validCheckoutPlan = ["local", "pro", "analyst"].includes(checkoutPlan || "") ? checkoutPlan! : "";
   const salesEmail = process.env.NEXT_PUBLIC_SALES_EMAIL?.trim();
+  const providers = authProviderAvailability();
+  const signInAvailable = providers.google || providers.github;
+  const checkoutAvailable = billingEnabled() && signInAvailable;
   return <>
     <section className="page-heading pricing-heading">
       <p className="eyebrow">Straightforward plans</p>
       <h1>Start free. Upgrade when the intelligence earns it.</h1>
       <p>Search real companies at no cost, then unlock deeper screening, history, alerts, tracking, and exports.</p>
-      <div className="current-plan"><span>Current plan</span><strong>{displayPlan[viewer.plan]}</strong>{viewer.user ? <Link href="/account">View account</Link> : <Link href="/sign-in?next=/pricing">Sign in</Link>}</div>
+      <div className="current-plan"><span>Current plan</span><strong>{displayPlan[viewer.plan]}</strong>{viewer.user ? <Link href="/account">View account</Link> : signInAvailable ? <Link href="/sign-in?next=/pricing">Sign in</Link> : <span>Public access</span>}</div>
     </section>
 
     {checkout === "success" && validCheckoutPlan ? <CheckoutActivationStatus intendedPlan={validCheckoutPlan} /> : null}
     {checkout === "cancelled" ? <section className="checkout-state"><h2>Checkout cancelled</h2><p>No charge was made. Your current plan is unchanged.</p></section> : null}
-    {validCheckoutPlan && checkout !== "success" && viewer.plan === "free" ? <section className="checkout-resume"><p>Continuing to {displayPlan[validCheckoutPlan]} checkout…</p><BillingButton plan={validCheckoutPlan} billing={billing} autoStart>Continue to secure checkout</BillingButton></section> : null}
+    {validCheckoutPlan && checkout !== "success" && viewer.plan === "free" && checkoutAvailable ? <section className="checkout-resume"><p>Continuing to {displayPlan[validCheckoutPlan]} checkout…</p><BillingButton plan={validCheckoutPlan} billing={billing} autoStart>Continue to secure checkout</BillingButton></section> : null}
 
     <section className="pricing-grid" aria-label="BusinessCurrent plans">
       {plans.map((plan) => <article id={plan.slug} className={`price-card ${plan.featured ? "featured" : ""} ${viewer.plan === plan.slug ? "current" : ""}`} key={plan.slug}>
@@ -45,7 +49,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
         <h2>{plan.name}</h2>
         <div className="price">{plan.price} <small>{plan.note}</small></div>
         <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
-        {plan.slug === "free" ? <Link className="button secondary" href="/companies">Search free</Link> : <div className="plan-actions"><BillingButton plan={plan.slug}>Choose {plan.name} monthly</BillingButton>{plan.slug !== "analyst" ? <BillingButton plan={plan.slug} billing="annual">Choose annual</BillingButton> : null}</div>}
+        {plan.slug === "free" ? <Link className="button secondary" href="/companies">Search free</Link> : checkoutAvailable ? <div className="plan-actions"><BillingButton plan={plan.slug}>Choose {plan.name} monthly</BillingButton>{plan.slug !== "analyst" ? <BillingButton plan={plan.slug} billing="annual">Choose annual</BillingButton> : null}</div> : <div className="plan-unavailable"><strong>Checkout is not enabled yet.</strong><span>Continue with the free research workspace while account access and billing are prepared.</span><Link href="/companies">Search companies →</Link></div>}
       </article>)}
       {salesEmail ? <article className="price-card"><h2>Organization</h2><div className="price">Custom</div><ul><li>Team access and higher limits</li><li>Scoped deployment support</li><li>Contact us to confirm requirements</li></ul><a className="button secondary" href={`mailto:${salesEmail}`}>Contact sales</a></article> : null}
     </section>
