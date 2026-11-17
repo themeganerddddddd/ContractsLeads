@@ -10,12 +10,13 @@ import "./research-product.css";
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
   title: {
-    default: "BusinessCurrent — Business change intelligence, nationwide",
-    template: "%s | BusinessCurrent",
+    default: "FirmQuarry — Business change intelligence, nationwide",
+    template: "%s | FirmQuarry",
   },
   description:
     "Track businesses opening, growing, moving, shrinking, and closing across the United States using source-backed public data.",
   robots: { index: true, follow: true },
+  openGraph: { type: "website", siteName: "FirmQuarry", title: "FirmQuarry — Company intelligence", description: "Research companies, opportunities, and source-backed business changes." },
 };
 
 export default function RootLayout({
