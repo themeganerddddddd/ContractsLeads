@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { MarketFilterBar } from "@/components/MarketFilterBar";
+import { ResearchCriteriaDialog } from "@/components/ResearchCriteriaDialog";
 import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -164,7 +164,7 @@ export async function PredictionScreener({kind,searchParams,dashboard=false}:{
       </div>
     </section> : null}
     <Tabs kind={kind} values={values}/>
-    <MarketFilterBar action={path} values={values} industries={industries} knownCounties={counties} otherStates={states} />
+    <ResearchCriteriaDialog mode={kind==="expansion"?"expansion":kind==="contraction"?"contraction":"moves"} action={path} initial={values} industries={industries} />
     <section className="terminal-result-pane">
       <div className="terminal-result-head">
         <div><p className="terminal-eyebrow">{copy.index} / RANKED {copy.signal.toUpperCase()} INTELLIGENCE</p>

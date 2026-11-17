@@ -20,7 +20,7 @@ describe("BusinessCurrent public product", () => {
   });
 
   it("covers the sellable homepage and preserves supporting research experiences", () => {
-    expect(read("app/page.tsx")).toContain('PredictionScreener kind="expansion"');
+    expect(read("app/page.tsx")).toContain("ResearchHome");
     expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
     expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
     expect(read("app/page.tsx")).not.toContain("studio-product-grid");
@@ -43,7 +43,7 @@ describe("BusinessCurrent public product", () => {
     const establishment = read("app/establishment/[id]/page.tsx");
     const css = read("app/globals.css");
     expect(company).toContain("Company and locations stay distinct");
-    expect(company.match(/<a href=\"#/g)).toHaveLength(5);
+    expect(company.match(/<a href=\"#/g)).toHaveLength(6);
     expect(establishment).toContain("Physical business location");
     expect(css).toContain("@media(max-width:860px)");
     expect(css).toContain("@media(max-width:600px)");

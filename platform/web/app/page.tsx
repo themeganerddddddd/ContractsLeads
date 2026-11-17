@@ -1,31 +1,30 @@
-import Link from "next/link";
-import { PredictionScreener } from "@/components/PredictionScreener";
 
-type RawParams = Record<string,string|string[]|undefined>;
-export const dynamic = "force-dynamic";
-
-export default function HomePage({searchParams}:{searchParams:Promise<RawParams>}) {
-  return <>
-    <section className="bc-home-intro">
-      <div className="bc-home-intro-main">
-        <p className="bc-home-kicker"><span className="bc-kicker-mark"/> COMPANY CHANGE INTELLIGENCE</p>
-        <h1>Company change, ranked by evidence.</h1>
-        <p>Screen expansion, movement, and retention signals across the United States. Every assessment stays connected to its source record and coverage limits.</p>
-      </div>
-      <div className="bc-home-context">
-        <span className="bc-home-context-label">DEFAULT MARKET</span>
-        <strong>United States</strong><span>State and county filters available</span>
-        <Link href="/coverage">Review coverage</Link>
-      </div>
-    </section>
-    <PredictionScreener kind="expansion" searchParams={searchParams} dashboard />
-    <div className="bc-home-quicklinks">
-      <div><span className="bc-kicker-mark"/><strong>Source-backed research</strong><span className="bc-home-quicklinks-description">Go deeper without losing the workspace context.</span></div>
-      <nav aria-label="Other research tools">
-        <Link href="/companies">Company directory</Link>
-        <Link href="/contracts">Government contracts</Link>
-        <Link href="/methodology">Methodology</Link>
-      </nav>
-    </div>
-  </>;
+import {ResearchHome,type HomeSignal} from "@/components/ResearchHome";
+import {parsePredictionInput,searchPredictionCompanies,type PredictionCompanyRow} from "@/lib/company-intelligence";
+import {resolveViewer} from "@/lib/plan";
+type RawParams=Record<string,string|string[]|undefined>;
+export const dynamic="force-dynamic";
+function signal(row:PredictionCompanyRow,type:HomeSignal["type"]):HomeSignal {
+ const components=type==="expansion"?row.expansion_components:type==="movement"?row.relocation_components:row.contraction_components;
+ const supported=components?.destination_claim_supported===true && components.destination && typeof components.destination==="object" ? components.destination as Record<string,unknown>:null;
+ const score=type==="expansion"?row.expansion_score:type==="movement"?row.relocation_score:row.contraction_score;
+ const date=type==="expansion"?row.expansion_date:type==="movement"?row.relocation_date:row.contraction_date;
+ const validated=row.probability_eligible===true && row.model_status==="active" && row.prediction_sufficiency==="sufficient" && row.probability!=null;
+ return {id:row.id,name:row.canonical_name,slug:row.slug,sector:row.industry_name||"Industry not reported",location:row.location_label||"Not reported",
+   observedState:row.location_state||"",observedCounty:row.location_county||"",signalDate:date||"",
+   score,probability:validated?row.probability:null,verifiedDestination:supported?Object.values(supported).filter(Boolean).join(", "):null,destinationState:typeof supported?.state==="string"?supported.state.toUpperCase():null,type};
+}
+export default async function HomePage({searchParams}:{searchParams:Promise<RawParams>}){
+ const raw=await searchParams;const values=parsePredictionInput(raw);
+ let signals:HomeSignal[]=[];let hasDatabase=false;
+ if(process.env.DATABASE_URL)try{
+   const viewer=await resolveViewer();
+   const [expansion,contraction,movement]=await Promise.all([
+    searchPredictionCompanies("expansion",values,viewer.plan,viewer.userId),
+    searchPredictionCompanies("contraction",values,viewer.plan,viewer.userId),
+    searchPredictionCompanies("moves",values,viewer.plan,viewer.userId)]);
+   signals=[...expansion.rows.map(r=>signal(r,"expansion")),...contraction.rows.map(r=>signal(r,"contraction")),...movement.rows.map(r=>signal(r,"movement"))];
+   hasDatabase=true;
+ }catch{hasDatabase=false;}
+ return <ResearchHome values={values} signals={signals} hasDatabase={hasDatabase}/>;
 }

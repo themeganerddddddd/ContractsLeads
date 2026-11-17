@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { ResearchTopbar } from "@/components/ResearchTopbar";
 import { publicAppUrl } from "@/lib/config";
 import "./globals.css";
 import "./product.css";
+import "./research-product.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
@@ -25,6 +27,7 @@ export default function RootLayout({
         <div className="bc-app-shell">
           <Header />
           <div className="bc-app-content">
+            <ResearchTopbar />
             <main className="page-shell bc-main">{children}</main>
             <Footer />
           </div>

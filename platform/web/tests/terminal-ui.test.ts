@@ -45,7 +45,7 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(read("app/public-records/page.tsx")).toContain("OfflineRecordsExplorer");
   });
   it("uses ranked tables rather than company cards on main screens and one dropdown arrow",()=>{
-    expect(read("app/page.tsx")).toContain('PredictionScreener kind="expansion"');
+    expect(read("app/page.tsx")).toContain("ResearchHome");
     expect(read("components/PredictionScreener.tsx")).toContain("terminal-ranking-table");
     expect(read("components/CompanyDirectory.tsx")).toContain("CompanyTable");
     expect(read("components/OfflineRecordsExplorer.tsx")).toContain("terminal-archive-table");
