@@ -13,6 +13,12 @@ type OfficialContact = {
   checked_date: string | null;
 };
 
+export function hasOfficialCompanyContact(uei?: string | null): boolean {
+  const key=(uei||"").trim().toUpperCase();
+  const item=/^[A-Z0-9]{12}$/.test(key) ? (directory.byUei as Record<string, OfficialContact>)[key] : undefined;
+  return Boolean(item && /^https:\/\/(?:www\.)?(?:sam\.gov|gsaelibrary\.gsa\.gov)\//i.test(item.source_url));
+}
+
 export function CompanyContactsCard({
   uei, website, companyName,
 }: { uei?: string | null; website?: string | null; companyName: string }) {
