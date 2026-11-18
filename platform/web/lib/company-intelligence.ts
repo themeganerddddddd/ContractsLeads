@@ -24,6 +24,10 @@ export type CompanySnapshotRow = {
   location_basis: string;
   government_business: string | null;
   obligations_12m: string | null;
+  obligations_baseline_annual: string | null;
+  baseline_supported: boolean;
+  new_awards_12m: number;
+  new_awards_baseline_annual: string | null;
   known_locations: string;
   latest_transaction_date: string | null;
   latest_transaction_obligation: string | null;
@@ -89,6 +93,12 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
     sum(t.obligation) FILTER (
       WHERE t.obligation IS NOT NULL AND t.action_date >= current_date - interval '365 days'
     ) AS obligations_12m,
+    sum(t.obligation) FILTER (
+      WHERE t.obligation IS NOT NULL
+        AND t.action_date >= current_date - interval '48 months'
+        AND t.action_date < current_date - interval '12 months'
+    ) / 3.0 AS obligations_baseline_annual,
+    min(t.action_date) <= current_date - interval '48 months' AS baseline_supported,
     bool_or(t.obligation > 0) AS has_positive_transaction
   FROM transactions t
   JOIN awards a ON a.id=t.award_id
@@ -109,7 +119,10 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   SELECT recipient_company_id AS company_id,
     bool_or(
       COALESCE(total_obligated,0) > 0 OR COALESCE(current_value,0) > 0 OR COALESCE(potential_value,0) > 0
-    ) AS has_positive_award
+    ) AS has_positive_award,
+    count(*) FILTER (WHERE award_date >= current_date - interval '12 months')::integer AS new_awards_12m,
+    count(*) FILTER (WHERE award_date >= current_date - interval '48 months'
+                       AND award_date < current_date - interval '12 months') / 3.0 AS new_awards_baseline_annual
   FROM awards
   WHERE NOT is_demo AND NOT is_benchmark
   GROUP BY recipient_company_id
@@ -198,6 +211,10 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
       WHEN c.recipient_city IS NOT NULL OR c.recipient_state IS NOT NULL THEN 'Observed recipient location'
       ELSE 'Location not reported' END AS location_basis,
     ta.government_business::text,ta.obligations_12m::text,
+    ta.obligations_baseline_annual::text,
+    COALESCE(ta.baseline_supported,false) AS baseline_supported,
+    COALESCE(aa.new_awards_12m,0)::integer AS new_awards_12m,
+    aa.new_awards_baseline_annual::text,
     COALESCE(ea.known_locations,'0') AS known_locations,
     lt.action_date::text AS latest_transaction_date,lt.obligation::text AS latest_transaction_obligation,
     lt.is_material AS latest_transaction_material,
@@ -248,6 +265,15 @@ function applyCommonFilters(filters: SqlFilters, input: CompanyScreenerInput | P
     filters.add("s.location_postal ILIKE ? || '%'", input.postal);
   if (input.governmentMin != null)
     filters.add("s.government_business::numeric >= ?", input.governmentMin);
+  if (input.baselineAnnualMin != null)
+    filters.add("s.baseline_supported AND s.obligations_baseline_annual::numeric >= ?", input.baselineAnnualMin);
+  if (input.obligations12mMin != null)
+    filters.add("s.obligations_12m::numeric >= ?", input.obligations12mMin);
+  // This is descriptive procurement momentum, not a calibrated business-outcome prediction.
+  if (input.baselineTrend === "above")
+    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric >= s.obligations_baseline_annual::numeric * 1.25 AND s.obligations_12m::numeric - s.obligations_baseline_annual::numeric >= 250000)");
+  if (input.baselineTrend === "below")
+    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric * 0.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)");
 }
 
 function applyScreenerFilters(filters: SqlFilters, input: CompanyScreenerInput) {
@@ -258,8 +284,6 @@ function applyScreenerFilters(filters: SqlFilters, input: CompanyScreenerInput) 
       input.q,
     );
   }
-  if (input.obligations12mMin != null)
-    filters.add("s.obligations_12m::numeric >= ?", input.obligations12mMin);
   if (input.knownLocations != null)
     filters.add("s.known_locations::integer >= ?", input.knownLocations);
   if (input.trackedOnly) filters.clauses.push("s.watched");
