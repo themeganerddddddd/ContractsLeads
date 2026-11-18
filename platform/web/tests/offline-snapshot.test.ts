@@ -6,7 +6,8 @@ import { archivedSources, filterArchivedAwards, filterArchivedCompanies, findArc
 const root = resolve(import.meta.dirname,"..");
 describe("bundled source archive",()=>{
  it("is source-backed, dated, and small enough to ship without Neon",()=>{
-   expect(archivedSources.lastUpdated).toMatch(/^2026-11-02T/);
+   const metadata = JSON.parse(readFileSync(resolve(root, "../../data/metadata.json"), "utf8")) as { last_updated: string };
+   expect(archivedSources.lastUpdated).toBe(metadata.last_updated);
    expect(archivedSources.companies).toHaveLength(9);
    expect(archivedSources.awards).toHaveLength(25);
    const json=readFileSync(resolve(root,"data/public-snapshot.json"),"utf8");
