@@ -228,11 +228,9 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
 
 
       {visibleKinds.length>0?<div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
-      {visibleKinds.length
-        ? <div className="outlook-grid fq-focused-outlook">{visibleKinds.map(kind => <Outlook key={kind} kind={kind} snapshot={snapshot} intelligence={data.changeIntelligence} />)}</div>
-        : <p className="fq-no-confirmed-signal">No expansion, contraction or relocation assessment currently meets the evidence threshold for this company.</p>}
-      </div>
-      <div id="geo-outlook"><CompanyGeographicOutlook company={company.canonical_name} focus={focus} visibleKinds={visibleKinds} expansion={{components:snapshot?.expansion_components,explanation:snapshot?.expansion_explanation,date:snapshot?.expansion_date,score:snapshot?.expansion_score}} relocation={{components:snapshot?.relocation_components,explanation:snapshot?.relocation_explanation,date:snapshot?.relocation_date,score:snapshot?.relocation_score}} contraction={{components:snapshot?.contraction_components,explanation:snapshot?.contraction_explanation,date:snapshot?.contraction_date,score:snapshot?.contraction_score}} /></div>
+      <div className="outlook-grid fq-focused-outlook">{visibleKinds.map(kind => <Outlook key={kind} kind={kind} snapshot={snapshot} intelligence={data.changeIntelligence} />)}</div>
+      </div>:null}
+      {hasGeographicEvidence?<div id="geo-outlook"><CompanyGeographicOutlook company={company.canonical_name} focus={focus} visibleKinds={visibleKinds} expansion={{components:snapshot?.expansion_components,explanation:snapshot?.expansion_explanation,date:snapshot?.expansion_date,score:snapshot?.expansion_score}} relocation={{components:snapshot?.relocation_components,explanation:snapshot?.relocation_explanation,date:snapshot?.relocation_date,score:snapshot?.relocation_score}} contraction={{components:snapshot?.contraction_components,explanation:snapshot?.contraction_explanation,date:snapshot?.contraction_date,score:snapshot?.contraction_score}} /></div>:null}
 
     </section>
 
