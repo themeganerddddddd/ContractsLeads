@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type MarketFilterValues } from "@/lib/market-filters";
 
 export const US_STATES = [
@@ -33,6 +33,8 @@ export function MarketFilterBar({
   const [country, setCountry] = useState(values.country || "US");
   const [state, setState] = useState(values.state || "");
   const [county, setCounty] = useState(values.county || "");
+  const [countyOptions, setCountyOptions] = useState<string[]>(knownCounties);
+  const [countiesLoading, setCountiesLoading] = useState(false);
   const [keyword, setKeyword] = useState(values.q || "");
   const [showAdvanced, setShowAdvanced] = useState(Boolean(
     values.industry || values.governmentMin != null ||
@@ -43,7 +45,21 @@ export function MarketFilterBar({
     ? US_STATES.map(([code,label])=>({code,label}))
     : otherStates.filter(s=>!otherStatesSet.has(s)).map(code=>({code,label:code}));
   if(state && !regionOptions.some(r=>r.code===state))regionOptions.unshift({code:state,label:state});
-  const countyOptions = state===values.state ? [...new Set(knownCounties.filter(Boolean))].sort() : [];
+  // Refresh available counties when a different state is selected; keep typed county fallback.
+  useEffect(() => {
+    if (!state || country !== "US") { setCountyOptions([]); setCountiesLoading(false); return; }
+    const controller = new AbortController();
+    setCountiesLoading(true);
+    fetch(`/api/geography/counties?state=${encodeURIComponent(state)}`, { signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error("County options unavailable");
+        return response.json() as Promise<{ counties?: string[] }>;
+      })
+      .then(data => setCountyOptions(Array.isArray(data.counties) ? data.counties : []))
+      .catch(() => { if (!controller.signal.aborted) setCountyOptions(state === values.state ? knownCounties : []); })
+      .finally(() => { if (!controller.signal.aborted) setCountiesLoading(false); });
+    return () => controller.abort();
+  }, [country, state]);
   const stateName = US_STATES.find(([code])=>code===state)?.[1] || state;
   return <form className="market-filter-bar bc-market-form" method="get" action={action} role="search">
     <div className="market-filter-top">
@@ -80,9 +96,16 @@ export function MarketFilterBar({
         </select>
       </label>
       <label className="market-field"><span>County / parish</span>
-        <input name="county" list="market-county-options" placeholder={state?"Any county / parish":"Choose a state first"}
-          value={county} onChange={e=>setCounty(e.target.value)} autoComplete="off" disabled={!state}/>
-        <datalist id="market-county-options">{countyOptions.map(value=><option key={value} value={value}/>)}</datalist>
+        <div className="fq-county-combobox">
+          <input name="county" list="market-county-options" placeholder={state?"Type a county or choose →":"Choose a state first"}
+            value={county} onChange={e=>setCounty(e.target.value)} autoComplete="off" disabled={!state}/>
+          <select aria-label="Choose county or parish from list" value={countyOptions.includes(county) ? county : ""}
+            onChange={e=>setCounty(e.target.value)} disabled={!state || countiesLoading || !countyOptions.length}>
+            <option value="">{countiesLoading?"Loading…":countyOptions.length?"All counties ▾":"No listed counties"}</option>
+            {countyOptions.map(value=><option key={value} value={value}>{value}</option>)}
+          </select>
+          <datalist id="market-county-options">{countyOptions.map(value=><option key={value} value={value}/>)}</datalist>
+        </div>
       </label>
       <button type="submit" className="market-filter-submit">Search <span aria-hidden="true">↗</span></button>
     </div>
