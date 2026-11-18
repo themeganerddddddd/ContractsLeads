@@ -4,6 +4,7 @@ import { WatchCompanyButton } from "@/components/WatchCompanyButton";
 import { indicationLabel } from "@/lib/change-intelligence";
 import type { CompanySnapshotRow } from "@/lib/company-intelligence";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
+import { assessProcurementMomentum } from "@/lib/procurement-baseline";
 
 function signedMoney(value: string | null) {
   if (value == null) return "Not reported";
@@ -84,6 +85,7 @@ export function CompanyTable({
             <th scope="col">Latest Change</th>
             <th scope="col">Government Business</th>
             <th scope="col">12M Net Obligations</th>
+            <th scope="col">Vs. 3Y Annual Baseline</th>
             <th scope="col">Locations</th>
             <th scope="col">Latest Signal</th>
             <th scope="col">Track</th>
@@ -125,6 +127,15 @@ export function CompanyTable({
                 <td className="numeric money-cell">
                   <strong>{signedMoney(row.obligations_12m)}</strong>
                   <small>Previous 365 days</small>
+                </td>
+                <td className="numeric fq-momentum-table-cell">
+                  {(() => {
+                    const result = assessProcurementMomentum({ current: row.obligations_12m, annualBaseline: row.obligations_baseline_annual, baselineSupported: row.baseline_supported });
+                    return <>
+                      <strong className={`fq-momentum-label fq-momentum-${result.status}`}>{result.status === "insufficient" ? "Not established" : result.relativeChangePct == null ? "—" : `${result.relativeChangePct > 0 ? "+" : ""}${result.relativeChangePct.toFixed(0)}%`}</strong>
+                      <small>{result.status === "insufficient" ? "4 years of history required" : `Normal: ${compactMoney(row.obligations_baseline_annual)} per year`}</small>
+                    </>;
+                  })()}
                 </td>
                 <td className="numeric">
                   <strong>{Number(row.known_locations).toLocaleString()}</strong>
