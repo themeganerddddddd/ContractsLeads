@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ResearchCriteriaDialog } from "@/components/ResearchCriteriaDialog";
+import { MarketFilterBar } from "@/components/MarketFilterBar";
 import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -89,7 +89,7 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
       const band=evidenceBand(item.score);
       return <tr key={row.id}>
         <td className="terminal-rank">#{String((page-1)*25+index+1).padStart(2,"0")}</td>
-        <td className="terminal-company"><Link href={`/company/${row.slug}`}>{row.canonical_name}</Link>
+        <td className="terminal-company"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`}>{row.canonical_name}</Link>
           <small>{row.legal_name !== row.canonical_name ? row.legal_name : "Company dossier"}</small></td>
         <td>{reported(row.industry_name)}</td>
         <td><strong>{reported(row.location_label)}</strong><small>{row.location_basis}</small></td>
@@ -164,7 +164,7 @@ export async function PredictionScreener({kind,searchParams,dashboard=false}:{
       </div>
     </section> : null}
     <Tabs kind={kind} values={values}/>
-    <ResearchCriteriaDialog mode={kind==="expansion"?"expansion":kind==="contraction"?"contraction":"moves"} action={path} initial={values} industries={industries} />
+    <MarketFilterBar action={path} values={values} industries={industries} knownCounties={counties} otherStates={states} mode="radar" />
     <section className="terminal-result-pane">
       <div className="terminal-result-head">
         <div><p className="terminal-eyebrow">{copy.index} / RANKED {copy.signal.toUpperCase()} INTELLIGENCE</p>
