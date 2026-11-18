@@ -97,7 +97,9 @@ describe("location-first business change", () => {
     expect(company).toContain("Company and locations stay distinct");
     expect(company).toContain("Supported operating locations");
     expect(company).toContain("EstablishmentIntelligencePanel");
-    expect(company.match(/<a href="#/g)).toHaveLength(6);
+    expect(company.match(/<a href="#/g)).toHaveLength(8);
+    expect(company).toContain("CompanyContactsCard");
+    expect(company).toContain("ProcurementBaselinePanel");
     expect(establishment).toContain("Physical business location");
     expect(establishment).toContain("Outcome ≠ indication ≠ signal");
     expect(establishment).toContain("Address history");
