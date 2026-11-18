@@ -58,6 +58,9 @@ export type CompanySnapshotRow = {
   contraction_sufficiency: string | null;
   contraction_components: Record<string, unknown> | null;
   contraction_explanation: string | null;
+  has_confirmed_expansion: boolean;
+  has_confirmed_relocation: boolean;
+  has_confirmed_contraction: boolean;
   watched: boolean;
   full_count?: string;
 };
