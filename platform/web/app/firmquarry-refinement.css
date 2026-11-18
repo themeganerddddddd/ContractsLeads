@@ -1,0 +1,61 @@
+/* FirmQuarry 2026-11 research UI refinement: inline criteria, PitchBook-style dossier and honest geographic comparisons. */
+.bc-intelligence-view .bc-market-form,
+.terminal-view .bc-market-form{margin:15px 0 22px;border:1px solid #d7e5e7;border-radius:11px;background:#fff;box-shadow:0 4px 18px rgba(23,48,60,.055)}
+.bc-intelligence-view .terminal-radar-tabs{margin-bottom:8px}
+.bc-market-form .market-filter-title strong{font-size:15px}
+.bc-market-form .market-filter-fields{grid-template-columns:minmax(180px,1.6fr) minmax(125px,.85fr) minmax(125px,.85fr) minmax(245px,1.45fr) auto}
+.fq-county-combobox{display:grid;grid-template-columns:minmax(105px,1fr) minmax(120px,1fr);gap:5px;width:100%}
+.fq-county-combobox input,.fq-county-combobox select{min-width:0;width:100%;font-size:11px}
+.fq-county-combobox select{cursor:pointer}
+.bc-geo-controls .fq-county-combobox{min-width:220px}
+.fq-focused-outlook{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.fq-focused-outlook .outlook-card{max-width:none}
+.fq-no-confirmed-signal{margin:15px 0 0;padding:17px 21px;border:1px dashed #c9dada;background:#f7faf9;border-radius:8px;color:#54717a}
+.company-profile-heading{background:white;border:1px solid #dbe7e8;border-radius:11px;padding:24px 28px 19px;margin:14px 0 14px;box-shadow:0 5px 25px rgba(16,46,64,.045)}
+.company-profile-heading .entity-header-row h1{font-family:inherit;font-weight:790;font-size:clamp(31px,3.3vw,43px);line-height:1.15;letter-spacing:-.035em}
+.company-profile-tabs.studio-profile-tabs{margin-bottom:21px;background:#fff;border:1px solid #dce7e7;border-radius:9px}
+.fq-pitchbook-intro{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(290px,.9fr);gap:18px;align-items:stretch;margin-bottom:21px}
+.fq-pitchbook-intro .company-facts{min-width:0;display:block;margin:0;padding:27px 28px;background:#fff;border:1px solid #d9e5e6;border-radius:11px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-pitchbook-intro .company-facts h2{color:#14394b;font-size:21px;font-weight:800;letter-spacing:-.025em;margin:0 0 21px}
+.fq-pitchbook-intro .company-facts .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0;background:none;border:0;box-shadow:none;gap:0 20px}
+.fq-pitchbook-intro .company-facts .detail-grid>div{padding:15px 0;border-bottom:1px solid #edf2f2;min-width:0}
+.fq-pitchbook-intro .company-facts dt{margin-bottom:6px;text-transform:uppercase;letter-spacing:.075em;font-size:10px;color:#75939d;font-weight:850}
+.fq-pitchbook-intro .company-facts dd{font-size:13px;font-weight:700;color:#25485a;margin:0;overflow-wrap:anywhere}
+.fq-pitchbook-snapshot{padding:25px 22px;background:#fff;border:1px solid #d9e5e6;border-radius:11px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-pitchbook-snapshot-heading h2{margin:4px 0 15px;font-size:21px;color:#16384a}
+.fq-pitchbook-snapshot .metrics-grid.company-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0;background:none;border:0;box-shadow:none}
+.fq-pitchbook-snapshot .metric-card{min-width:0;margin:0;padding:15px 13px;background:#f7faf9;border:1px solid #e2ebec;border-radius:8px}
+.fq-pitchbook-snapshot .metric-card+.metric-card{border-left:1px solid #e2ebec}
+.fq-pitchbook-snapshot .metric-card strong{font-size:clamp(17px,1.7vw,22px)}
+.fq-outlook-map{margin:20px 0 23px}
+.fq-outlook-map .fq-map-grid{grid-template-columns:minmax(0,1.65fr) minmax(270px,.85fr);gap:16px}
+.fq-outlook-map .fq-map-panel{min-width:0;background:#f5fafa;border-radius:11px;border:1px solid #d7e6e8;padding:13px}
+.fq-outlook-map .fq-map-control-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;font-weight:850;letter-spacing:.11em;color:#61818a;padding:5px 8px 11px}
+.fq-outlook-map svg.fq-vector-map{display:block;width:100%;height:auto;max-height:415px;aspect-ratio:920/430;border-radius:9px;overflow:hidden}
+.fq-outlook-map .fq-map-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:13px 7px 4px;color:#627a83;font-size:10px;font-weight:740}
+.fq-outlook-map .fq-map-legend span{display:inline-flex;align-items:center;gap:6px}
+.fq-outlook-map .fq-map-legend i{display:inline-block;width:9px;height:9px;border-radius:50%}
+.fq-outlook-map .fq-legend-verified{background:#0a777a}
+.fq-outlook-map .fq-legend-source{background:#4b80a6}
+.fq-outlook-map .fq-legend-compare{background:#dd923a}
+.fq-map-evidence h3{font-size:23px}
+.fq-map-evidence .fq-map-compare{margin:17px 0 0;padding:14px;border:1px solid #d9e8e8;background:#f8fbfb;border-radius:9px}
+.fq-map-compare>label{font-size:11px;color:#1e4655;font-weight:800}
+.fq-map-compare>div:first-of-type{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px;margin:9px 0}
+.fq-map-compare select{min-width:0;min-height:36px;font-size:11px}
+.fq-map-compare button{border:1px solid #0b777a;background:#0b777a;color:white;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer}
+.fq-map-compare button:disabled{opacity:.4;cursor:default}
+.fq-map-compare small{display:block;color:#6c858e;font-size:10px;line-height:1.55}
+.fq-map-selected{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 12px}
+.fq-map-selected button{padding:6px 7px;background:#e6f5f1;border:1px solid #c0deda;color:#245e63;font-size:10px}
+.fq-map-alternatives{border-top:1px solid #dbe7e8;padding-top:14px;margin-top:14px}
+.fq-map-alternatives>strong{font-size:11px;color:#245267}
+.fq-map-alternatives p{margin:7px 0;font-size:11px}
+.fq-map-reason{margin:15px 0 0;font-size:11px}
+@media(max-width:1250px){
+.bc-market-form .market-filter-fields{grid-template-columns:minmax(170px,1.4fr) repeat(2,minmax(130px,1fr)) minmax(220px,1.2fr)}
+.bc-market-form .market-filter-submit{grid-column:1/-1;justify-content:center}
+}
+@media(max-width:980px){.fq-pitchbook-intro{grid-template-columns:1fr}.fq-outlook-map .fq-map-grid{grid-template-columns:1fr}.fq-pitchbook-snapshot .metrics-grid.company-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:720px){.bc-market-form .market-filter-fields{grid-template-columns:1fr 1fr}.bc-market-form .market-field-search,.bc-market-form .market-filter-submit{grid-column:1/-1}.fq-pitchbook-intro .company-facts .detail-grid{grid-template-columns:1fr}.fq-pitchbook-snapshot .metrics-grid.company-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.fq-county-combobox{grid-template-columns:1fr}.fq-map-evidence h3{font-size:19px}}
+@media(max-width:470px){.bc-market-form .market-filter-fields{grid-template-columns:1fr}.bc-market-form .market-field-search,.bc-market-form .market-filter-submit{grid-column:auto}.company-profile-heading{padding:18px}.fq-pitchbook-intro .company-facts,.fq-pitchbook-snapshot{padding:18px}}
