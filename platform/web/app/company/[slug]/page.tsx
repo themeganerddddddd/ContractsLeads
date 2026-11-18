@@ -160,6 +160,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const visibleKinds = focus ? relevantKinds.filter(kind=>kind===focus) : relevantKinds;
   const hasContracts=Number(metrics?.award_count || 0)>0 || Number(snapshot?.government_business || 0)!==0;
   const hasContractBaseline=Boolean(snapshot && (snapshot.obligations_12m!==null || snapshot.baseline_supported) && hasContracts);
+  const hasGovernmentBusiness=hasContracts || data.globalMetrics.length>0;
   const hasContacts=hasOfficialCompanyContact(company.uei);
   const hasEstablishments=establishments.length>0 || data.establishmentIntelligence.recentChanges.length>0;
   const verifiedMovements=data.movements.filter((row: any) =>
@@ -177,8 +178,12 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const hasSourceDetails=data.identifiers.length>0 || data.tracking.coverage.length>0;
   const hasGeographicEvidence=(["expansion","relocation","contraction"] as const).some(kind=>{
     const component=snapshot?.[`${kind}_components` as keyof CompanySnapshotRow];
-    return component && typeof component==="object" &&
-      (component as Record<string,unknown>).destination_claim_supported===true;
+    if (!component || typeof component!=="object") return false;
+    const source=component as Record<string,unknown>;
+    const destination=source.destination;
+    return source.destination_claim_supported===true &&
+      destination!==null && typeof destination==="object" &&
+      Boolean((destination as Record<string,unknown>).state || (destination as Record<string,unknown>).region);
   });
 
   return <>
@@ -195,7 +200,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
       {hasGeographicEvidence?<a href="#geo-outlook">Verified Destinations</a>:null}
       {hasLocations?<a href="#locations-change">Locations &amp; Events</a>:null}
       {hasTimeline?<a href="#intelligence-timeline">Timeline</a>:null}
-      {hasContracts?<a href="#government-business">Government Business</a>:null}
+      {hasGovernmentBusiness?<a href="#government-business">Government Business</a>:null}
       {hasSourceDetails?<a href="#sources">Sources</a>:null}
     </nav>
 
@@ -244,7 +249,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
 
     {hasTimeline?<section className="section" id="intelligence-timeline"><div className="section-header"><div><p className="eyebrow">One source-backed chronology</p><h2>Timeline</h2><p>Business change, facilities, workforce, corporate events, and government activity appear chronologically.</p></div></div><CompanyIntelligenceTimeline rows={data.intelligenceTimeline} /></section>:null}
 
-    {hasContracts?<section className="section profile-section-group" id="government-business"><div className="section-header"><div><p className="eyebrow">Disclosed procurement context</p><h2>Government Business</h2><p>Money leads this view. Values represent disclosed obligations and procurement amounts—not company revenue.</p></div></div><div className="metrics-grid company-metrics"><MetricCard label="Total Net Obligations" value={compactMoney(metrics.total_activity)} note="U.S. transaction obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(metrics.obligations_12m)} note="Previous 365 days" />{data.awards[0]?<MetricCard label="Latest Award" value={compactMoney(data.awards[0].total_obligated)} note={dateLabel(data.awards[0].award_date)} />:null}{latestMaterial?<MetricCard label="Latest Material Adjustment" value={nativeMoney(latestMaterial.value, latestMaterial.currency)} note={dateLabel(latestMaterial.event_at)} />:null}</div>
+    {hasGovernmentBusiness?<section className="section profile-section-group" id="government-business"><div className="section-header"><div><p className="eyebrow">Disclosed procurement context</p><h2>Government Business</h2><p>Money leads this view. Values represent disclosed obligations and procurement amounts—not company revenue.</p></div></div>{hasContracts?<div className="metrics-grid company-metrics"><MetricCard label="Total Net Obligations" value={compactMoney(metrics.total_activity)} note="U.S. transaction obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(metrics.obligations_12m)} note="Previous 365 days" />{data.awards[0]?<MetricCard label="Latest Award" value={compactMoney(data.awards[0].total_obligated)} note={dateLabel(data.awards[0].award_date)} />:null}{latestMaterial?<MetricCard label="Latest Material Adjustment" value={nativeMoney(latestMaterial.value, latestMaterial.currency)} note={dateLabel(latestMaterial.event_at)} />:null}</div>:null}
       {data.globalMetrics.length>0?<div className="profile-subsection"><div className="section-header"><div><h3>Global government business</h3><p>Markets and currencies remain separate; incompatible currencies are never summed.</p></div></div>{data.globalMetrics.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>Market</th><th>Disclosed value</th><th>Currency</th><th>Latest activity</th><th>Processes</th></tr></thead><tbody>{data.globalMetrics.map((row: any) => <tr key={`${row.source_country}-${row.currency || "none"}`}><td>{row.source_country}</td><td className="numeric"><strong>{nativeMoney(row.disclosed_value, row.currency)}</strong></td><td>{reported(row.currency)}</td><td>{dateLabel(row.latest_activity)}</td><td className="numeric">{Number(row.process_count).toLocaleString()}</td></tr>)}</tbody></table></div> : null}</div>:null}
       {data.agencies.length>0 || data.locations.length>0?<div className="profile-subsection split-grid">
         {data.agencies.length>0?<div className="panel"><h3>Top agencies by net obligations</h3><RankedList rows={data.agencies.map((row: any) => ({ ...row, awards: row.award_count, activity: row.activity }))} /></div>:null}
