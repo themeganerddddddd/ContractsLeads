@@ -10,13 +10,15 @@ describe("FirmQuarry public product", () => {
     const layout = read("app/layout.tsx");
     const header = read("components/Header.tsx");
     expect(layout).toContain("FirmQuarry — Business change intelligence, nationwide");
-    for (const label of ["Overview", "Expansion Intelligence", "Movement Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
+    for (const label of ["Overview", "Expansion Intelligence", "Retention Intelligence", "Companies", "Locations", "Government Contracts"]) {
       expect(header).toContain(`\"${label}\"`);
     }
     for (const label of ["Government Business", "Industries", "Agencies", "Saved", "Alerts", "Coverage", "Methodology"]) {
       expect(header).toContain(`\"${label}\"`);
     }
     expect(header).toContain("My Account");
+    expect(header).toContain("Observed moves");
+    expect(header).not.toContain('["Movement Intelligence", "/predicted-moves"]');
     expect(header).toContain("Help &amp; Feedback");
     expect(header).not.toContain('["Plans", "/pricing"]');
     expect(header).not.toContain("Owner overview");
@@ -46,11 +48,11 @@ describe("FirmQuarry public product", () => {
 
   it("positions the public homepage around expansion, contraction and relocation forecasts", () => {
     const page = read("app/page.tsx");
-    expect(page).toContain("Know when a company is likely to expand, contract, or move.");
+    expect(page).toContain("Spot likely expansion and retention risks—and track documented moves.");
     expect(page).toContain("Unearth their next move.");
     expect(page).toContain('href: "/predicted-expansion"');
     expect(page).toContain('href: "/predicted-contraction"');
-    expect(page).toContain('href: "/predicted-moves"');
+    expect(page).toContain('href: "/business-change?tab=moving"');
     expect(page).toContain('>Start for free <');
     expect(page).toContain('>View pricing plans <');
     expect(page).toContain("predicted likelihoods appear only when supported by validated models");
