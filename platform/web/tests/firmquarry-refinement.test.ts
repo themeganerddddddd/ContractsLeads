@@ -42,7 +42,7 @@ describe("FirmQuarry company research refinements", () => {
   });
   it("does not imply unsourced alternate destinations or embed external donation UI", () => {
     const geographic = read("components/CompanyGeographicOutlook.tsx");
-    expect(geographic).toContain('Manually selected research geographies');
+    expect(geographic).toContain('manually selected research geographies');
     expect(geographic).toContain('destination_claim_supported');
     expect(geographic).toContain('alternative_destinations');
     expect(geographic).not.toContain("<iframe");
