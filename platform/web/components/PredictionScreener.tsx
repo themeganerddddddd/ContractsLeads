@@ -133,7 +133,6 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
 function Tabs({kind,values}:{kind:PredictionKind;values:MarketFilterValues}){
   const tabs: {kind:PredictionKind;href:string;label:string;index:string}[]=[
     {kind:"expansion",href:"/predicted-expansion",label:"Expansion intelligence",index:"01"},
-    {kind:"moves",href:"/predicted-moves",label:"Movement intelligence",index:"02"},
     {kind:"contraction",href:"/predicted-contraction",label:"Retention intelligence",index:"03"},
   ];
   return <nav className="terminal-radar-tabs" aria-label="Intelligence categories">
