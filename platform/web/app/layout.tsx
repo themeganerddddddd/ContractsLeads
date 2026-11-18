@@ -5,6 +5,7 @@ import "./globals.css";
 import "./product.css";
 import "./research-product.css";
 import "./firmquarry-public.css";
+import "./firmquarry-refinement.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicAppUrl()),
