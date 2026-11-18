@@ -439,7 +439,9 @@ export async function searchPredictionCompanies(
     : kind === "contraction"
       ? "(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric*.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)"
       : "(s.new_work_states_12m > 0)";
-  const officialWarnCue = kind === "contraction" ? "(s.warn_notice_count_24m > 0)" : "false";
+  const officialWarnCue = kind === "contraction"
+    ? "(s.warn_notice_count_24m > 0 OR s.has_confirmed_contraction)"
+    : "false";
   filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active') OR ${contractCue} OR ${officialWarnCue})`);
   if (input.recencyDays) {
     filters.add(
