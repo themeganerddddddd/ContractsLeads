@@ -17,7 +17,8 @@ import { RankedList } from "@/components/RankedList";
 import { TrackingCoverageMatrix } from "@/components/TrackingCoverageMatrix";
 import { WatchCompanyButton } from "@/components/WatchCompanyButton";
 import { CompanyGeographicOutlook } from "@/components/CompanyGeographicOutlook";
-import { CompanyContactsCard } from "@/components/CompanyContactsCard";
+import { CompanyContactsCard, hasOfficialCompanyContact } from "@/components/CompanyContactsCard";
+import { CompanyWarnNotice } from "@/components/CompanyWarnNotice";
 import { ProcurementBaselinePanel } from "@/components/ProcurementBaselinePanel";
 import { getCompanySnapshotBySlug, type CompanySnapshotRow } from "@/lib/company-intelligence";
 import { can } from "@/lib/entitlements";
@@ -150,19 +151,52 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     const signalSupported = score != null && sufficiency !== "insufficient_history";
     const procurementCue = kind === "expansion" && baselineMomentum.status === "above" ||
       kind === "contraction" && baselineMomentum.status === "below" ||
-      kind === "relocation" && (snapshot?.new_work_states_12m || 0) > 0;
+      kind === "relocation" && Boolean(snapshot?.relocation_score || snapshot?.has_confirmed_relocation);
     return signalSupported || procurementCue;
   });
   const visibleKinds = focus ? [focus] as typeof signalKinds[number][] : relevantKinds;
+  const hasContracts=Number(metrics?.award_count || 0)>0 || Number(snapshot?.government_business || 0)!==0;
+  const hasContractBaseline=Boolean(snapshot && (snapshot.obligations_12m!==null || snapshot.baseline_supported) && hasContracts);
+  const hasContacts=hasOfficialCompanyContact(company.uei);
+  const hasEstablishments=establishments.length>0 || data.establishmentIntelligence.recentChanges.length>0;
+  const verifiedMovements=data.movements.filter((row: any) =>
+    ["source_verified","corroborated"].includes(String(row.verification_status)) &&
+    ["auto_verified","approved"].includes(String(row.review_status)) &&
+    ["relocation","headquarters_move","expansion","facility_expansion","new_facility","layoff","closure","furlough"].includes(String(row.event_type)));
+  const hasEarlyIndicators=data.earlyIndicators.indicators.length>0 ||
+    data.earlyIndicators.assessments.some((row:any)=>row.score!==null && row.data_sufficiency!=="insufficient_history");
+  const hasChangeIntelligence=data.changeIntelligence.outcomes.length>0 ||
+    data.changeIntelligence.assessments.some((row:any)=>row.score!=null && row.data_sufficiency!=="insufficient_history") ||
+    data.changeIntelligence.predictions.some((row:any)=>row.probability_eligible && row.probability!=null);
+  const hasLocations=hasEstablishments || verifiedMovements.length>0 || hasEarlyIndicators || hasChangeIntelligence;
+  const hasTimeline=data.intelligenceTimeline.length>0;
+  const hasSourceDetails=data.identifiers.length>0 || data.tracking.coverage.length>0;
+  const hasGeographicEvidence=(["expansion","relocation","contraction"] as const).some(kind=>{
+    const component=snapshot?.[`${kind}_components` as keyof CompanySnapshotRow];
+    return component && typeof component==="object" &&
+      (component as Record<string,unknown>).destination_claim_supported===true;
+  });
 
   return <>
     <section className="entity-heading company-profile-heading">
       <div className="breadcrumb"><Link href="/companies">Companies</Link><span>/</span><span>{company.canonical_name}</span></div>
-      <div className="entity-header-row"><div><p className="eyebrow">FIRMQUARRY / COMPANY INTELLIGENCE</p><h1>{company.canonical_name}</h1><p className="entity-subtitle">{reported(company.industry_name)} · {geography ? geography + " · " + geographyBasis.toLowerCase() : "Verified headquarters unavailable"}</p>{company.parent_company_name ? <p className="company-parent">Parent: {company.parent_company_name}</p> : null}</div><div className="entity-actions"><Link className="button studio-profile-history-cta" href={`/company/${company.slug}/contracts`}>View contract history ↗</Link>{viewer.user && can(viewer.plan, "company_watches") ? <WatchCompanyButton companyId={company.id} /> : <Link className="button secondary" href="/pricing#pro">Track with Pro</Link>}<DataNote updated={data.lastUpdated} demo={company.is_demo} source="official procurement and company-intelligence sources" /></div></div>
+      <div className="entity-header-row"><div><p className="eyebrow">FIRMQUARRY / COMPANY INTELLIGENCE</p><h1>{company.canonical_name}</h1><p className="entity-subtitle">{reported(company.industry_name)} · {geography ? geography + " · " + geographyBasis.toLowerCase() : "Verified headquarters unavailable"}</p>{company.parent_company_name ? <p className="company-parent">Parent: {company.parent_company_name}</p> : null}</div><div className="entity-actions">{hasContracts?<Link className="button studio-profile-history-cta" href={`/company/${company.slug}/contracts`}>View contract history ↗</Link>:null}{viewer.user && can(viewer.plan, "company_watches") ? <WatchCompanyButton companyId={company.id} /> : <Link className="button secondary" href="/pricing#pro">Track with Pro</Link>}<DataNote updated={data.lastUpdated} demo={company.is_demo} source="official procurement and company-intelligence sources" /></div></div>
     </section>
 
-    <nav className="tabs company-profile-tabs studio-profile-tabs" aria-label="Company profile sections"><a href="#overview">Overview</a><a href="#company-contacts">Contacts</a><a href="#contract-baseline">Contract Baseline</a><a href="#geo-outlook">Geographic Outlook</a><a href="#locations-change">Locations</a><a href="#intelligence-timeline">Timeline</a><a href="#government-business">Government Business</a><a href="#sources">Sources</a></nav>
+    <nav className="tabs company-profile-tabs studio-profile-tabs" aria-label="Company profile sections">
+      {hasContractBaseline?<a href="#contract-baseline">Contract Cycle</a>:null}
+      <a href="#overview">General Information</a>
+      {hasContacts?<a href="#company-contacts">Contacts</a>:null}
+      {snapshot?.warn_notice_count_24m ? <a href="#workforce-notices">WARN Notices</a>:null}
+      {hasGeographicEvidence?<a href="#geo-outlook">Verified Destinations</a>:null}
+      {hasLocations?<a href="#locations-change">Locations &amp; Events</a>:null}
+      {hasTimeline?<a href="#intelligence-timeline">Timeline</a>:null}
+      {hasContracts?<a href="#government-business">Government Business</a>:null}
+      {hasSourceDetails?<a href="#sources">Sources</a>:null}
+    </nav>
 
+    {hasContractBaseline?<ProcurementBaselinePanel snapshot={snapshot} newWorkMarkets={data.newWorkMarkets || []} />:null}
+    <CompanyWarnNotice snapshot={snapshot} />
     <section id="overview" className="company-overview">
       <div className="fq-pitchbook-intro">
         <div className="fq-pitchbook-left">
@@ -174,7 +208,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
                 <div className="metrics-grid company-metrics"><MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" /><MetricCard label="Verified Locations" value={establishments.length ? currentEstablishments.length.toLocaleString() : "—"} note="Supported operating locations only" /><MetricCard label="Latest Change" value={changeLabel(String(latestChange || ""))} note={latestChangeDate ? dateLabel(String(latestChangeDate)) : "No supported change signal"} /></div>
         </aside>
       </div>
-      <ProcurementBaselinePanel snapshot={snapshot} newWorkMarkets={data.newWorkMarkets || []} />
+
 
       <div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
       {visibleKinds.length
