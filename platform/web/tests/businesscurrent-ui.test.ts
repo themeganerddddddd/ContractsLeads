@@ -28,7 +28,7 @@ describe("FirmQuarry public product", () => {
     expect(read("app/page.tsx")).toContain("ProviderSignInButton");
     expect(read("app/page.tsx")).toContain('href="/pricing"');
     expect(read("components/PredictionScreener.tsx")).toContain("Expansion intelligence");
-    expect(read("components/PredictionScreener.tsx")).toContain("Ranked by validated likelihood");
+    expect(read("components/PredictionScreener.tsx")).toContain("Validated probabilities appear first");
     expect(read("app/workspace/page.tsx")).not.toContain("studio-product-grid");
     expect(read("app/business-change/page.tsx")).toContain("Cards");
     expect(read("app/business-change/page.tsx")).toContain("Table");
@@ -62,7 +62,7 @@ describe("FirmQuarry public product", () => {
     const establishment = read("app/establishment/[id]/page.tsx");
     const css = read("app/globals.css");
     expect(company).toContain("Company and locations stay distinct");
-    expect(company.match(/<a href=\"#/g)).toHaveLength(6);
+    expect(company.match(/<a href=\"#/g)).toHaveLength(8);
     expect(establishment).toContain("Physical business location");
     expect(css).toContain("@media(max-width:860px)");
     expect(css).toContain("@media(max-width:600px)");
