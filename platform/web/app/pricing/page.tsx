@@ -42,13 +42,15 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
     {checkout === "cancelled" ? <section className="checkout-state"><h2>Checkout cancelled</h2><p>No charge was made. Your current plan is unchanged.</p></section> : null}
     {validCheckoutPlan && checkout !== "success" && viewer.plan === "free" && checkoutAvailable ? <section className="checkout-resume"><p>Continuing to {displayPlan[validCheckoutPlan]} checkout…</p><BillingButton plan={validCheckoutPlan} billing={billing} autoStart>Continue to secure checkout</BillingButton></section> : null}
 
+    {!billingEnabled() ? <p className="fq-public-preview-notice">Public research preview: the Free plan’s search-result and history limits are temporarily lifted while billing is unavailable. Paid features, downloads, saved-work permissions and future plan limits remain unchanged.</p> : null}
+
     <section className="pricing-grid" aria-label="FirmQuarry plans">
       {plans.map((plan) => <article id={plan.slug} className={`price-card ${plan.featured ? "featured" : ""} ${viewer.plan === plan.slug ? "current" : ""}`} key={plan.slug}>
         {plan.featured ? <span className="plan-badge">Most Popular</span> : null}
         {viewer.plan === plan.slug ? <span className="current-badge">Current plan</span> : null}
         <h2>{plan.name}</h2>
         <div className="price">{plan.price} <small>{plan.note}</small></div>
-        <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+        <ul>{(plan.slug === "free" && !billingEnabled() ? ["Search all source-backed companies in paginated results during preview", "Full supported history while billing is off", "Company profile previews", "Saved research and exports require an eligible plan"] : plan.features).map((feature) => <li key={feature}>{feature}</li>)}</ul>
         {plan.slug === "free" ? <Link className="button secondary" href="/companies">Search free</Link> : checkoutAvailable ? <div className="plan-actions"><BillingButton plan={plan.slug}>Choose {plan.name} monthly</BillingButton>{plan.slug !== "analyst" ? <BillingButton plan={plan.slug} billing="annual">Choose annual</BillingButton> : null}</div> : <div className="plan-unavailable"><strong>Checkout is not enabled yet.</strong><span>Continue with the free research workspace while account access and billing are prepared.</span><Link href="/companies">Search companies →</Link></div>}
       </article>)}
       {salesEmail ? <article className="price-card"><h2>Organization</h2><div className="price">Custom</div><ul><li>Team access and higher limits</li><li>Scoped deployment support</li><li>Contact us to confirm requirements</li></ul><a className="button secondary" href={`mailto:${salesEmail}`}>Contact sales</a></article> : null}
