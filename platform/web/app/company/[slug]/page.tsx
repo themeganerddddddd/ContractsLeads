@@ -152,9 +152,11 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     const procurementCue = kind === "expansion" && baselineMomentum.status === "above" ||
       kind === "contraction" && baselineMomentum.status === "below" ||
       kind === "relocation" && Boolean(snapshot?.relocation_score || snapshot?.has_confirmed_relocation);
-    return signalSupported || procurementCue;
+    const workforceEvidence=kind==="contraction" &&
+      ((snapshot?.warn_notice_count_24m||0)>0 || snapshot?.has_confirmed_contraction===true);
+    return signalSupported || procurementCue || workforceEvidence;
   });
-  const visibleKinds = focus ? [focus] as typeof signalKinds[number][] : relevantKinds;
+  const visibleKinds = focus ? relevantKinds.filter(kind=>kind===focus) : relevantKinds;
   const hasContracts=Number(metrics?.award_count || 0)>0 || Number(snapshot?.government_business || 0)!==0;
   const hasContractBaseline=Boolean(snapshot && (snapshot.obligations_12m!==null || snapshot.baseline_supported) && hasContracts);
   const hasContacts=hasOfficialCompanyContact(company.uei);
@@ -170,6 +172,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     data.changeIntelligence.predictions.some((row:any)=>row.probability_eligible && row.probability!=null);
   const hasLocations=hasEstablishments || verifiedMovements.length>0 || hasEarlyIndicators || hasChangeIntelligence;
   const hasTimeline=data.intelligenceTimeline.length>0;
+  const hasSnapshot=hasContracts || hasEstablishments || Boolean(latestChange);
   const hasSourceDetails=data.identifiers.length>0 || data.tracking.coverage.length>0;
   const hasGeographicEvidence=(["expansion","relocation","contraction"] as const).some(kind=>{
     const component=snapshot?.[`${kind}_components` as keyof CompanySnapshotRow];
@@ -200,13 +203,26 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     <section id="overview" className="company-overview">
       <div className="fq-pitchbook-intro">
         <div className="fq-pitchbook-left">
-              <div className="company-facts"><h2>Company facts</h2><dl className="detail-grid"><div><dt>Company industry</dt><dd>{reported(company.industry_name)}</dd></div><div><dt>Legal name</dt><dd>{reported(company.legal_name)}</dd></div><div><dt>Parent company</dt><dd>{reported(company.parent_company_name)}</dd></div><div><dt>Observed geography</dt><dd>{geography ? geography + " · " + geographyBasis : "Not reported"}</dd></div><div><dt>Known operating locations</dt><dd>{establishments.length ? currentEstablishments.length.toLocaleString() : "Not available"}</dd></div><div><dt>First / latest observed</dt><dd>{dateLabel(company.first_seen)} — {dateLabel(company.last_seen)}</dd></div></dl></div>
+              <div className="company-facts"><h2>General information</h2><dl className="detail-grid">
+            <div><dt>Legal name</dt><dd>{company.legal_name}</dd></div>
+            {company.industry_name?<div><dt>Industry</dt><dd>{company.industry_name}</dd></div>:null}
+            {company.parent_company_name?<div><dt>Parent company</dt><dd>{company.parent_company_name}</dd></div>:null}
+            {geography?<div><dt>Observed geography</dt><dd>{geography} · {geographyBasis}</dd></div>:null}
+            {currentEstablishments.length>0?<div><dt>Known operating locations</dt><dd>{currentEstablishments.length.toLocaleString()}</dd></div>:null}
+            {company.website && /^https:\/\//i.test(company.website) ? <div><dt>Company website</dt><dd><a href={company.website} target="_blank" rel="noopener noreferrer">Visit company site ↗</a></dd></div>:null}
+            {company.first_seen || company.last_seen ? <div><dt>First / latest observed</dt><dd>{company.first_seen?dateLabel(company.first_seen):"—"} — {company.last_seen?dateLabel(company.last_seen):"—"}</dd></div>:null}
+          </dl></div>
           <CompanyContactsCard companyName={company.canonical_name} uei={company.uei} website={company.website} />
         </div>
-        <aside className="fq-pitchbook-snapshot" aria-label="Company snapshot">
-          <div className="fq-pitchbook-snapshot-heading"><span className="eyebrow">RESEARCH SNAPSHOT</span><h2>At a glance</h2></div>
-                <div className="metrics-grid company-metrics"><MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" /><MetricCard label="Verified Locations" value={establishments.length ? currentEstablishments.length.toLocaleString() : "—"} note="Supported operating locations only" /><MetricCard label="Latest Change" value={changeLabel(String(latestChange || ""))} note={latestChangeDate ? dateLabel(String(latestChangeDate)) : "No supported change signal"} /></div>
-        </aside>
+        {hasSnapshot?<aside className="fq-pitchbook-snapshot" aria-label="Company snapshot">
+           <div className="fq-pitchbook-snapshot-heading"><span className="eyebrow">RESEARCH SNAPSHOT</span><h2>At a glance</h2></div>
+           <div className="metrics-grid company-metrics">
+             {hasContracts?<MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" />:null}
+             {hasContracts?<MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" />:null}
+             {currentEstablishments.length>0?<MetricCard label="Verified Locations" value={currentEstablishments.length.toLocaleString()} note="Supported operating locations only" />:null}
+             {latestChange?<MetricCard label="Latest Change" value={changeLabel(String(latestChange))} note={latestChangeDate?dateLabel(String(latestChangeDate)):"Source-linked change"} />:null}
+           </div>
+         </aside>:null}
       </div>
 
 
