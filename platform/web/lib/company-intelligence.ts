@@ -29,6 +29,10 @@ export type CompanySnapshotRow = {
   new_awards_12m: number;
   new_awards_baseline_annual: string | null;
   new_work_states_12m: number;
+  warn_notice_count_24m: number;
+  warn_jobs_affected_24m: number;
+  latest_warn_date: string | null;
+  latest_warn_source_url: string | null;
   known_locations: string;
   latest_transaction_date: string | null;
   latest_transaction_obligation: string | null;
@@ -172,6 +176,28 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   ORDER BY company_id,verified_headquarters DESC,
     CASE location_status WHEN 'active' THEN 0 WHEN 'expanding' THEN 1 WHEN 'opening' THEN 2 ELSE 3 END,
     last_observed_at DESC
+), warn_activity AS MATERIALIZED (
+  SELECT ec.company_id,
+    count(DISTINCT e.id)::integer AS notice_count_24m,
+    COALESCE(sum(e.jobs_affected),0)::integer AS jobs_affected_24m,
+    max(COALESCE(e.effective_start_date,e.announced_date))::text AS latest_warn_date,
+    (array_agg(src.original_url ORDER BY COALESCE(e.effective_start_date,e.announced_date) DESC NULLS LAST)
+      FILTER (WHERE src.original_url ~ '^https://'))[1] AS latest_warn_source_url
+  FROM company_events e
+  JOIN company_event_companies ec ON ec.event_id=e.id
+    AND ec.review_status IN ('auto_verified','approved')
+    AND ec.relationship_type IN ('subject','affected_employer','employer','operator')
+  LEFT JOIN LATERAL (
+    SELECT ces.original_url FROM company_event_sources ces
+    WHERE ces.event_id=e.id AND ces.record_status IN ('parsed','linked')
+      AND ces.original_url ~ '^https://' ORDER BY ces.is_primary DESC,ces.collected_at DESC LIMIT 1
+  ) src ON true
+  WHERE e.source_system IN ('maryland_warn','virginia_warn')
+    AND e.verification_status IN ('source_verified','corroborated')
+    AND e.event_type IN ('layoff','closure','furlough')
+    AND e.event_status NOT IN ('rescinded','cancelled','rejected')
+    AND COALESCE(e.effective_start_date,e.announced_date) >= current_date - interval '24 months'
+  GROUP BY ec.company_id
 ), latest_assessments AS MATERIALIZED (
   SELECT DISTINCT ON (company_id,assessment_type) company_id,assessment_type,as_of_date,score,
     data_sufficiency,components,explanation
@@ -235,6 +261,9 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
     COALESCE(aa.new_awards_12m,0)::integer AS new_awards_12m,
     aa.new_awards_baseline_annual::text,
     COALESCE(nws.count_12m,0) AS new_work_states_12m,
+    COALESCE(wa.notice_count_24m,0) AS warn_notice_count_24m,
+    COALESCE(wa.jobs_affected_24m,0) AS warn_jobs_affected_24m,
+    wa.latest_warn_date,wa.latest_warn_source_url,
     COALESCE(ea.known_locations,'0') AS known_locations,
     lt.action_date::text AS latest_transaction_date,lt.obligation::text AS latest_transaction_obligation,
     lt.is_material AS latest_transaction_material,
@@ -257,6 +286,7 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   LEFT JOIN latest_transaction lt ON lt.company_id=c.id
   LEFT JOIN award_activity aa ON aa.company_id=c.id
   LEFT JOIN new_work_states nws ON nws.company_id=c.id
+  LEFT JOIN warn_activity wa ON wa.company_id=c.id
   LEFT JOIN global_activity ga ON ga.company_id=c.id
   LEFT JOIN establishment_activity ea ON ea.company_id=c.id
   LEFT JOIN best_location bl ON bl.company_id=c.id
@@ -409,7 +439,8 @@ export async function searchPredictionCompanies(
     : kind === "contraction"
       ? "(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric*.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)"
       : "(s.new_work_states_12m > 0)";
-  filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active') OR ${contractCue})`);
+  const officialWarnCue = kind === "contraction" ? "(s.warn_notice_count_24m > 0)" : "false";
+  filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active') OR ${contractCue} OR ${officialWarnCue})`);
   if (input.recencyDays) {
     filters.add(
       `s.${scoreColumn}_date::date >= current_date - (?::integer * interval '1 day')`,
