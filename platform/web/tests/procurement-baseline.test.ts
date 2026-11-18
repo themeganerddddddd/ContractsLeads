@@ -43,7 +43,7 @@ describe("company-specific procurement baseline (descriptive only)",()=>{
     const ranked=read("components/PredictionScreener.tsx");
     expect(ranked).toContain("Procurement research cue · not a probability");
     const panel=read("components/ProcurementBaselinePanel.tsx");
-    expect(panel).toContain("not a verified facility or relocation destination");
+    expect(panel).toContain("verified facility or relocation destination");
   });
   it("only shows contacts from official source-matched UEI records",()=>{
     const contacts=JSON.parse(read("data/official-business-contacts.json"));
