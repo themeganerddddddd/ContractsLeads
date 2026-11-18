@@ -89,6 +89,13 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
         row.prediction_sufficiency === "sufficient" &&
         row.probability != null;
       const band=evidenceBand(item.score);
+      const contract = assessProcurementMomentum({current:row.obligations_12m,annualBaseline:row.obligations_baseline_annual,baselineSupported:row.baseline_supported});
+      const procurementCue = kind === "moves" ? row.new_work_states_12m > 0 : kind === "expansion" ? contract.status === "above" : contract.status === "below";
+      const cueLabel = kind === "moves" ? "New contract work geography" : kind === "expansion" ? "Above-normal contracts" : "Below-normal contracts";
+      const cueExplanation = kind === "moves"
+        ? `${row.new_work_states_12m} newly observed out-of-state work-performance market(s), not verified relocation destinations`
+        : contract.relativeChangePct === null ? "No company-specific baseline" :
+          `${contract.relativeChangePct > 0 ? "+" : ""}${contract.relativeChangePct.toFixed(0)}% net obligations vs own prior 3-year annual normal`;
       return <tr key={row.id}>
         <td className="terminal-rank">#{String((page-1)*25+index+1).padStart(2,"0")}</td>
         <td className="terminal-company"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`}>{row.canonical_name}</Link>
@@ -98,11 +105,11 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
         <td><div className="terminal-indication">
           {calibrated?
             <strong className="terminal-probability">{Math.round(Number(row.probability)*100)}% <span>calibrated</span></strong> :
-            <strong className={`terminal-band terminal-band-${band.toLowerCase().replaceAll(" ","-")}`}>{indicationLabel(item.score,item.sufficiency||undefined)}</strong>}
-          <small>{calibrated?`${row.horizon_days||180}-day validated model`:item.score!=null?`Evidence score ${Number(item.score).toFixed(0)}/100 · not a probability`:"Prediction not yet available"}</small>
+            <strong className={`terminal-band terminal-band-${band.toLowerCase().replaceAll(" ","-")}`}>{item.score == null && procurementCue ? cueLabel : indicationLabel(item.score,item.sufficiency||undefined)}</strong>}
+          <small>{calibrated?`${row.horizon_days||180}-day validated model`:item.score!=null?`Evidence score ${Number(item.score).toFixed(0)}/100 · not a probability`:procurementCue?"Procurement research cue · not a probability":"Prediction not yet available"}</small>
         </div></td>
-        <td><strong className="terminal-evidence-label">{evidenceLabel(item.components)}</strong>
-          <small>{item.explanation||"Open company dossier for supporting sources."}</small></td>
+        <td><strong className="terminal-evidence-label">{item.score == null && procurementCue ? cueLabel : evidenceLabel(item.components)}</strong>
+          <small>{item.explanation||(procurementCue?cueExplanation:"Open company dossier for supporting sources.")}</small></td>
         {kind==="moves"?<td>{destinationLabel(item.components)}</td>:
           <td className="terminal-money">{compactMoney(row.government_business)}<small>Disclosed obligations</small></td>}
         <td className="fq-momentum-table-cell">{(() => {
@@ -112,7 +119,7 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
             <small>12M {compactMoney(row.obligations_12m)} · annual normal {baseline.status === "insufficient" ? "unknown" : compactMoney(row.obligations_baseline_annual)}</small>
           </>;
         })()}</td>
-        <td>{dateLabel(item.date)}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
+        <td>{dateLabel(item.date || (procurementCue ? row.latest_transaction_date : null))}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
       </tr>;
     })}</tbody>
   </table></div>;
@@ -180,7 +187,7 @@ export async function PredictionScreener({kind,searchParams,dashboard=false}:{
         <h2>{dashboard ? "Expansion watchlist" : title + " · ranked companies"}</h2>
         <p>{unavailable
           ?"No unverified company or likelihood data is substituted while the source is disconnected."
-          :"Ranked by validated likelihood when available, then descriptive source-evidence strength. Evidence strength is not a calibrated probability."}</p></div>
+          :"Validated probabilities appear first when available; other rows can show descriptive evidence or material changes in company-specific contract activity. A procurement cue is not a prediction."}</p></div>
         {!unavailable ? <div className="terminal-result-meta">
           <strong>{(data?.visibleTotal||0).toLocaleString()}</strong>
           <span>visible signals</span>
