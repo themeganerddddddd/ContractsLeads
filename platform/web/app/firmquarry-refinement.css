@@ -63,3 +63,61 @@
 .fq-public-preview-notice{padding:13px 17px;background:#edf7f4;border:1px solid #cfe6df;border-radius:8px;color:#28716c;font-size:12px;line-height:1.55;margin:15px 0}
 .fq-empty-fallback-link{display:inline-flex;margin:10px 0 0;color:#0a777a;font-size:12px;font-weight:800;text-decoration:none}
 .fq-empty-fallback-link:hover{text-decoration:underline}
+
+
+/* Three-year contract baseline: visible on each inline screener, never hidden in a modal. */
+.fq-procurement-search{display:grid;grid-template-columns:minmax(160px,1.3fr) repeat(3,minmax(155px,1fr));gap:12px;border-top:1px solid #dfebed;background:#f6fafa;padding:16px 19px;align-items:end}
+.fq-procurement-search-intro{align-self:center;padding-right:9px}
+.fq-procurement-search-intro .bc-microcopy{display:block;color:#0a777a;margin-bottom:4px}
+.fq-procurement-search-intro small{display:block;line-height:1.47;color:#607780;font-size:11px}
+.fq-procurement-search>label{display:flex;flex-direction:column;gap:6px;color:#244955;font-size:11px;font-weight:820;min-width:0}
+.fq-procurement-search>label span{font-size:9px;letter-spacing:.08em;color:#778b91}
+.fq-procurement-search input,.fq-procurement-search select{width:100%;min-height:38px;border-radius:6px;border:1px solid #c6d9dc;background:#fff;padding:8px 10px;color:#153c4c;font-size:12px;min-width:0}
+.fq-procurement-search input:focus,.fq-procurement-search select:focus{outline:2px solid #09a2a0;border-color:#068181}
+.fq-momentum-table-cell{min-width:160px}
+.fq-momentum-table-cell small{display:block;max-width:220px;line-height:1.4;word-break:normal;white-space:normal}
+.fq-momentum-label{font-size:12px;font-weight:900}
+.fq-momentum-label.fq-momentum-above{color:#087f66}
+.fq-momentum-label.fq-momentum-below{color:#a8593b}
+.fq-momentum-label.fq-momentum-within{color:#526f7a}
+.fq-momentum-label.fq-momentum-insufficient{color:#72858b}
+.fq-pitchbook-left{display:flex;flex-direction:column;gap:16px;min-width:0}
+.fq-pitchbook-intro .fq-pitchbook-left .company-facts{flex:0 0 auto}
+.fq-company-contacts{border:1px solid #d9e5e6;background:#fff;border-radius:11px;padding:25px 27px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-company-contacts header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:17px}
+.fq-company-contacts h2{margin:3px 0;font-size:19px;font-weight:800;color:#16384a}
+.fq-contact-source-chip{white-space:nowrap;background:#eaf5f2;color:#126b69;font-size:10px;font-weight:800;padding:6px 9px;border-radius:30px}
+.fq-contact-item{display:flex;gap:14px}
+.fq-contact-avatar{display:grid;place-items:center;background:#e2f2ef;color:#087476;border-radius:10px;font-size:14px;font-weight:900;flex:0 0 43px;width:43px;height:43px}
+.fq-contact-info{min-width:0}
+.fq-contact-info h3{font-size:16px;color:#153b4b;margin:0 0 4px}
+.fq-contact-info>p{font-size:12px;color:#345868;margin:0 0 5px;font-weight:750}
+.fq-contact-type{font-size:11px;line-height:1.6;color:#6c8288}
+.fq-contact-actions{display:flex;gap:12px;flex-wrap:wrap;margin:13px 0}
+.fq-contact-actions a,.fq-contact-company-website a{font-weight:790;font-size:12px;color:#087779;text-decoration:none}
+.fq-contact-actions a:hover{text-decoration:underline}
+.fq-contact-foot{font-size:10px;color:#7b9197}
+.fq-contact-company-website{margin:15px 0 0;font-size:12px;color:#647c82}
+.fq-contact-empty{padding:14px 16px;background:#f5fafa;border-radius:6px;font-size:12px;color:#5c7580;line-height:1.65}
+.fq-contact-disclosure{margin:18px 0 0;padding-top:13px;border-top:1px solid #e6efef;font-size:10px;line-height:1.6;color:#778d95}
+.fq-contact-disclosure a{font-size:10px;color:#09797c}
+.fq-contract-baseline{margin:22px 0;padding:25px 27px;background:#fff;border:1px solid #d9e5e6;border-radius:11px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-contract-baseline>header{display:flex;align-items:start;justify-content:space-between;gap:25px;margin:0 0 18px}
+.fq-contract-baseline h2{color:#14394b;font:600 25px/1.17 Georgia,"Times New Roman",serif;letter-spacing:-.025em;margin:5px 0 8px}
+.fq-contract-baseline>header p:last-child{font-size:12px;line-height:1.6;color:#647d85;max-width:730px;margin:0}
+.fq-momentum-pill{white-space:nowrap;font-size:10px;font-weight:850;border-radius:20px;padding:9px 12px}
+.fq-momentum-pill.fq-momentum-above{color:#136953;background:#e3f6eb}
+.fq-momentum-pill.fq-momentum-below{color:#94522c;background:#fff0df}
+.fq-momentum-pill.fq-momentum-within{color:#486b76;background:#eaf1f4}
+.fq-momentum-pill.fq-momentum-insufficient{color:#627d85;background:#edf2f3}
+.fq-contract-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.fq-contract-metrics>div{padding:18px 15px;background:#f5faf9;border:1px solid #e0edeb;border-radius:8px;min-width:0}
+.fq-contract-metrics span{display:block;font-size:10px;color:#5a777d;font-weight:850;line-height:1.4;min-height:28px}
+.fq-contract-metrics strong{display:block;margin:10px 0 4px;font-size:clamp(18px,1.85vw,26px);color:#143c4e;letter-spacing:-.035em}
+.fq-contract-metrics small{display:block;font-size:10px;line-height:1.45;color:#66838c}
+.fq-contract-interpretation{display:flex;gap:15px;align-items:center;padding-top:17px;margin-top:15px;border-top:1px solid #e4eeee}
+.fq-contract-interpretation strong{font-size:12px;color:#0c7877;min-width:210px}
+.fq-contract-interpretation p{margin:0;font-size:11px;color:#67818a;line-height:1.55}
+@media(max-width:1180px){.fq-procurement-search{grid-template-columns:repeat(3,minmax(0,1fr))}.fq-procurement-search-intro{grid-column:1/-1}.fq-contract-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:735px){.fq-procurement-search{grid-template-columns:1fr 1fr}.fq-procurement-search-intro{grid-column:1/-1}.fq-procurement-search>label:last-child{grid-column:1/-1}.fq-contract-baseline>header,.fq-contract-interpretation{display:block}.fq-momentum-pill{display:inline-block;margin-top:14px}.fq-contract-interpretation strong{display:block;margin-bottom:9px}.fq-contact-source-chip{display:none}}
+@media(max-width:455px){.fq-procurement-search{grid-template-columns:1fr}.fq-procurement-search>label:last-child{grid-column:auto}.fq-contract-metrics{grid-template-columns:1fr}.fq-company-contacts,.fq-contract-baseline{padding:18px}}
