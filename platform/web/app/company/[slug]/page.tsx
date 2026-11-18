@@ -23,6 +23,7 @@ import { getCompanySnapshotBySlug, type CompanySnapshotRow } from "@/lib/company
 import { can } from "@/lib/entitlements";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
 import { resolveViewer } from "@/lib/plan";
+import { assessProcurementMomentum } from "@/lib/procurement-baseline";
 import { getCompanyProfile } from "@/lib/profiles";
 
 export const dynamic = "force-dynamic";
@@ -75,12 +76,27 @@ function Outlook({ kind, snapshot, intelligence }: { kind: "expansion" | "reloca
   const predictionType = `company_${kind}`;
   const prediction = intelligence.predictions.find((row: any) => row.prediction_type === predictionType);
   const calibrated = prediction?.probability_eligible === true && prediction?.model_status === "active" && prediction?.data_sufficiency === "sufficient" && prediction?.probability != null;
-  const prefix = kind === "relocation" ? "relocation" : kind;
-  const score = snapshot?.[`${prefix}_score` as keyof CompanySnapshotRow];
-  const sufficiency = snapshot?.[`${prefix}_sufficiency` as keyof CompanySnapshotRow];
-  const date = snapshot?.[`${prefix}_date` as keyof CompanySnapshotRow];
+  const score = snapshot?.[`${kind}_score` as keyof CompanySnapshotRow];
+  const sufficiency = snapshot?.[`${kind}_sufficiency` as keyof CompanySnapshotRow];
+  const date = snapshot?.[`${kind}_date` as keyof CompanySnapshotRow];
   const title = kind === "relocation" ? "Move" : kind[0].toUpperCase() + kind.slice(1);
-  return <article className="outlook-card"><span>{title}</span><strong>{calibrated ? `${Math.round(Number(prediction.probability) * 100)}% predicted probability` : signalBand(score, sufficiency)}</strong><small>{calibrated ? `${prediction.horizon_days}-day validated model · ${dateLabel(prediction.as_of_date)}` : score == null ? "No recent supported signal" : `Prediction not yet available · evidence as of ${dateLabel(String(date))}`}</small></article>;
+  const contracts = assessProcurementMomentum({ current:snapshot?.obligations_12m, annualBaseline:snapshot?.obligations_baseline_annual, baselineSupported:snapshot?.baseline_supported===true });
+  const contractCue = kind === "expansion" && contracts.status === "above" ||
+    kind === "contraction" && contracts.status === "below" ||
+    kind === "relocation" && (snapshot?.new_work_states_12m || 0) > 0;
+  const cueText = kind === "relocation"
+    ? `${snapshot?.new_work_states_12m || 0} new work-performance geography(ies)`
+    : contracts.relativeChangePct == null ? "Historical procurement shift" :
+      `${contracts.relativeChangePct>0?"+":""}${contracts.relativeChangePct.toFixed(0)}% vs normal contracts`;
+  return <article className="outlook-card">
+    <span>{title}</span>
+    <strong>{calibrated ? `${Math.round(Number(prediction.probability) * 100)}% predicted probability` :
+      score != null ? signalBand(score,sufficiency) : contractCue ? cueText : "Insufficient evidence"}</strong>
+    <small>{calibrated ? `${prediction.horizon_days}-day validated model · ${dateLabel(prediction.as_of_date)}` :
+      score != null ? `Evidence score only; not a probability · ${dateLabel(String(date))}` :
+      contractCue ? "Procurement research cue · not a validated expansion, contraction or move forecast" :
+      "No recent supported assessment or validated model"}</small>
+  </article>;
 }
 
 export default async function CompanyPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams?: Promise<{ focus?: string | string[] }> }) {
