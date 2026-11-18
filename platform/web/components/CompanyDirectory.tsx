@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CompanyTable } from "@/components/CompanyTable";
-import { ResearchCriteriaDialog } from "@/components/ResearchCriteriaDialog";
+import { MarketFilterBar } from "@/components/MarketFilterBar";
 import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -46,7 +46,7 @@ export async function CompanyDirectory({searchParams,locationFocus=false}:{
       <Link href={marketHref("/predicted-moves",values)}>Movement intelligence</Link>
       <Link href={marketHref("/predicted-contraction",values)}>Retention intelligence</Link>
     </nav>
-    <ResearchCriteriaDialog mode="companies" action={path} initial={values} industries={options?.industries||[]}/>
+    <MarketFilterBar action={path} values={values} industries={options?.industries||[]} knownCounties={options?.counties||[]} otherStates={options?.states||[]} mode="directory"/>
     <section className="terminal-result-pane">
       <div className="terminal-result-head">
         <div><p className="terminal-eyebrow">{locationFocus?"GEOGRAPHIC INDEX":"COMPANY COVERAGE"} / SORTABLE SOURCE DATA</p>
