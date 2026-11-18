@@ -6,7 +6,7 @@ function dollars(value: string | null | undefined) {
   return value == null ? "Not available" : compactMoney(value);
 }
 
-export function ProcurementBaselinePanel({ snapshot }: { snapshot: CompanySnapshotRow | null }) {
+export function ProcurementBaselinePanel({ snapshot, newWorkMarkets = [] }: { snapshot: CompanySnapshotRow | null; newWorkMarkets?: {state: string; award_date: string; source_url: string | null}[] }) {
   const current = snapshot?.obligations_12m ?? null;
   const baseline = snapshot?.obligations_baseline_annual ?? null;
   const momentum = assessProcurementMomentum({
@@ -37,6 +37,12 @@ export function ProcurementBaselinePanel({ snapshot }: { snapshot: CompanySnapsh
         <div><span>Previous 36 months · annual average</span><strong>{momentum.status === "insufficient" ? "—" : dollars(baseline)}</strong><small>Company's own historical run rate</small></div>
         <div><span>Change from normal</span><strong>{deltaLabel}</strong><small>{momentum.difference != null ? `${momentum.difference >= 0 ? "+" : "−"}${compactMoney(String(Math.abs(momentum.difference)))} versus annual baseline` : "Requires at least four years of observable contract history"}</small></div>
         <div><span>New contracts · last 12 months</span><strong>{snapshot?.new_awards_12m ?? "—"}</strong><small>{momentum.status === "insufficient" ? "Prior-cycle count not established" : `Prior 3-year annual avg: ${Number(snapshot?.new_awards_baseline_annual || 0).toFixed(1)}`}</small></div>
+      </div>
+      <div className="fq-new-markets">
+        <div><span className="eyebrow">GEOGRAPHIC DIVERSIFICATION</span><h3>New out-of-state contract performance</h3><p>States appearing on newly awarded contracts in the last 12 months that did not appear in the preceding three years. A government work location is <strong>not</strong> a verified facility or relocation destination.</p></div>
+        {newWorkMarkets.length
+          ? <ul>{newWorkMarkets.map(row => <li key={row.state}><strong>{row.state}</strong>{row.source_url && /^https:\/\//i.test(row.source_url) ? <a href={row.source_url} target="_blank" rel="noopener noreferrer">Award source ↗</a> : null}</li>)}</ul>
+          : <span className="fq-market-none">No new out-of-state work geography identified in these award records.</span>}
       </div>
       <div className="fq-contract-interpretation">
         <strong>{momentum.status === "above"
