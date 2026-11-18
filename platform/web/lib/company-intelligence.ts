@@ -358,14 +358,15 @@ export async function searchPredictionCompanies(
   );
   const config = PREDICTION_CONFIG[kind];
   const scoreColumn = kind === "moves" ? "relocation" : kind;
-  filters.clauses.push(`s.${scoreColumn}_score IS NOT NULL`);
+  // Include an active calibrated prediction even if the parallel evidence-score snapshot is absent.
+  filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active'))`);
   if (input.recencyDays) {
     filters.add(
       `s.${scoreColumn}_date::date >= current_date - (?::integer * interval '1 day')`,
       input.recencyDays,
     );
   }
-  filters.add("(cp.horizon_days=? OR cp.horizon_days IS NULL)", input.horizon || 180);
+  if (input.horizon) filters.add("(cp.horizon_days=? OR cp.horizon_days IS NULL)", input.horizon);
   const entitlementLimit = searchResultLimit(plan);
   const pageSize = Math.min(25, entitlementLimit);
   const offset = Math.max(0, (input.page - 1) * pageSize);
