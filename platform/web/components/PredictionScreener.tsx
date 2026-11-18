@@ -13,6 +13,7 @@ import {
   type PredictionKind,
 } from "@/lib/company-intelligence";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
+import { assessProcurementMomentum } from "@/lib/procurement-baseline";
 import { marketHref, type MarketFilterValues } from "@/lib/market-filters";
 import { resolveViewer } from "@/lib/plan";
 
@@ -78,7 +79,7 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
       <th scope="col">Rank</th><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Observed geography</th>
       <th scope="col">Likelihood / indication</th><th scope="col">Key evidence</th>
       {kind==="moves"?<th scope="col">Potential destination</th>:<th scope="col">Government business</th>}
-      <th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
+      <th scope="col">Contract vs 3Y baseline</th><th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
     </tr></thead>
     <tbody>{rows.map((row,index)=>{
       const item=assessment(row,kind);
@@ -104,7 +105,14 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
           <small>{item.explanation||"Open company dossier for supporting sources."}</small></td>
         {kind==="moves"?<td>{destinationLabel(item.components)}</td>:
           <td className="terminal-money">{compactMoney(row.government_business)}<small>Disclosed obligations</small></td>}
-        <td>{dateLabel(item.date)}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
+        <td className="fq-momentum-table-cell">{(() => {
+          const baseline = assessProcurementMomentum({ current: row.obligations_12m, annualBaseline: row.obligations_baseline_annual, baselineSupported: row.baseline_supported });
+          return <>
+            <strong className={`fq-momentum-label fq-momentum-${baseline.status}`}>{baseline.status === "insufficient" || baseline.relativeChangePct == null ? "History limited" : `${baseline.relativeChangePct > 0 ? "+" : ""}${baseline.relativeChangePct.toFixed(0)}%`}</strong>
+            <small>12M {compactMoney(row.obligations_12m)} · annual normal {baseline.status === "insufficient" ? "unknown" : compactMoney(row.obligations_baseline_annual)}</small>
+          </>;
+        })()}</td>
+        <td>{dateLabel(item.date)}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
       </tr>;
     })}</tbody>
   </table></div>;
