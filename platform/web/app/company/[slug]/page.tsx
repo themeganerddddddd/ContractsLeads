@@ -140,10 +140,18 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
       ? "Observed recipient location" : snapshot?.location_basis || "Location not reported";
   const latestMaterial = data.intelligenceTimeline.find((event: any) => event.materiality_status === "material" && event.adjustment_direction);
   const signalKinds = (["expansion", "relocation", "contraction"] as const);
+  const baselineMomentum = assessProcurementMomentum({
+    current: snapshot?.obligations_12m, annualBaseline: snapshot?.obligations_baseline_annual,
+    baselineSupported: snapshot?.baseline_supported === true,
+  });
   const relevantKinds = signalKinds.filter(kind => {
     const sufficiency = snapshot?.[`${kind}_sufficiency` as keyof CompanySnapshotRow];
     const score = snapshot?.[`${kind}_score` as keyof CompanySnapshotRow];
-    return score != null && sufficiency !== "insufficient_history";
+    const signalSupported = score != null && sufficiency !== "insufficient_history";
+    const procurementCue = kind === "expansion" && baselineMomentum.status === "above" ||
+      kind === "contraction" && baselineMomentum.status === "below" ||
+      kind === "relocation" && (snapshot?.new_work_states_12m || 0) > 0;
+    return signalSupported || procurementCue;
   });
   const visibleKinds = focus ? [focus] as typeof signalKinds[number][] : relevantKinds;
 
