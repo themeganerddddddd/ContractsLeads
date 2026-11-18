@@ -127,3 +127,27 @@
 .fq-new-markets ul{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0}.fq-new-markets li{display:grid;gap:2px;background:#e9f3f1;padding:9px 13px;border-radius:7px;color:#1b6973;font-size:11px}.fq-new-markets li a{color:#17828b;font-size:9px;font-weight:800}
 .fq-market-none{padding:10px;border:1px dashed #cadae0;border-radius:7px;color:#718790;font-size:10px}
 @media(max-width:735px){.fq-new-markets{display:block}.fq-new-markets ul,.fq-market-none{margin-top:13px}}
+
+
+/* Put contracts relative to the firm's own normal at the start of each ranking. */
+.fq-primary-contract-cell{min-width:192px;background:#f3faf8}
+.fq-primary-contract-cell>.fq-momentum-label,.fq-primary-contract-cell strong{font-size:18px;line-height:1.15}
+.fq-primary-contract-cell small{margin-top:7px;font-size:11px;line-height:1.45}
+.fq-warn-column{min-width:165px}
+.fq-warn-column strong,.fq-warn-column small,.fq-warn-column a{display:block}
+.fq-warn-alert{display:inline-flex!important;align-items:center;border:1px solid #f2cfad;background:#fff0e0;padding:6px 8px;border-radius:6px;color:#91502f;font-size:12px;font-weight:880}
+.fq-confirmed-risk{font-size:12px;font-weight:850;color:#8a5b32}
+.fq-no-warn{font-size:11px;color:#899da3}
+.fq-warn-column small{font-size:10px;color:#667e86;margin:5px 0}
+.fq-warn-column a{font-size:10px;color:#0b7b7b;font-weight:800}
+.fq-warn-panel{display:flex;gap:15px;align-items:flex-start;background:#fff8ef;border:1px solid #f0d6b7;border-radius:10px;margin:17px 0 21px;padding:21px 23px}
+.fq-warn-emblem{flex:0 0 36px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#a45b30;background:#ffe8d4;font-weight:900}
+.fq-warn-panel-content{flex:1}
+.fq-warn-panel .eyebrow{color:#a15a31}
+.fq-warn-panel h2{margin:5px 0 7px;color:#704428;font-size:18px}
+.fq-warn-panel p{margin:0 0 8px;color:#695744;font-size:12px;line-height:1.58}
+.fq-warn-panel small{font-size:10px;color:#8c7765}
+.fq-warn-panel>a{align-self:center;white-space:nowrap;color:#8a542f;font-size:12px;font-weight:850}
+.fq-pitchbook-intro:not(:has(.fq-pitchbook-snapshot)){grid-template-columns:1fr}
+.fq-company-contacts:empty{display:none}
+@media(max-width:850px){.fq-warn-panel{flex-wrap:wrap}.fq-warn-panel>a{margin-left:50px;align-self:flex-start}}
