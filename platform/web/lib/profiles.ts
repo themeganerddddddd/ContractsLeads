@@ -64,7 +64,7 @@ export async function getCompanyProfile(slug: string) {
   );
   const company = rows[0];
   if (!company) return null;
-  const [metrics, awards, agencies, locations, annual, industries, events, predictions, momentum, identifiers, globalMetrics, movements, earlyIndicators, tracking, intelligenceTimeline, changeIntelligence, establishmentIntelligence] = await Promise.all([
+  const [metrics, awards, agencies, locations, annual, industries, events, predictions, momentum, identifiers, globalMetrics, movements, earlyIndicators, tracking, intelligenceTimeline, changeIntelligence, establishmentIntelligence, newWorkMarkets] = await Promise.all([
     query<any>(
       `SELECT COALESCE(sum(t.obligation),0)::text AS total_activity,
        COALESCE(sum(t.obligation) FILTER (WHERE t.action_date>=current_date-interval '365 days'),0)::text AS obligations_12m,
@@ -146,11 +146,29 @@ export async function getCompanyProfile(slug: string) {
     getCompanyIntelligenceTimeline(company.id),
     getCompanyChangeIntelligence(company.id),
     getCompanyEstablishmentIntelligence(company.id),
+    query<{state: string; award_date: string; source_url: string | null}>(`
+      SELECT DISTINCT ON (upper(a.performance_state))
+        upper(a.performance_state) AS state,a.award_date::text,a.source_url
+      FROM awards a JOIN companies c ON c.id=a.recipient_company_id
+      WHERE a.recipient_company_id=$1 AND NOT a.is_demo AND NOT a.is_benchmark
+        AND a.award_date >= current_date - interval '12 months'
+        AND upper(a.performance_state) ~ '^[A-Z]{2}$'
+        AND upper(a.performance_state) <> upper(COALESCE(c.recipient_state,''))
+        AND NOT EXISTS (
+          SELECT 1 FROM awards old
+          WHERE old.recipient_company_id=a.recipient_company_id
+            AND NOT old.is_demo AND NOT old.is_benchmark
+            AND old.award_date >= current_date - interval '48 months'
+            AND old.award_date < current_date - interval '12 months'
+            AND upper(old.performance_state)=upper(a.performance_state)
+        )
+      ORDER BY upper(a.performance_state),a.award_date DESC
+      LIMIT 8`,[company.id]),
   ]);
   return {
     company, metrics: metrics[0], awards, agencies, locations, annual, industries, events: events || [], predictions: predictions || [],
     momentum: momentum?.[0] || null, identifiers: identifiers || [], globalMetrics: globalMetrics || [], movements: movements || [], earlyIndicators,
-    tracking, intelligenceTimeline, changeIntelligence, establishmentIntelligence, lastUpdated: await getDataFreshness()
+    tracking, intelligenceTimeline, changeIntelligence, establishmentIntelligence, newWorkMarkets, lastUpdated: await getDataFreshness()
   };
 }
 

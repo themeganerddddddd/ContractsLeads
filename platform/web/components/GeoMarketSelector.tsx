@@ -12,6 +12,7 @@ export function GeoMarketSelector({state:initialState="",county:initialCounty=""
   const router=useRouter();
   const [state,setState]=useState(initialState);
   const [county,setCounty]=useState(initialCounty);
+  const [countyOptions,setCountyOptions]=useState<string[]>([]);
   const [status,setStatus]=useState("");
   const [busy,setBusy]=useState(false);
   const target=county?county+", "+(states.find(s=>s[0]===state)?.[1]||state):state?states.find(s=>s[0]===state)?.[1]||state:"United States";
@@ -44,6 +45,15 @@ export function GeoMarketSelector({state:initialState="",county:initialCounty=""
     }finally{setBusy(false);}
   }
   useEffect(()=>{
+    if (!state || country !== "US") { setCountyOptions([]); return; }
+    const controller = new AbortController();
+    fetch("/api/geography/counties?state="+encodeURIComponent(state),{signal:controller.signal})
+      .then(response=>response.ok?response.json():{counties:[]})
+      .then(data=>setCountyOptions(Array.isArray(data.counties)?data.counties:[]))
+      .catch(()=>{ if(!controller.signal.aborted)setCountyOptions([]); });
+    return ()=>controller.abort();
+  },[state,country]);
+  useEffect(()=>{
     if(initialState||initialCounty||country!=="US")return;
     let active=true;
     if(navigator.permissions?.query)navigator.permissions.query({name:"geolocation"}).then(permission=>{
@@ -57,7 +67,7 @@ export function GeoMarketSelector({state:initialState="",county:initialCounty=""
     <div className="bc-geo-identity"><span className="bc-geo-globe" aria-hidden="true">◎</span><div><span className="bc-microcopy">YOUR TARGET MARKET</span><h2>{target}</h2><p>{county?"County-level intelligence workspace":state?"State-level intelligence workspace":"National intelligence workspace · choose a market or use your location"}</p></div></div>
     <form className="bc-geo-controls" onSubmit={event=>{event.preventDefault();navigate(state,county)}}>
       <label>State<select value={state} onChange={e=>{setState(e.target.value);setCounty("");}}><option value="">United States (all states)</option>{states.map(([code,label])=><option value={code} key={code}>{label}</option>)}</select></label>
-      <label>County / parish<input value={county} disabled={!state} onChange={e=>setCounty(e.target.value)} placeholder={state?"County or parish":"Select a state"}/></label>
+      <label>County / parish<div className="fq-county-combobox"><input value={county} disabled={!state} onChange={e=>setCounty(e.target.value)} list="fq-workspace-county-list" placeholder={state?"Search county / parish":"Select a state"}/><select aria-label="Choose county or parish" disabled={!state||!countyOptions.length} value={countyOptions.includes(county)?county:""} onChange={e=>setCounty(e.target.value)}><option value="">All counties ▾</option>{countyOptions.map(value=><option key={value} value={value}>{value}</option>)}</select><datalist id="fq-workspace-county-list">{countyOptions.map(value=><option key={value} value={value}/>)}</datalist></div></label>
       <button className="bc-outline-btn" type="submit">Set market</button>
       <button className="bc-geo-detect" type="button" disabled={busy} onClick={()=>void locate(true)}>{busy?"Locating…":"⌾ Use my location"}</button>
       <small role={status?"status":undefined}>{status||"Your browser shares coordinates once with the U.S. Census Geocoder to resolve a county; FirmQuarry does not store them."}</small>

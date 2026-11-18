@@ -10,6 +10,9 @@ export type MarketFilterValues = {
   rank?: string;
   sort?: string;
   governmentMin?: number;
+  obligations12mMin?: number;
+  baselineAnnualMin?: number;
+  baselineTrend?: "above" | "below";
 };
 
 /** Build a cross-workspace link without dropping the user's current market. */
@@ -26,5 +29,8 @@ export function marketHref(path: string, values: MarketFilterValues) {
   if (values.recencyDays && values.recencyDays !== 180) params.set("recency", String(values.recencyDays));
   if (values.horizon && values.horizon !== 180) params.set("horizon", String(values.horizon));
   if (values.governmentMin != null) params.set("government_min", String(values.governmentMin));
+  if (values.obligations12mMin != null) params.set("obligations_12m_min", String(values.obligations12mMin));
+  if (values.baselineAnnualMin != null) params.set("baseline_annual_min", String(values.baselineAnnualMin));
+  if (values.baselineTrend) params.set("baseline_trend", values.baselineTrend);
   return path + (params.size ? `?${params.toString()}` : "");
 }

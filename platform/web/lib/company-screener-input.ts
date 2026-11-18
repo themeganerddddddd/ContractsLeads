@@ -16,6 +16,8 @@ export type CompanyScreenerInput = {
   change?: string;
   governmentMin?: number;
   obligations12mMin?: number;
+  baselineAnnualMin?: number;
+  baselineTrend?: "above" | "below";
   knownLocations?: number;
   trackedOnly: boolean;
   latestSignal?: string;
@@ -34,6 +36,9 @@ export type PredictionInput = {
   horizon?: number;
   recencyDays?: number;
   governmentMin?: number;
+  obligations12mMin?: number;
+  baselineAnnualMin?: number;
+  baselineTrend?: "above" | "below";
   rank: "likelihood" | "evidence" | "recent";
   page: number;
 };
@@ -43,8 +48,10 @@ const one = (value: string | string[] | undefined) => Array.isArray(value) ? val
 const optionalNumber = (value: string | undefined): number | undefined => {
   if (!value) return undefined;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1e15 ? parsed : undefined;
 };
+const baselineTrend = (value?: string): "above" | "below" | undefined =>
+  value === "above" || value === "below" ? value : undefined;
 const positiveInteger = (value: string | undefined, fallback: number) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
@@ -64,6 +71,8 @@ export function parseCompanyScreenerInput(raw: RawParams): CompanyScreenerInput 
     change: one(raw.change)?.trim() || undefined,
     governmentMin: optionalNumber(one(raw.government_min)),
     obligations12mMin: optionalNumber(one(raw.obligations_12m_min)),
+    baselineAnnualMin: optionalNumber(one(raw.baseline_annual_min)),
+    baselineTrend: baselineTrend(one(raw.baseline_trend)),
     knownLocations: optionalNumber(one(raw.known_locations)),
     trackedOnly: one(raw.tracked) === "true",
     latestSignal: one(raw.latest_signal)?.trim() || undefined,
@@ -84,9 +93,12 @@ export function parsePredictionInput(raw: RawParams): PredictionInput {
     state: one(raw.state)?.trim().toUpperCase() || undefined,
     county: one(raw.county)?.trim() || undefined,
     city: one(raw.city)?.trim() || undefined,
-    horizon: horizon && [90, 180, 365].includes(horizon) ? horizon : 180,
-    recencyDays: recencyDays && [30, 90, 180, 365].includes(recencyDays) ? recencyDays : 180,
+    horizon: horizon && [90, 180, 365].includes(horizon) ? horizon : undefined,
+    recencyDays: recencyDays !== undefined && [0, 30, 90, 180, 365, 730].includes(recencyDays) ? recencyDays : 0,
     governmentMin: optionalNumber(one(raw.government_min)),
+    obligations12mMin: optionalNumber(one(raw.obligations_12m_min)),
+    baselineAnnualMin: optionalNumber(one(raw.baseline_annual_min)),
+    baselineTrend: baselineTrend(one(raw.baseline_trend)),
     rank: ranking === "evidence" || ranking === "recent" ? ranking : "likelihood",
     page: positiveInteger(one(raw.page), 1),
   };

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ResearchCriteriaDialog } from "@/components/ResearchCriteriaDialog";
+import { MarketFilterBar } from "@/components/MarketFilterBar";
 import { RankingsEmptyState } from "@/components/RankingsEmptyState";
 import { Pagination } from "@/components/Pagination";
 import { PaywallNotice } from "@/components/PaywallNotice";
@@ -13,6 +13,7 @@ import {
   type PredictionKind,
 } from "@/lib/company-intelligence";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
+import { assessProcurementMomentum } from "@/lib/procurement-baseline";
 import { marketHref, type MarketFilterValues } from "@/lib/market-filters";
 import { resolveViewer } from "@/lib/plan";
 
@@ -70,14 +71,16 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
   if(!rows.length) return <section className="terminal-empty">
     <div className="terminal-empty-symbol">—</div>
     <h2>No ranked signals match these filters.</h2>
-    <p>Try the full United States, broaden the time range, or clear your county filter. This is a data-coverage statement, not proof that no business activity occurred.</p>
+    <p>No source-backed assessments were returned for this category and geography. This does not prove that no companies will {kind === "moves" ? "relocate" : kind === "contraction" ? "contract" : "expand"}. Try a broader market or see recorded business events instead.</p>
+    <Link className="fq-empty-fallback-link" href={kind === "moves" ? "/business-change?tab=moving" : kind === "contraction" ? "/business-change?tab=shrinking" : "/business-change?tab=growing"}>Browse documented {kind === "moves" ? "moves" : kind === "contraction" ? "contractions" : "growth"} instead ↗</Link>
   </section>;
   return <div className="terminal-table-scroll"><table className="terminal-table terminal-ranking-table">
     <thead><tr>
       <th scope="col">Rank</th><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Observed geography</th>
+      <th scope="col">Contracts vs. normal</th>
+      {kind==="contraction"?<th scope="col">WARN / retention alerts</th>:null}
       <th scope="col">Likelihood / indication</th><th scope="col">Key evidence</th>
-      {kind==="moves"?<th scope="col">Potential destination</th>:<th scope="col">Government business</th>}
-      <th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
+      <th scope="col">12M obligations</th><th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
     </tr></thead>
     <tbody>{rows.map((row,index)=>{
       const item=assessment(row,kind);
@@ -87,23 +90,41 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
         row.prediction_sufficiency === "sufficient" &&
         row.probability != null;
       const band=evidenceBand(item.score);
+      const contract = assessProcurementMomentum({current:row.obligations_12m,annualBaseline:row.obligations_baseline_annual,baselineSupported:row.baseline_supported});
+      const procurementCue = kind === "moves" ? row.new_work_states_12m > 0 : kind === "expansion" ? contract.status === "above" : contract.status === "below";
+      const officialWorkforceCue = kind === "contraction" && (row.warn_notice_count_24m>0 || row.has_confirmed_contraction);
+      const cueLabel = kind === "moves" ? "New contract work geography" : kind === "expansion" ? "Above-normal contracts" : "Below-normal contracts";
+      const cueExplanation = kind === "moves"
+        ? `${row.new_work_states_12m} newly observed out-of-state work-performance market(s), not verified relocation destinations`
+        : contract.relativeChangePct === null ? "No company-specific baseline" :
+          `${contract.relativeChangePct > 0 ? "+" : ""}${contract.relativeChangePct.toFixed(0)}% net obligations vs own prior 3-year annual normal`;
       return <tr key={row.id}>
         <td className="terminal-rank">#{String((page-1)*25+index+1).padStart(2,"0")}</td>
-        <td className="terminal-company"><Link href={`/company/${row.slug}`}>{row.canonical_name}</Link>
-          <small>{row.legal_name !== row.canonical_name ? row.legal_name : "Company dossier"}</small></td>
+        <td className="terminal-company"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`}>{row.canonical_name}</Link>
+          <small>{row.legal_name !== row.canonical_name ? row.legal_name : "Company dossier"} · {reported(row.location_label)}</small></td>
         <td>{reported(row.industry_name)}</td>
-        <td><strong>{reported(row.location_label)}</strong><small>{row.location_basis}</small></td>
+        <td className="fq-momentum-table-cell fq-primary-contract-cell">{(() => {
+          const baseline=assessProcurementMomentum({current:row.obligations_12m,annualBaseline:row.obligations_baseline_annual,baselineSupported:row.baseline_supported});
+          return <>
+            <strong className={`fq-momentum-label fq-momentum-${baseline.status}`}>{baseline.status==="insufficient"?"History limited":baseline.relativeChangePct==null?"—":`${baseline.relativeChangePct>0?"+":""}${baseline.relativeChangePct.toFixed(0)}%`}</strong>
+            <small>12M {compactMoney(row.obligations_12m)} · 3Y annual normal {baseline.status==="insufficient"?"unknown":compactMoney(row.obligations_baseline_annual)}</small>
+          </>;
+        })()}</td>
+        {kind==="contraction"?<td className="fq-warn-column">{row.warn_notice_count_24m>0?<>
+          <strong className="fq-warn-alert">Official WARN · {row.warn_notice_count_24m}</strong>
+          <small>{row.warn_jobs_affected_24m>0?`${row.warn_jobs_affected_24m.toLocaleString()} reported affected jobs`:"Workforce notice recorded"}</small>
+          {row.latest_warn_source_url ? <a href={row.latest_warn_source_url} target="_blank" rel="noopener noreferrer">Official notice ↗</a> : null}
+        </>:row.has_confirmed_contraction?<strong className="fq-confirmed-risk">Verified location contraction</strong>:<span className="fq-no-warn">No verified WARN</span>}</td>:null}
         <td><div className="terminal-indication">
           {calibrated?
             <strong className="terminal-probability">{Math.round(Number(row.probability)*100)}% <span>calibrated</span></strong> :
-            <strong className={`terminal-band terminal-band-${band.toLowerCase().replaceAll(" ","-")}`}>{indicationLabel(item.score,item.sufficiency||undefined)}</strong>}
-          <small>{calibrated?`${row.horizon_days||180}-day validated model`:item.score!=null?`Evidence score ${Number(item.score).toFixed(0)}/100 · not a probability`:"Prediction not yet available"}</small>
+            <strong className={`terminal-band terminal-band-${band.toLowerCase().replaceAll(" ","-")}`}>{item.score == null && officialWorkforceCue ? (row.warn_notice_count_24m>0?"WARN workforce notice":"Verified contraction") : item.score == null && procurementCue ? cueLabel : indicationLabel(item.score,item.sufficiency||undefined)}</strong>}
+          <small>{calibrated?`${row.horizon_days||180}-day validated model`:item.score!=null?`Evidence score ${Number(item.score).toFixed(0)}/100 · not a probability`:officialWorkforceCue?"Source-verified workforce or closure evidence · not a probability":procurementCue?"Procurement research cue · not a probability":"Prediction not yet available"}</small>
         </div></td>
-        <td><strong className="terminal-evidence-label">{evidenceLabel(item.components)}</strong>
-          <small>{item.explanation||"Open company dossier for supporting sources."}</small></td>
-        {kind==="moves"?<td>{destinationLabel(item.components)}</td>:
-          <td className="terminal-money">{compactMoney(row.government_business)}<small>Disclosed obligations</small></td>}
-        <td>{dateLabel(item.date)}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
+        <td><strong className="terminal-evidence-label">{item.score == null && officialWorkforceCue ? (row.warn_notice_count_24m>0?"Official workforce notice":"Verified contraction") : item.score == null && procurementCue ? cueLabel : evidenceLabel(item.components)}</strong>
+          <small>{item.explanation||(officialWorkforceCue?"Company-linked verified WARN, closure, or contraction evidence. Investigate locally." :procurementCue?cueExplanation:"Open company dossier for supporting sources.")}</small></td>
+        <td className="terminal-money">{compactMoney(row.obligations_12m)}<small>Net in previous 12 months</small></td>
+        <td>{dateLabel(item.date || (procurementCue ? row.latest_transaction_date : null))}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
       </tr>;
     })}</tbody>
   </table></div>;
@@ -112,7 +133,6 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
 function Tabs({kind,values}:{kind:PredictionKind;values:MarketFilterValues}){
   const tabs: {kind:PredictionKind;href:string;label:string;index:string}[]=[
     {kind:"expansion",href:"/predicted-expansion",label:"Expansion intelligence",index:"01"},
-    {kind:"moves",href:"/predicted-moves",label:"Movement intelligence",index:"02"},
     {kind:"contraction",href:"/predicted-contraction",label:"Retention intelligence",index:"03"},
   ];
   return <nav className="terminal-radar-tabs" aria-label="Intelligence categories">
@@ -164,14 +184,14 @@ export async function PredictionScreener({kind,searchParams,dashboard=false}:{
       </div>
     </section> : null}
     <Tabs kind={kind} values={values}/>
-    <ResearchCriteriaDialog mode={kind==="expansion"?"expansion":kind==="contraction"?"contraction":"moves"} action={path} initial={values} industries={industries} />
+    <MarketFilterBar action={path} values={values} industries={industries} knownCounties={counties} otherStates={states} mode="radar" />
     <section className="terminal-result-pane">
       <div className="terminal-result-head">
         <div><p className="terminal-eyebrow">{copy.index} / RANKED {copy.signal.toUpperCase()} INTELLIGENCE</p>
         <h2>{dashboard ? "Expansion watchlist" : title + " · ranked companies"}</h2>
         <p>{unavailable
           ?"No unverified company or likelihood data is substituted while the source is disconnected."
-          :"Ranked by validated likelihood when available, then descriptive source-evidence strength. Evidence strength is not a calibrated probability."}</p></div>
+          :"Validated probabilities appear first when available; other rows can show descriptive evidence or material changes in company-specific contract activity. A procurement cue is not a prediction."}</p></div>
         {!unavailable ? <div className="terminal-result-meta">
           <strong>{(data?.visibleTotal||0).toLocaleString()}</strong>
           <span>visible signals</span>

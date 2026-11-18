@@ -10,10 +10,10 @@ function place(row: any, prefix: "origin" | "destination") {
   return [row?.[`${prefix}_city`], row?.[`${prefix}_county_fips`], row?.[`${prefix}_state`], row?.[`${prefix}_country`]].filter(Boolean).join(", ");
 }
 
-export function ChangeIntelligencePanel({ data }: { data: any }) {
+export function ChangeIntelligencePanel({ data, focus=null }: { data: any; focus?: "expansion" | "relocation" | "contraction" | null }) {
   return <>
     <div className="change-intelligence-grid">
-      {products.map(([assessmentType, predictionType]) => {
+      {products.filter(([assessmentType]) => focus ? assessmentType === focus : data.assessments.some((row: any) => row.assessment_type === assessmentType && row.score != null && row.data_sufficiency !== "insufficient_history") || data.outcomes.some((row: any) => row.outcome_type === assessmentType) || data.predictions.some((row: any) => row.prediction_type === `company_${assessmentType}` && row.probability_eligible && row.probability != null)).map(([assessmentType, predictionType]) => {
         const assessment = data.assessments.find((row: any) => row.assessment_type === assessmentType);
         const relevantOutcomes = assessmentType === "expansion" ? ["expansion", "new_facility", "market_entry"] : assessmentType === "contraction" ? ["contraction", "closure"] : [assessmentType];
         const outcome = data.outcomes.find((row: any) => relevantOutcomes.includes(row.outcome_type));

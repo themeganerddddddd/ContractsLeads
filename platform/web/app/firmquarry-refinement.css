@@ -1,0 +1,153 @@
+/* FirmQuarry 2026-11 research UI refinement: inline criteria, PitchBook-style dossier and honest geographic comparisons. */
+.bc-intelligence-view .bc-market-form,
+.terminal-view .bc-market-form{margin:15px 0 22px;border:1px solid #d7e5e7;border-radius:11px;background:#fff;box-shadow:0 4px 18px rgba(23,48,60,.055)}
+.bc-intelligence-view .terminal-radar-tabs{margin-bottom:8px}
+.bc-market-form .market-filter-title strong{font-size:15px}
+.bc-market-form .market-filter-fields{grid-template-columns:minmax(180px,1.6fr) minmax(125px,.85fr) minmax(125px,.85fr) minmax(245px,1.45fr) auto}
+.fq-county-combobox{display:grid;grid-template-columns:minmax(105px,1fr) minmax(120px,1fr);gap:5px;width:100%}
+.fq-county-combobox input,.fq-county-combobox select{min-width:0;width:100%;font-size:11px}
+.fq-county-combobox select{cursor:pointer}
+.bc-geo-controls .fq-county-combobox{min-width:220px}
+.fq-focused-outlook{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.fq-focused-outlook .outlook-card{max-width:none}
+.fq-no-confirmed-signal{margin:15px 0 0;padding:17px 21px;border:1px dashed #c9dada;background:#f7faf9;border-radius:8px;color:#54717a}
+.company-profile-heading{background:white;border:1px solid #dbe7e8;border-radius:11px;padding:24px 28px 19px;margin:14px 0 14px;box-shadow:0 5px 25px rgba(16,46,64,.045)}
+.company-profile-heading .entity-header-row h1{font-family:inherit;font-weight:790;font-size:clamp(31px,3.3vw,43px);line-height:1.15;letter-spacing:-.035em}
+.company-profile-tabs.studio-profile-tabs{margin-bottom:21px;background:#fff;border:1px solid #dce7e7;border-radius:9px}
+.fq-pitchbook-intro{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(290px,.9fr);gap:18px;align-items:stretch;margin-bottom:21px}
+.fq-pitchbook-intro .company-facts{min-width:0;display:block;margin:0;padding:27px 28px;background:#fff;border:1px solid #d9e5e6;border-radius:11px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-pitchbook-intro .company-facts h2{color:#14394b;font-size:21px;font-weight:800;letter-spacing:-.025em;margin:0 0 21px}
+.fq-pitchbook-intro .company-facts .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0;background:none;border:0;box-shadow:none;gap:0 20px}
+.fq-pitchbook-intro .company-facts .detail-grid>div{padding:15px 0;border-bottom:1px solid #edf2f2;min-width:0}
+.fq-pitchbook-intro .company-facts dt{margin-bottom:6px;text-transform:uppercase;letter-spacing:.075em;font-size:10px;color:#75939d;font-weight:850}
+.fq-pitchbook-intro .company-facts dd{font-size:13px;font-weight:700;color:#25485a;margin:0;overflow-wrap:anywhere}
+.fq-pitchbook-snapshot{padding:25px 22px;background:#fff;border:1px solid #d9e5e6;border-radius:11px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-pitchbook-snapshot-heading h2{margin:4px 0 15px;font-size:21px;color:#16384a}
+.fq-pitchbook-snapshot .metrics-grid.company-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0;background:none;border:0;box-shadow:none}
+.fq-pitchbook-snapshot .metric-card{min-width:0;margin:0;padding:15px 13px;background:#f7faf9;border:1px solid #e2ebec;border-radius:8px}
+.fq-pitchbook-snapshot .metric-card+.metric-card{border-left:1px solid #e2ebec}
+.fq-pitchbook-snapshot .metric-card strong{font-size:clamp(17px,1.7vw,22px)}
+.fq-outlook-map{margin:20px 0 23px}
+.fq-outlook-map .fq-map-grid{grid-template-columns:minmax(0,1.65fr) minmax(270px,.85fr);gap:16px}
+.fq-outlook-map .fq-map-panel{min-width:0;background:#f5fafa;border-radius:11px;border:1px solid #d7e6e8;padding:13px}
+.fq-outlook-map .fq-map-control-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;font-weight:850;letter-spacing:.11em;color:#61818a;padding:5px 8px 11px}
+.fq-outlook-map svg.fq-vector-map{display:block;width:100%;height:auto;max-height:415px;aspect-ratio:920/430;border-radius:9px;overflow:hidden}
+.fq-outlook-map .fq-map-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:13px 7px 4px;color:#627a83;font-size:10px;font-weight:740}
+.fq-outlook-map .fq-map-legend span{display:inline-flex;align-items:center;gap:6px}
+.fq-outlook-map .fq-map-legend i{display:inline-block;width:9px;height:9px;border-radius:50%}
+.fq-outlook-map .fq-legend-verified{background:#0a777a}
+.fq-outlook-map .fq-legend-source{background:#4b80a6}
+.fq-outlook-map .fq-legend-compare{background:#dd923a}
+.fq-map-evidence h3{font-size:23px}
+.fq-map-evidence .fq-map-compare{margin:17px 0 0;padding:14px;border:1px solid #d9e8e8;background:#f8fbfb;border-radius:9px}
+.fq-map-compare>label{font-size:11px;color:#1e4655;font-weight:800}
+.fq-map-compare>div:first-of-type{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px;margin:9px 0}
+.fq-map-compare select{min-width:0;min-height:36px;font-size:11px}
+.fq-map-compare button{border:1px solid #0b777a;background:#0b777a;color:white;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer}
+.fq-map-compare button:disabled{opacity:.4;cursor:default}
+.fq-map-compare small{display:block;color:#6c858e;font-size:10px;line-height:1.55}
+.fq-map-selected{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 12px}
+.fq-map-selected button{padding:6px 7px;background:#e6f5f1;border:1px solid #c0deda;color:#245e63;font-size:10px}
+.fq-map-alternatives{border-top:1px solid #dbe7e8;padding-top:14px;margin-top:14px}
+.fq-map-alternatives>strong{font-size:11px;color:#245267}
+.fq-map-alternatives p{margin:7px 0;font-size:11px}
+.fq-map-reason{margin:15px 0 0;font-size:11px}
+@media(max-width:1250px){
+.bc-market-form .market-filter-fields{grid-template-columns:minmax(170px,1.4fr) repeat(2,minmax(130px,1fr)) minmax(220px,1.2fr)}
+.bc-market-form .market-filter-submit{grid-column:1/-1;justify-content:center}
+}
+@media(max-width:980px){.fq-pitchbook-intro{grid-template-columns:1fr}.fq-outlook-map .fq-map-grid{grid-template-columns:1fr}.fq-pitchbook-snapshot .metrics-grid.company-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:720px){.bc-market-form .market-filter-fields{grid-template-columns:1fr 1fr}.bc-market-form .market-field-search,.bc-market-form .market-filter-submit{grid-column:1/-1}.fq-pitchbook-intro .company-facts .detail-grid{grid-template-columns:1fr}.fq-pitchbook-snapshot .metrics-grid.company-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.fq-county-combobox{grid-template-columns:1fr}.fq-map-evidence h3{font-size:19px}}
+@media(max-width:470px){.bc-market-form .market-filter-fields{grid-template-columns:1fr}.bc-market-form .market-field-search,.bc-market-form .market-filter-submit{grid-column:auto}.company-profile-heading{padding:18px}.fq-pitchbook-intro .company-facts,.fq-pitchbook-snapshot{padding:18px}}
+
+.fq-public-preview-notice{padding:13px 17px;background:#edf7f4;border:1px solid #cfe6df;border-radius:8px;color:#28716c;font-size:12px;line-height:1.55;margin:15px 0}
+.fq-empty-fallback-link{display:inline-flex;margin:10px 0 0;color:#0a777a;font-size:12px;font-weight:800;text-decoration:none}
+.fq-empty-fallback-link:hover{text-decoration:underline}
+
+
+/* Three-year contract baseline: visible on each inline screener, never hidden in a modal. */
+.fq-procurement-search{display:grid;grid-template-columns:minmax(160px,1.3fr) repeat(3,minmax(155px,1fr));gap:12px;border-top:1px solid #dfebed;background:#f6fafa;padding:16px 19px;align-items:end}
+.fq-procurement-search-intro{align-self:center;padding-right:9px}
+.fq-procurement-search-intro .bc-microcopy{display:block;color:#0a777a;margin-bottom:4px}
+.fq-procurement-search-intro small{display:block;line-height:1.47;color:#607780;font-size:11px}
+.fq-procurement-search>label{display:flex;flex-direction:column;gap:6px;color:#244955;font-size:11px;font-weight:820;min-width:0}
+.fq-procurement-search>label span{font-size:9px;letter-spacing:.08em;color:#778b91}
+.fq-procurement-search input,.fq-procurement-search select{width:100%;min-height:38px;border-radius:6px;border:1px solid #c6d9dc;background:#fff;padding:8px 10px;color:#153c4c;font-size:12px;min-width:0}
+.fq-procurement-search input:focus,.fq-procurement-search select:focus{outline:2px solid #09a2a0;border-color:#068181}
+.fq-momentum-table-cell{min-width:160px}
+.fq-momentum-table-cell small{display:block;max-width:220px;line-height:1.4;word-break:normal;white-space:normal}
+.fq-momentum-label{font-size:12px;font-weight:900}
+.fq-momentum-label.fq-momentum-above{color:#087f66}
+.fq-momentum-label.fq-momentum-below{color:#a8593b}
+.fq-momentum-label.fq-momentum-within{color:#526f7a}
+.fq-momentum-label.fq-momentum-insufficient{color:#72858b}
+.fq-pitchbook-left{display:flex;flex-direction:column;gap:16px;min-width:0}
+.fq-pitchbook-intro .fq-pitchbook-left .company-facts{flex:0 0 auto}
+.fq-company-contacts{border:1px solid #d9e5e6;background:#fff;border-radius:11px;padding:25px 27px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-company-contacts header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:17px}
+.fq-company-contacts h2{margin:3px 0;font-size:19px;font-weight:800;color:#16384a}
+.fq-contact-source-chip{white-space:nowrap;background:#eaf5f2;color:#126b69;font-size:10px;font-weight:800;padding:6px 9px;border-radius:30px}
+.fq-contact-item{display:flex;gap:14px}
+.fq-contact-avatar{display:grid;place-items:center;background:#e2f2ef;color:#087476;border-radius:10px;font-size:14px;font-weight:900;flex:0 0 43px;width:43px;height:43px}
+.fq-contact-info{min-width:0}
+.fq-contact-info h3{font-size:16px;color:#153b4b;margin:0 0 4px}
+.fq-contact-info>p{font-size:12px;color:#345868;margin:0 0 5px;font-weight:750}
+.fq-contact-type{font-size:11px;line-height:1.6;color:#6c8288}
+.fq-contact-actions{display:flex;gap:12px;flex-wrap:wrap;margin:13px 0}
+.fq-contact-actions a,.fq-contact-company-website a{font-weight:790;font-size:12px;color:#087779;text-decoration:none}
+.fq-contact-actions a:hover{text-decoration:underline}
+.fq-contact-foot{font-size:10px;color:#7b9197}
+.fq-contact-company-website{margin:15px 0 0;font-size:12px;color:#647c82}
+.fq-contact-empty{padding:14px 16px;background:#f5fafa;border-radius:6px;font-size:12px;color:#5c7580;line-height:1.65}
+.fq-contact-disclosure{margin:18px 0 0;padding-top:13px;border-top:1px solid #e6efef;font-size:10px;line-height:1.6;color:#778d95}
+.fq-contact-disclosure a{font-size:10px;color:#09797c}
+.fq-contract-baseline{margin:22px 0;padding:25px 27px;background:#fff;border:1px solid #d9e5e6;border-radius:11px;box-shadow:0 5px 22px rgba(16,46,64,.04)}
+.fq-contract-baseline>header{display:flex;align-items:start;justify-content:space-between;gap:25px;margin:0 0 18px}
+.fq-contract-baseline h2{color:#14394b;font:600 25px/1.17 Georgia,"Times New Roman",serif;letter-spacing:-.025em;margin:5px 0 8px}
+.fq-contract-baseline>header p:last-child{font-size:12px;line-height:1.6;color:#647d85;max-width:730px;margin:0}
+.fq-momentum-pill{white-space:nowrap;font-size:10px;font-weight:850;border-radius:20px;padding:9px 12px}
+.fq-momentum-pill.fq-momentum-above{color:#136953;background:#e3f6eb}
+.fq-momentum-pill.fq-momentum-below{color:#94522c;background:#fff0df}
+.fq-momentum-pill.fq-momentum-within{color:#486b76;background:#eaf1f4}
+.fq-momentum-pill.fq-momentum-insufficient{color:#627d85;background:#edf2f3}
+.fq-contract-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.fq-contract-metrics>div{padding:18px 15px;background:#f5faf9;border:1px solid #e0edeb;border-radius:8px;min-width:0}
+.fq-contract-metrics span{display:block;font-size:10px;color:#5a777d;font-weight:850;line-height:1.4;min-height:28px}
+.fq-contract-metrics strong{display:block;margin:10px 0 4px;font-size:clamp(18px,1.85vw,26px);color:#143c4e;letter-spacing:-.035em}
+.fq-contract-metrics small{display:block;font-size:10px;line-height:1.45;color:#66838c}
+.fq-contract-interpretation{display:flex;gap:15px;align-items:center;padding-top:17px;margin-top:15px;border-top:1px solid #e4eeee}
+.fq-contract-interpretation strong{font-size:12px;color:#0c7877;min-width:210px}
+.fq-contract-interpretation p{margin:0;font-size:11px;color:#67818a;line-height:1.55}
+@media(max-width:1180px){.fq-procurement-search{grid-template-columns:repeat(3,minmax(0,1fr))}.fq-procurement-search-intro{grid-column:1/-1}.fq-contract-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:735px){.fq-procurement-search{grid-template-columns:1fr 1fr}.fq-procurement-search-intro{grid-column:1/-1}.fq-procurement-search>label:last-child{grid-column:1/-1}.fq-contract-baseline>header,.fq-contract-interpretation{display:block}.fq-momentum-pill{display:inline-block;margin-top:14px}.fq-contract-interpretation strong{display:block;margin-bottom:9px}.fq-contact-source-chip{display:none}}
+@media(max-width:455px){.fq-procurement-search{grid-template-columns:1fr}.fq-procurement-search>label:last-child{grid-column:auto}.fq-contract-metrics{grid-template-columns:1fr}.fq-company-contacts,.fq-contract-baseline{padding:18px}}
+
+.fq-new-markets{display:flex;justify-content:space-between;align-items:center;gap:26px;margin-top:15px;padding:16px 3px 13px;border-top:1px solid #e4eeee}
+.fq-new-markets>div{max-width:600px}.fq-new-markets h3{font-size:15px;color:#1a4754;margin:4px 0 6px}.fq-new-markets p{font-size:11px;color:#6b8189;margin:0;line-height:1.55}
+.fq-new-markets ul{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0}.fq-new-markets li{display:grid;gap:2px;background:#e9f3f1;padding:9px 13px;border-radius:7px;color:#1b6973;font-size:11px}.fq-new-markets li a{color:#17828b;font-size:9px;font-weight:800}
+.fq-market-none{padding:10px;border:1px dashed #cadae0;border-radius:7px;color:#718790;font-size:10px}
+@media(max-width:735px){.fq-new-markets{display:block}.fq-new-markets ul,.fq-market-none{margin-top:13px}}
+
+
+/* Put contracts relative to the firm's own normal at the start of each ranking. */
+.fq-primary-contract-cell{min-width:192px;background:#f3faf8}
+.fq-primary-contract-cell>.fq-momentum-label,.fq-primary-contract-cell strong{font-size:18px;line-height:1.15}
+.fq-primary-contract-cell small{margin-top:7px;font-size:11px;line-height:1.45}
+.fq-warn-column{min-width:165px}
+.fq-warn-column strong,.fq-warn-column small,.fq-warn-column a{display:block}
+.fq-warn-alert{display:inline-flex!important;align-items:center;border:1px solid #f2cfad;background:#fff0e0;padding:6px 8px;border-radius:6px;color:#91502f;font-size:12px;font-weight:880}
+.fq-confirmed-risk{font-size:12px;font-weight:850;color:#8a5b32}
+.fq-no-warn{font-size:11px;color:#899da3}
+.fq-warn-column small{font-size:10px;color:#667e86;margin:5px 0}
+.fq-warn-column a{font-size:10px;color:#0b7b7b;font-weight:800}
+.fq-warn-panel{display:flex;gap:15px;align-items:flex-start;background:#fff8ef;border:1px solid #f0d6b7;border-radius:10px;margin:17px 0 21px;padding:21px 23px}
+.fq-warn-emblem{flex:0 0 36px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#a45b30;background:#ffe8d4;font-weight:900}
+.fq-warn-panel-content{flex:1}
+.fq-warn-panel .eyebrow{color:#a15a31}
+.fq-warn-panel h2{margin:5px 0 7px;color:#704428;font-size:18px}
+.fq-warn-panel p{margin:0 0 8px;color:#695744;font-size:12px;line-height:1.58}
+.fq-warn-panel small{font-size:10px;color:#8c7765}
+.fq-warn-panel>a{align-self:center;white-space:nowrap;color:#8a542f;font-size:12px;font-weight:850}
+.fq-pitchbook-intro:not(:has(.fq-pitchbook-snapshot)){grid-template-columns:1fr}
+.fq-company-contacts:empty{display:none}
+@media(max-width:850px){.fq-warn-panel{flex-wrap:wrap}.fq-warn-panel>a{margin-left:50px;align-self:flex-start}}

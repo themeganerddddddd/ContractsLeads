@@ -19,11 +19,10 @@ export default async function WorkspacePage({searchParams}:{searchParams:Promise
  let signals:HomeSignal[]=[];let hasDatabase=false;
  if(process.env.DATABASE_URL)try{
    const viewer=await resolveViewer();
-   const [expansion,contraction,movement]=await Promise.all([
+   const [expansion,contraction]=await Promise.all([
     searchPredictionCompanies("expansion",values,viewer.plan,viewer.userId),
-    searchPredictionCompanies("contraction",values,viewer.plan,viewer.userId),
-    searchPredictionCompanies("moves",values,viewer.plan,viewer.userId)]);
-   signals=[...expansion.rows.map(r=>signal(r,"expansion")),...contraction.rows.map(r=>signal(r,"contraction")),...movement.rows.map(r=>signal(r,"movement"))];
+    searchPredictionCompanies("contraction",values,viewer.plan,viewer.userId)]);
+   signals=[...expansion.rows.map(r=>signal(r,"expansion")),...contraction.rows.map(r=>signal(r,"contraction"))];
    // Attraction considers companies outside the target, but only with a supported destination.
    // This is a bounded first-page research sample, not an exhaustive national candidate universe.
    if(values.state){

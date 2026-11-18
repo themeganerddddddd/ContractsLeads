@@ -24,6 +24,15 @@ export type CompanySnapshotRow = {
   location_basis: string;
   government_business: string | null;
   obligations_12m: string | null;
+  obligations_baseline_annual: string | null;
+  baseline_supported: boolean;
+  new_awards_12m: number;
+  new_awards_baseline_annual: string | null;
+  new_work_states_12m: number;
+  warn_notice_count_24m: number;
+  warn_jobs_affected_24m: number;
+  latest_warn_date: string | null;
+  latest_warn_source_url: string | null;
   known_locations: string;
   latest_transaction_date: string | null;
   latest_transaction_obligation: string | null;
@@ -49,6 +58,9 @@ export type CompanySnapshotRow = {
   contraction_sufficiency: string | null;
   contraction_components: Record<string, unknown> | null;
   contraction_explanation: string | null;
+  has_confirmed_expansion: boolean;
+  has_confirmed_relocation: boolean;
+  has_confirmed_contraction: boolean;
   watched: boolean;
   full_count?: string;
 };
@@ -89,6 +101,11 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
     sum(t.obligation) FILTER (
       WHERE t.obligation IS NOT NULL AND t.action_date >= current_date - interval '365 days'
     ) AS obligations_12m,
+    sum(t.obligation) FILTER (
+      WHERE t.obligation IS NOT NULL AND t.action_date >= current_date - interval '48 months'
+        AND t.action_date < current_date - interval '12 months'
+    ) / 3.0 AS obligations_baseline_annual,
+    min(t.action_date) <= current_date - interval '48 months' AS baseline_supported,
     bool_or(t.obligation > 0) AS has_positive_transaction
   FROM transactions t
   JOIN awards a ON a.id=t.award_id
@@ -109,10 +126,32 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   SELECT recipient_company_id AS company_id,
     bool_or(
       COALESCE(total_obligated,0) > 0 OR COALESCE(current_value,0) > 0 OR COALESCE(potential_value,0) > 0
-    ) AS has_positive_award
+    ) AS has_positive_award,
+    count(*) FILTER (WHERE award_date >= current_date - interval '12 months')::integer AS new_awards_12m,
+    count(*) FILTER (WHERE award_date >= current_date - interval '48 months'
+      AND award_date < current_date - interval '12 months') / 3.0 AS new_awards_baseline_annual
   FROM awards
   WHERE NOT is_demo AND NOT is_benchmark
   GROUP BY recipient_company_id
+), recent_new_work_states AS MATERIALIZED (
+  SELECT DISTINCT a.recipient_company_id AS company_id,upper(a.performance_state) AS state
+  FROM awards a JOIN companies c ON c.id=a.recipient_company_id
+  WHERE NOT a.is_demo AND NOT a.is_benchmark
+    AND a.award_date >= current_date - interval '12 months'
+    AND upper(a.performance_state) ~ '^[A-Z]{2}$'
+    AND upper(a.performance_state) <> upper(COALESCE(c.recipient_state,''))
+), new_work_states AS MATERIALIZED (
+  SELECT rn.company_id,count(*)::integer AS count_12m
+  FROM recent_new_work_states rn
+  WHERE NOT EXISTS (
+    SELECT 1 FROM awards older
+    WHERE older.recipient_company_id=rn.company_id
+      AND NOT older.is_demo AND NOT older.is_benchmark
+      AND older.award_date >= current_date - interval '48 months'
+      AND older.award_date < current_date - interval '12 months'
+      AND upper(older.performance_state)=rn.state
+  )
+  GROUP BY rn.company_id
 ), global_activity AS MATERIALIZED (
   SELECT ps.company_id,bool_or(COALESCE(p.value_native,0) > 0) AS has_positive_process
   FROM procurement_process_suppliers ps
@@ -140,6 +179,34 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   ORDER BY company_id,verified_headquarters DESC,
     CASE location_status WHEN 'active' THEN 0 WHEN 'expanding' THEN 1 WHEN 'opening' THEN 2 ELSE 3 END,
     last_observed_at DESC
+), warn_events AS MATERIALIZED (
+  SELECT DISTINCT ON (ec.company_id,e.id)
+    ec.company_id,e.id,e.jobs_affected,
+    COALESCE(e.effective_start_date,e.announced_date) AS event_date,
+    src.original_url
+  FROM company_event_companies ec
+  JOIN company_events e ON e.id=ec.event_id
+  LEFT JOIN LATERAL (
+    SELECT ces.original_url FROM company_event_sources ces
+    WHERE ces.event_id=e.id AND ces.record_status IN ('parsed','linked')
+      AND ces.original_url ~ '^https://'
+    ORDER BY ces.is_primary DESC,ces.collected_at DESC LIMIT 1
+  ) src ON true
+  WHERE ec.review_status IN ('auto_verified','approved')
+    AND ec.relationship_type IN ('subject','affected_employer','employer','operator')
+    AND e.source_system IN ('maryland_warn','virginia_warn')
+    AND e.verification_status IN ('source_verified','corroborated')
+    AND e.event_type IN ('layoff','closure','furlough')
+    AND e.event_status NOT IN ('rescinded','cancelled')
+    AND COALESCE(e.effective_start_date,e.announced_date) >= current_date - interval '24 months'
+  ORDER BY ec.company_id,e.id,ec.is_primary DESC
+), warn_activity AS MATERIALIZED (
+  SELECT company_id,count(*)::integer AS notice_count_24m,
+    COALESCE(sum(jobs_affected),0)::integer AS jobs_affected_24m,
+    max(event_date)::text AS latest_warn_date,
+    (array_agg(original_url ORDER BY event_date DESC NULLS LAST)
+      FILTER (WHERE original_url ~ '^https://'))[1] AS latest_warn_source_url
+  FROM warn_events GROUP BY company_id
 ), latest_assessments AS MATERIALIZED (
   SELECT DISTINCT ON (company_id,assessment_type) company_id,assessment_type,as_of_date,score,
     data_sufficiency,components,explanation
@@ -198,6 +265,14 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
       WHEN c.recipient_city IS NOT NULL OR c.recipient_state IS NOT NULL THEN 'Observed recipient location'
       ELSE 'Location not reported' END AS location_basis,
     ta.government_business::text,ta.obligations_12m::text,
+    ta.obligations_baseline_annual::text,
+    COALESCE(ta.baseline_supported,false) AS baseline_supported,
+    COALESCE(aa.new_awards_12m,0)::integer AS new_awards_12m,
+    aa.new_awards_baseline_annual::text,
+    COALESCE(nws.count_12m,0) AS new_work_states_12m,
+    COALESCE(wa.notice_count_24m,0) AS warn_notice_count_24m,
+    COALESCE(wa.jobs_affected_24m,0) AS warn_jobs_affected_24m,
+    wa.latest_warn_date,wa.latest_warn_source_url,
     COALESCE(ea.known_locations,'0') AS known_locations,
     lt.action_date::text AS latest_transaction_date,lt.obligation::text AS latest_transaction_obligation,
     lt.is_material AS latest_transaction_material,
@@ -219,6 +294,8 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   LEFT JOIN transaction_activity ta ON ta.company_id=c.id
   LEFT JOIN latest_transaction lt ON lt.company_id=c.id
   LEFT JOIN award_activity aa ON aa.company_id=c.id
+  LEFT JOIN new_work_states nws ON nws.company_id=c.id
+  LEFT JOIN warn_activity wa ON wa.company_id=c.id
   LEFT JOIN global_activity ga ON ga.company_id=c.id
   LEFT JOIN establishment_activity ea ON ea.company_id=c.id
   LEFT JOIN best_location bl ON bl.company_id=c.id
@@ -248,6 +325,15 @@ function applyCommonFilters(filters: SqlFilters, input: CompanyScreenerInput | P
     filters.add("s.location_postal ILIKE ? || '%'", input.postal);
   if (input.governmentMin != null)
     filters.add("s.government_business::numeric >= ?", input.governmentMin);
+  if (input.baselineAnnualMin != null)
+    filters.add("s.baseline_supported AND s.obligations_baseline_annual::numeric >= ?", input.baselineAnnualMin);
+  if (input.obligations12mMin != null)
+    filters.add("s.obligations_12m::numeric >= ?", input.obligations12mMin);
+  // Descriptive procurement change, not a validated business-outcome prediction.
+  if (input.baselineTrend === "above")
+    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric >= s.obligations_baseline_annual::numeric*1.25 AND s.obligations_12m::numeric - s.obligations_baseline_annual::numeric >= 250000)");
+  if (input.baselineTrend === "below")
+    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric*.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)");
 }
 
 function applyScreenerFilters(filters: SqlFilters, input: CompanyScreenerInput) {
@@ -258,8 +344,6 @@ function applyScreenerFilters(filters: SqlFilters, input: CompanyScreenerInput) 
       input.q,
     );
   }
-  if (input.obligations12mMin != null)
-    filters.add("s.obligations_12m::numeric >= ?", input.obligations12mMin);
   if (input.knownLocations != null)
     filters.add("s.known_locations::integer >= ?", input.knownLocations);
   if (input.trackedOnly) filters.clauses.push("s.watched");
@@ -358,28 +442,40 @@ export async function searchPredictionCompanies(
   );
   const config = PREDICTION_CONFIG[kind];
   const scoreColumn = kind === "moves" ? "relocation" : kind;
-  filters.clauses.push(`s.${scoreColumn}_score IS NOT NULL`);
+  // Include an active calibrated prediction even if the parallel evidence-score snapshot is absent.
+  const contractCue = kind === "expansion"
+    ? "(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric >= s.obligations_baseline_annual::numeric*1.25 AND s.obligations_12m::numeric - s.obligations_baseline_annual::numeric >= 250000)"
+    : kind === "contraction"
+      ? "(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric*.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)"
+      : "(s.new_work_states_12m > 0)";
+  const officialWarnCue = kind === "contraction"
+    ? "(s.warn_notice_count_24m > 0 OR s.has_confirmed_contraction)"
+    : "false";
+  filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active') OR ${contractCue} OR ${officialWarnCue})`);
   if (input.recencyDays) {
     filters.add(
       `s.${scoreColumn}_date::date >= current_date - (?::integer * interval '1 day')`,
       input.recencyDays,
     );
   }
-  filters.add("(cp.horizon_days=? OR cp.horizon_days IS NULL)", input.horizon || 180);
+  if (input.horizon) filters.add("(cp.horizon_days=? OR cp.horizon_days IS NULL)", input.horizon);
   const entitlementLimit = searchResultLimit(plan);
   const pageSize = Math.min(25, entitlementLimit);
   const offset = Math.max(0, (input.page - 1) * pageSize);
   const values = [...filters.values, pageSize, offset];
   // A "most likely" sort is a probability ranking ONLY for calibrated, active models.
   // Non-calibrated companies remain ordered by descriptive evidence score, never a fake percentage.
+  const verifiedRetentionSort = kind === "contraction"
+    ? "s.warn_notice_count_24m DESC,s.has_confirmed_contraction DESC,"
+    : "";
   const orderBy = input.rank === "recent"
-    ? `s.${scoreColumn}_date::date DESC NULLS LAST,s.${scoreColumn}_score::numeric DESC NULLS LAST,s.canonical_name`
+    ? `${kind==="contraction"?"GREATEST(s.contraction_date::date,s.latest_warn_date::date)":"s."+scoreColumn+"_date::date"} DESC NULLS LAST,${verifiedRetentionSort}s.${scoreColumn}_score::numeric DESC NULLS LAST,s.canonical_name`
     : input.rank === "evidence"
-      ? `s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`
+      ? `${verifiedRetentionSort}s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`
       : `CASE WHEN pm.probability_eligible = true AND pm.status = 'active'
             AND cp.data_sufficiency = 'sufficient' AND cp.probability IS NOT NULL
           THEN cp.probability ELSE NULL END DESC NULLS LAST,
-          s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`;
+          ${verifiedRetentionSort}s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`;
   const rows = await query<PredictionCompanyRow>(
     `${SNAPSHOT_CTES}
      SELECT s.*,cp.probability::text,cp.data_sufficiency AS prediction_sufficiency,

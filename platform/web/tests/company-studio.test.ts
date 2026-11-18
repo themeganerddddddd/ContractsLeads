@@ -23,7 +23,7 @@ describe("Company-first SEO and intelligence experience", () => {
     expect(chart).toContain('useState<"5" | "all">');
     expect(chart).toContain("deobligations");
     expect(radar).toContain('row.probability_eligible === true');
-    expect(radar).toContain("Evidence strength is not a calibrated probability.");
+    expect(radar).toContain("A procurement cue is not a prediction.");
     expect(radar).toContain("Destination unknown");
   });
 

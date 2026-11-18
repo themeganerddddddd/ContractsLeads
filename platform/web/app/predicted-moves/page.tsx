@@ -1,14 +1,16 @@
-import { PredictionScreener } from "@/components/PredictionScreener";
+import { redirect } from "next/navigation";
 
-type RawParams = Record<string, string | string[] | undefined>;
+type RawParams=Record<string,string|string[]|undefined>;
+export const dynamic="force-dynamic";
 
-export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "Predicted Moves",
-  description: "Source-backed relocation and footprint-change signals without invented destinations.",
-};
-
-export default function PredictedMovesPage({ searchParams }: { searchParams: Promise<RawParams> }) {
-  return <PredictionScreener kind="moves" searchParams={searchParams} />;
+/** Do not expose an unvalidated relocation forecast. Show documented movement records instead. */
+export default async function MovementArchiveRedirect({searchParams}:{searchParams:Promise<RawParams>}) {
+  const raw=await searchParams;
+  const params=new URLSearchParams({tab:"moving"});
+  for(const key of ["state","county","city","industry"]){
+    const v=raw[key];
+    const value=Array.isArray(v)?v[0]:v;
+    if(value && value.length<160)params.set(key,value);
+  }
+  redirect("/business-change?"+params.toString());
 }
-

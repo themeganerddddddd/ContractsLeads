@@ -4,8 +4,8 @@ import { authProviderAvailability } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Know when companies are likely to expand, contract, or move",
-  description: "Unearth source-backed indicators of company expansion, contraction, and relocation. FirmQuarry helps you investigate which businesses may move next—and why.",
+  title: "Spot likely growth, retention risk, and documented moves",
+  description: "Unearth company-specific contract changes, workforce notices, and documented business moves—without presenting unverified relocation predictions.",
 };
 
 const capabilities = [
@@ -27,11 +27,11 @@ const capabilities = [
   },
   {
     number: "03",
-    name: "Relocation",
-    title: "Know who might be on the move.",
-    text: "Unearth clues that a company could relocate or shift operations. Explore the supporting records—and treat destinations as known only when the evidence warrants it.",
-    href: "/predicted-moves",
-    cta: "Explore movement intelligence",
+    name: "Observed movement",
+    title: "Follow moves with evidence.",
+    text: "Track documented company moves and source-supported location changes. We don’t pretend that a new contract worksite predicts a relocation.",
+    href: "/business-change?tab=moving",
+    cta: "Browse movement records",
   },
 ] as const;
 
@@ -47,7 +47,7 @@ export default function LandingPage() {
           <div className="fq-hero-copy">
             <div className="fq-hero-eyebrow"><span aria-hidden="true" className="fq-hero-pulse" /> UNEARTH THE SIGNALS. ANTICIPATE THE SHIFT.</div>
             <h1 id="fq-hero-title">Unearth their next move.<br/><em>Before it happens.</em></h1>
-            <p className="fq-hero-lead"><strong>Know when a company is likely to expand, contract, or move.</strong> FirmQuarry digs through scattered public records to surface evidence-backed business signals—so you can investigate what may happen next, not just what already happened.</p>
+            <p className="fq-hero-lead"><strong>Spot likely expansion and retention risks—and track documented moves.</strong> FirmQuarry digs through scattered public records to surface evidence-backed business signals—so you can investigate what may happen next, not just what already happened.</p>
             <div className="fq-hero-cta-row">
               <Link href="/workspace" className="fq-button fq-button-primary">Start for free <span aria-hidden="true">↗</span></Link>
               <Link href="/pricing" className="fq-button fq-button-outline">View pricing plans <span aria-hidden="true">→</span></Link>
@@ -76,14 +76,14 @@ export default function LandingPage() {
             <div className="fq-signin-foot">New to FirmQuarry? <Link href="/pricing">View pricing plans</Link>.</div>
           </aside>
         </div>
-        <div className="fq-hero-index" aria-hidden="true"><span>EXPANSION INTELLIGENCE</span><span>CONTRACTION SIGNALS</span><span>RELOCATION OUTLOOK</span><span>SOURCE-BACKED RESEARCH</span></div>
+        <div className="fq-hero-index" aria-hidden="true"><span>EXPANSION INTELLIGENCE</span><span>RETENTION SIGNALS</span><span>DOCUMENTED MOVES</span><span>SOURCE-BACKED RESEARCH</span></div>
       </section>
 
       <section className="fq-value-section" id="how-it-works">
         <div className="fq-section-wrap">
           <div className="fq-section-intro">
             <div><p className="fq-section-eyebrow">DIG BENEATH THE SURFACE</p><h2>Three moves. One clearer picture.</h2></div>
-            <p>Is a company likely to expand, contract, or move? Follow the clues beneath the headlines, compare the evidence, and see what deserves a closer look.</p>
+            <p>Could this company grow or contract? Has it announced a move? Follow the clues beneath the headlines, compare the evidence, and see what deserves a closer look.</p>
           </div>
           <div className="fq-feature-grid">
             {capabilities.map(feature => (
@@ -105,7 +105,7 @@ export default function LandingPage() {
 
       <section className="fq-plan-section">
         <div className="fq-section-wrap fq-plan-wrap">
-          <div><p className="fq-section-eyebrow">START WITH A FREE DIG</p><h2>Start for free.<br/>Unearth what’s next.</h2><p>Explore which companies may expand, contract, or relocate—without paying to get started. When you need deeper research and monitoring, compare the available plans. Paid checkout is available once account and billing services are enabled.</p></div>
+          <div><p className="fq-section-eyebrow">START WITH A FREE DIG</p><h2>Start for free.<br/>Unearth what’s next.</h2><p>Explore possible expansion and contraction signals, plus documented company moves—without paying to get started. When you need deeper research and monitoring, compare the available plans. Paid checkout is available once account and billing services are enabled.</p></div>
           <div className="fq-plan-summary fq-start-card">
             <span className="fq-start-card-overline">YOUR FIRST LOOK IS FREE</span>
             <h3>There’s more beneath the surface.</h3>

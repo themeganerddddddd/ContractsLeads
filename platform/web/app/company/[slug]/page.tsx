@@ -17,10 +17,14 @@ import { RankedList } from "@/components/RankedList";
 import { TrackingCoverageMatrix } from "@/components/TrackingCoverageMatrix";
 import { WatchCompanyButton } from "@/components/WatchCompanyButton";
 import { CompanyGeographicOutlook } from "@/components/CompanyGeographicOutlook";
+import { CompanyContactsCard, hasOfficialCompanyContact } from "@/components/CompanyContactsCard";
+import { CompanyWarnNotice } from "@/components/CompanyWarnNotice";
+import { ProcurementBaselinePanel } from "@/components/ProcurementBaselinePanel";
 import { getCompanySnapshotBySlug, type CompanySnapshotRow } from "@/lib/company-intelligence";
 import { can } from "@/lib/entitlements";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
 import { resolveViewer } from "@/lib/plan";
+import { assessProcurementMomentum } from "@/lib/procurement-baseline";
 import { getCompanyProfile } from "@/lib/profiles";
 
 export const dynamic = "force-dynamic";
@@ -73,16 +77,37 @@ function Outlook({ kind, snapshot, intelligence }: { kind: "expansion" | "reloca
   const predictionType = `company_${kind}`;
   const prediction = intelligence.predictions.find((row: any) => row.prediction_type === predictionType);
   const calibrated = prediction?.probability_eligible === true && prediction?.model_status === "active" && prediction?.data_sufficiency === "sufficient" && prediction?.probability != null;
-  const prefix = kind === "relocation" ? "relocation" : kind;
-  const score = snapshot?.[`${prefix}_score` as keyof CompanySnapshotRow];
-  const sufficiency = snapshot?.[`${prefix}_sufficiency` as keyof CompanySnapshotRow];
-  const date = snapshot?.[`${prefix}_date` as keyof CompanySnapshotRow];
+  const score = snapshot?.[`${kind}_score` as keyof CompanySnapshotRow];
+  const sufficiency = snapshot?.[`${kind}_sufficiency` as keyof CompanySnapshotRow];
+  const date = snapshot?.[`${kind}_date` as keyof CompanySnapshotRow];
   const title = kind === "relocation" ? "Move" : kind[0].toUpperCase() + kind.slice(1);
-  return <article className="outlook-card"><span>{title}</span><strong>{calibrated ? `${Math.round(Number(prediction.probability) * 100)}% predicted probability` : signalBand(score, sufficiency)}</strong><small>{calibrated ? `${prediction.horizon_days}-day validated model · ${dateLabel(prediction.as_of_date)}` : score == null ? "No recent supported signal" : `Prediction not yet available · evidence as of ${dateLabel(String(date))}`}</small></article>;
+  const contracts = assessProcurementMomentum({ current:snapshot?.obligations_12m, annualBaseline:snapshot?.obligations_baseline_annual, baselineSupported:snapshot?.baseline_supported===true });
+  const contractCue = kind === "expansion" && contracts.status === "above" ||
+    kind === "contraction" && contracts.status === "below";
+  const warnCue=kind==="contraction" && (snapshot?.warn_notice_count_24m||0)>0;
+  const observedContraction=kind==="contraction" && snapshot?.has_confirmed_contraction===true;
+  const observedMove=kind==="relocation" && snapshot?.has_confirmed_relocation===true;
+  const cueText = contracts.relativeChangePct == null ? "Historical procurement shift" :
+      `${contracts.relativeChangePct>0?"+":""}${contracts.relativeChangePct.toFixed(0)}% vs normal contracts`;
+  return <article className="outlook-card">
+    <span>{title}</span>
+    <strong>{calibrated ? `${Math.round(Number(prediction.probability) * 100)}% predicted probability` :
+      score != null ? signalBand(score,sufficiency) : warnCue ? "Official WARN workforce notice" : observedContraction ? "Verified closure / contraction" : observedMove ? "Verified relocation event" : contractCue ? cueText : "Insufficient evidence"}</strong>
+    <small>{calibrated ? `${prediction.horizon_days}-day validated model · ${dateLabel(prediction.as_of_date)}` :
+      score != null ? `Evidence score only; not a probability · ${dateLabel(String(date))}` :
+      warnCue ? "Source-verified MD/VA WARN notice; planned workforce change is not a forecast" :
+      observedContraction ? "Independent source-backed outcome, not a forecast" :
+      observedMove ? "Independently documented company movement; not a future relocation prediction" :
+      contractCue ? "Procurement research cue · not a validated expansion, contraction or move forecast" :
+      "No recent supported assessment or validated model"}</small>
+  </article>;
 }
 
-export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CompanyPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams?: Promise<{ focus?: string | string[] }> }) {
   const { slug } = await params;
+  const query = await searchParams;
+  const requestedFocus = Array.isArray(query?.focus) ? query?.focus[0] : query?.focus;
+  const focus = requestedFocus === "expansion" || requestedFocus === "relocation" || requestedFocus === "contraction" ? requestedFocus : null;
   if (!process.env.DATABASE_URL) {
     if (findArchivedCompany(slug)) redirect(`/public-records/company/${slug}`);
     return <>
@@ -107,36 +132,138 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
   const latestBusinessChange = data.establishmentIntelligence.recentChanges[0];
   const latestChange = snapshot?.latest_change_type || latestBusinessChange?.change_type || null;
   const latestChangeDate = snapshot?.latest_change_date || latestBusinessChange?.change_date || null;
-  const geography = snapshot?.location_label || [company.recipient_city, company.recipient_state].filter(Boolean).join(", ");
-  const geographyBasis = snapshot?.location_basis || (geography ? "Observed recipient location" : "Location not reported");
+  // A missing snapshot location must not hide known, supported establishments.
+  const statedLocation = snapshot?.location_label;
+  const knownLocation = currentEstablishments.find((row: any) => row.city || row.county || row.state_code);
+  const establishmentLocation = knownLocation ? [knownLocation.city, knownLocation.county, knownLocation.state_code].filter(Boolean).join(", ") : "";
+  const recipientLocation = [company.recipient_city, company.recipient_state].filter(Boolean).join(", ");
+  const geography = statedLocation && !/^(location (not )?available|not (available|reported)|unknown|unavailable)$/i.test(statedLocation.trim())
+    ? statedLocation : establishmentLocation || recipientLocation;
+  const geographyBasis = geography === establishmentLocation && establishmentLocation
+    ? "Supported establishment" : geography === recipientLocation && recipientLocation
+      ? "Observed recipient location" : snapshot?.location_basis || "Location not reported";
   const latestMaterial = data.intelligenceTimeline.find((event: any) => event.materiality_status === "material" && event.adjustment_direction);
+  const signalKinds = (["expansion", "relocation", "contraction"] as const);
+  const baselineMomentum = assessProcurementMomentum({
+    current: snapshot?.obligations_12m, annualBaseline: snapshot?.obligations_baseline_annual,
+    baselineSupported: snapshot?.baseline_supported === true,
+  });
+  const relevantKinds = signalKinds.filter(kind => {
+    const sufficiency = snapshot?.[`${kind}_sufficiency` as keyof CompanySnapshotRow];
+    const score = snapshot?.[`${kind}_score` as keyof CompanySnapshotRow];
+    const signalSupported = score != null && sufficiency !== "insufficient_history";
+    const procurementCue = kind === "expansion" && baselineMomentum.status === "above" ||
+      kind === "contraction" && baselineMomentum.status === "below" ||
+      kind === "relocation" && Boolean(snapshot?.relocation_score || snapshot?.has_confirmed_relocation);
+    const workforceEvidence=kind==="contraction" &&
+      ((snapshot?.warn_notice_count_24m||0)>0 || snapshot?.has_confirmed_contraction===true);
+    return signalSupported || procurementCue || workforceEvidence;
+  });
+  const visibleKinds = focus ? relevantKinds.filter(kind=>kind===focus) : relevantKinds;
+  const hasContracts=Number(metrics?.award_count || 0)>0 || Number(snapshot?.government_business || 0)!==0;
+  const hasContractBaseline=Boolean(snapshot && (snapshot.obligations_12m!==null || snapshot.baseline_supported) && hasContracts);
+  const hasGovernmentBusiness=hasContracts || data.globalMetrics.length>0;
+  const hasContacts=hasOfficialCompanyContact(company.uei);
+  const hasEstablishments=establishments.length>0 || data.establishmentIntelligence.recentChanges.length>0;
+  const verifiedMovements=data.movements.filter((row: any) =>
+    ["source_verified","corroborated"].includes(String(row.verification_status)) &&
+    ["auto_verified","approved"].includes(String(row.review_status)) &&
+    ["relocation","headquarters_move","expansion","facility_expansion","new_facility","layoff","closure","furlough"].includes(String(row.event_type)));
+  const hasEarlyIndicators=data.earlyIndicators.indicators.length>0 ||
+    data.earlyIndicators.assessments.some((row:any)=>row.score!==null && row.data_sufficiency!=="insufficient_history");
+  const hasChangeIntelligence=data.changeIntelligence.outcomes.length>0 ||
+    data.changeIntelligence.assessments.some((row:any)=>row.score!=null && row.data_sufficiency!=="insufficient_history") ||
+    data.changeIntelligence.predictions.some((row:any)=>row.probability_eligible && row.probability!=null);
+  const hasLocations=hasEstablishments || verifiedMovements.length>0 || hasEarlyIndicators || hasChangeIntelligence;
+  const hasTimeline=data.intelligenceTimeline.length>0;
+  const hasSnapshot=hasContracts || hasEstablishments || Boolean(latestChange);
+  const hasSourceDetails=data.identifiers.length>0 || data.tracking.coverage.length>0;
+  const hasGeographicEvidence=(["expansion","relocation","contraction"] as const).some(kind=>{
+    const component=snapshot?.[`${kind}_components` as keyof CompanySnapshotRow];
+    if (!component || typeof component!=="object") return false;
+    const source=component as Record<string,unknown>;
+    const destination=source.destination;
+    return source.destination_claim_supported===true &&
+      destination!==null && typeof destination==="object" &&
+      Boolean((destination as Record<string,unknown>).state || (destination as Record<string,unknown>).region);
+  });
 
   return <>
     <section className="entity-heading company-profile-heading">
       <div className="breadcrumb"><Link href="/companies">Companies</Link><span>/</span><span>{company.canonical_name}</span></div>
-      <div className="entity-header-row"><div><p className="eyebrow">FIRMQUARRY / COMPANY INTELLIGENCE</p><h1>{company.canonical_name}</h1><p className="entity-subtitle">{reported(company.industry_name)} · {reported(geography)} · {geographyBasis.toLowerCase()}</p>{company.parent_company_name ? <p className="company-parent">Parent: {company.parent_company_name}</p> : null}</div><div className="entity-actions"><Link className="button studio-profile-history-cta" href={`/company/${company.slug}/contracts`}>View contract history ↗</Link>{viewer.user && can(viewer.plan, "company_watches") ? <WatchCompanyButton companyId={company.id} /> : <Link className="button secondary" href="/pricing#pro">Track with Pro</Link>}<DataNote updated={data.lastUpdated} demo={company.is_demo} source="official procurement and company-intelligence sources" /></div></div>
+      <div className="entity-header-row"><div><p className="eyebrow">FIRMQUARRY / COMPANY INTELLIGENCE</p><h1>{company.canonical_name}</h1><p className="entity-subtitle">{reported(company.industry_name)} · {geography ? geography + " · " + geographyBasis.toLowerCase() : "Verified headquarters unavailable"}</p>{company.parent_company_name ? <p className="company-parent">Parent: {company.parent_company_name}</p> : null}</div><div className="entity-actions">{hasContracts?<Link className="button studio-profile-history-cta" href={`/company/${company.slug}/contracts`}>View contract history ↗</Link>:null}{viewer.user && can(viewer.plan, "company_watches") ? <WatchCompanyButton companyId={company.id} /> : <Link className="button secondary" href="/pricing#pro">Track with Pro</Link>}<DataNote updated={data.lastUpdated} demo={company.is_demo} source="official procurement and company-intelligence sources" /></div></div>
     </section>
 
-    <nav className="tabs company-profile-tabs studio-profile-tabs" aria-label="Company profile sections"><a href="#overview">Overview</a><a href="#geo-outlook">Geographic Outlook</a><a href="#locations-change">Locations</a><a href="#intelligence-timeline">Timeline</a><a href="#government-business">Government Business</a><a href="#sources">Sources</a></nav>
+    <nav className="tabs company-profile-tabs studio-profile-tabs" aria-label="Company profile sections">
+      {hasContractBaseline?<a href="#contract-baseline">Contract Cycle</a>:null}
+      <a href="#overview">General Information</a>
+      {hasContacts?<a href="#company-contacts">Contacts</a>:null}
+      {snapshot?.warn_notice_count_24m ? <a href="#workforce-notices">WARN Notices</a>:null}
+      {hasGeographicEvidence?<a href="#geo-outlook">Verified Destinations</a>:null}
+      {hasLocations?<a href="#locations-change">Locations &amp; Events</a>:null}
+      {hasTimeline?<a href="#intelligence-timeline">Timeline</a>:null}
+      {hasGovernmentBusiness?<a href="#government-business">Government Business</a>:null}
+      {hasSourceDetails?<a href="#sources">Sources</a>:null}
+    </nav>
 
+    {hasContractBaseline?<ProcurementBaselinePanel snapshot={snapshot} newWorkMarkets={data.newWorkMarkets || []} />:null}
+    <CompanyWarnNotice snapshot={snapshot} />
     <section id="overview" className="company-overview">
-      <div className="metrics-grid company-metrics"><MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" /><MetricCard label="Locations" value={establishments.length ? currentEstablishments.length.toLocaleString() : "Not available"} note="Supported operating locations" /><MetricCard label="Latest Change" value={changeLabel(String(latestChange || ""))} note={latestChangeDate ? dateLabel(String(latestChangeDate)) : "No supported change signal"} /></div>
-      <div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">EXPANSION / MOVEMENT / RETENTION</p><h2>Company change signals</h2><p>Probabilities appear only for calibrated, active models with sufficient data. All other labels describe evidence strength.</p></div></div><div className="outlook-grid"><Outlook kind="expansion" snapshot={snapshot} intelligence={data.changeIntelligence} /><Outlook kind="relocation" snapshot={snapshot} intelligence={data.changeIntelligence} /><Outlook kind="contraction" snapshot={snapshot} intelligence={data.changeIntelligence} /></div></div>
-      <div id="geo-outlook"><CompanyGeographicOutlook company={company.canonical_name} expansion={{components:snapshot?.expansion_components,explanation:snapshot?.expansion_explanation,date:snapshot?.expansion_date,score:snapshot?.expansion_score}} relocation={{components:snapshot?.relocation_components,explanation:snapshot?.relocation_explanation,date:snapshot?.relocation_date,score:snapshot?.relocation_score}} contraction={{components:snapshot?.contraction_components,explanation:snapshot?.contraction_explanation,date:snapshot?.contraction_date,score:snapshot?.contraction_score}} /></div>
-      <div className="company-facts"><h2>Company facts</h2><dl className="detail-grid"><div><dt>Company industry</dt><dd>{reported(company.industry_name)}</dd></div><div><dt>Legal name</dt><dd>{reported(company.legal_name)}</dd></div><div><dt>Parent company</dt><dd>{reported(company.parent_company_name)}</dd></div><div><dt>Observed geography</dt><dd>{reported(geography)} · {geographyBasis}</dd></div><div><dt>Known operating locations</dt><dd>{establishments.length ? currentEstablishments.length.toLocaleString() : "Not available"}</dd></div><div><dt>First / latest observed</dt><dd>{dateLabel(company.first_seen)} — {dateLabel(company.last_seen)}</dd></div></dl></div>
+      <div className="fq-pitchbook-intro">
+        <div className="fq-pitchbook-left">
+              <div className="company-facts"><h2>General information</h2><dl className="detail-grid">
+            <div><dt>Legal name</dt><dd>{company.legal_name}</dd></div>
+            {company.industry_name?<div><dt>Industry</dt><dd>{company.industry_name}</dd></div>:null}
+            {company.parent_company_name?<div><dt>Parent company</dt><dd>{company.parent_company_name}</dd></div>:null}
+            {geography?<div><dt>Observed geography</dt><dd>{geography} · {geographyBasis}</dd></div>:null}
+            {currentEstablishments.length>0?<div><dt>Known operating locations</dt><dd>{currentEstablishments.length.toLocaleString()}</dd></div>:null}
+            {company.website && /^https:\/\//i.test(company.website) ? <div><dt>Company website</dt><dd><a href={company.website} target="_blank" rel="noopener noreferrer">Visit company site ↗</a></dd></div>:null}
+            {company.first_seen || company.last_seen ? <div><dt>First / latest observed</dt><dd>{company.first_seen?dateLabel(company.first_seen):"—"} — {company.last_seen?dateLabel(company.last_seen):"—"}</dd></div>:null}
+          </dl></div>
+          <CompanyContactsCard companyName={company.canonical_name} uei={company.uei} website={company.website} />
+        </div>
+        {hasSnapshot?<aside className="fq-pitchbook-snapshot" aria-label="Company snapshot">
+           <div className="fq-pitchbook-snapshot-heading"><span className="eyebrow">RESEARCH SNAPSHOT</span><h2>At a glance</h2></div>
+           <div className="metrics-grid company-metrics">
+             {hasContracts?<MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" />:null}
+             {hasContracts?<MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" />:null}
+             {currentEstablishments.length>0?<MetricCard label="Verified Locations" value={currentEstablishments.length.toLocaleString()} note="Supported operating locations only" />:null}
+             {latestChange?<MetricCard label="Latest Change" value={changeLabel(String(latestChange))} note={latestChangeDate?dateLabel(String(latestChangeDate)):"Source-linked change"} />:null}
+           </div>
+         </aside>:null}
+      </div>
+
+
+      {visibleKinds.length>0?<div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
+      <div className="outlook-grid fq-focused-outlook">{visibleKinds.map(kind => <Outlook key={kind} kind={kind} snapshot={snapshot} intelligence={data.changeIntelligence} />)}</div>
+      </div>:null}
+      {hasGeographicEvidence?<div id="geo-outlook"><CompanyGeographicOutlook company={company.canonical_name} focus={focus} visibleKinds={visibleKinds} expansion={{components:snapshot?.expansion_components,explanation:snapshot?.expansion_explanation,date:snapshot?.expansion_date,score:snapshot?.expansion_score}} relocation={{components:snapshot?.relocation_components,explanation:snapshot?.relocation_explanation,date:snapshot?.relocation_date,score:snapshot?.relocation_score}} contraction={{components:snapshot?.contraction_components,explanation:snapshot?.contraction_explanation,date:snapshot?.contraction_date,score:snapshot?.contraction_score}} /></div>:null}
+
     </section>
 
-    <section className="section profile-section-group" id="locations-change"><div className="section-header"><div><p className="eyebrow">Company and locations stay distinct</p><h2>Location footprint</h2><p>Only supported operating establishments appear as locations. Procurement work and recipient addresses remain separate evidence.</p></div><Link href={`/locations?state=${encodeURIComponent(company.recipient_state || "")}`}>Browse companies in this geography →</Link></div><div className="profile-subsection"><EstablishmentIntelligencePanel data={data.establishmentIntelligence} /></div><div className="profile-subsection"><ChangeIntelligencePanel data={data.changeIntelligence} /></div><div className="profile-subsection"><div className="section-header"><div><h3>Moves and market changes</h3><p>Reviewed workforce and economic-development records linked to this legal entity.</p></div></div><MovementTable rows={data.movements} /></div><div className="profile-subsection"><EarlyIndicatorsPanel data={data.earlyIndicators} /></div></section>
+    {hasLocations?<section className="section profile-section-group" id="locations-change">
+      <div className="section-header"><div><p className="eyebrow">Company and locations stay distinct</p><h2>Supported locations &amp; events</h2><p>Operating locations require independent verification. Recipient addresses and contract work sites are not automatically company facilities.</p></div></div>
+      {hasEstablishments?<div className="profile-subsection"><EstablishmentIntelligencePanel data={data.establishmentIntelligence} /></div>:null}
+      {hasChangeIntelligence?<div className="profile-subsection"><ChangeIntelligencePanel data={data.changeIntelligence} focus={focus} /></div>:null}
+      {verifiedMovements.length>0?<div className="profile-subsection"><div className="section-header"><div><h3>Verified workforce and location events</h3><p>Source-verified company-linked events, including documented relocations where present. Not predictive movement scores.</p></div></div><MovementTable rows={verifiedMovements} /></div>:null}
+      {hasEarlyIndicators?<div className="profile-subsection"><EarlyIndicatorsPanel data={data.earlyIndicators} /></div>:null}
+    </section>:null}
 
-    <section className="section" id="intelligence-timeline"><div className="section-header"><div><p className="eyebrow">One source-backed chronology</p><h2>Timeline</h2><p>Business change, facilities, workforce, corporate events, and government activity appear chronologically.</p></div></div><CompanyIntelligenceTimeline rows={data.intelligenceTimeline} /></section>
+    {hasTimeline?<section className="section" id="intelligence-timeline"><div className="section-header"><div><p className="eyebrow">One source-backed chronology</p><h2>Timeline</h2><p>Business change, facilities, workforce, corporate events, and government activity appear chronologically.</p></div></div><CompanyIntelligenceTimeline rows={data.intelligenceTimeline} /></section>:null}
 
-    <section className="section profile-section-group" id="government-business"><div className="section-header"><div><p className="eyebrow">Disclosed procurement context</p><h2>Government Business</h2><p>Money leads this view. Values represent disclosed obligations and procurement amounts—not company revenue.</p></div></div><div className="metrics-grid company-metrics"><MetricCard label="Total Net Obligations" value={compactMoney(metrics.total_activity)} note="U.S. transaction obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(metrics.obligations_12m)} note="Previous 365 days" /><MetricCard label="Latest Award" value={data.awards[0] ? compactMoney(data.awards[0].total_obligated) : "Not reported"} note={data.awards[0] ? dateLabel(data.awards[0].award_date) : "No disclosed award"} /><MetricCard label="Latest Material Adjustment" value={latestMaterial ? nativeMoney(latestMaterial.value, latestMaterial.currency) : "Not reported"} note={latestMaterial ? dateLabel(latestMaterial.event_at) : "No material adjustment linked"} /></div>
-      <div className="profile-subsection"><div className="section-header"><div><h3>Global government business</h3><p>Markets and currencies remain separate; incompatible currencies are never summed.</p></div></div>{data.globalMetrics.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>Market</th><th>Disclosed value</th><th>Currency</th><th>Latest activity</th><th>Processes</th></tr></thead><tbody>{data.globalMetrics.map((row: any) => <tr key={`${row.source_country}-${row.currency || "none"}`}><td>{row.source_country}</td><td className="numeric"><strong>{nativeMoney(row.disclosed_value, row.currency)}</strong></td><td>{reported(row.currency)}</td><td>{dateLabel(row.latest_activity)}</td><td className="numeric">{Number(row.process_count).toLocaleString()}</td></tr>)}</tbody></table></div> : <div className="empty-panel"><p>No global process activity has been linked to this legal entity.</p></div>}</div>
-      <div className="profile-subsection split-grid"><div className="panel"><h3>Top agencies by net obligations</h3><RankedList rows={data.agencies.map((row: any) => ({ ...row, awards: row.award_count, activity: row.activity }))} /></div><div className="panel"><h3>Top work locations by net obligations</h3><RankedList rows={data.locations.map((row: any) => ({ name: [row.performance_city, row.performance_county, row.performance_state].filter(Boolean).join(", "), awards: row.award_count, activity: row.activity }))} /></div></div>
-      <div className="profile-subsection" id="contracts"><div className="section-header"><div><h3>Latest U.S. awards</h3><p>Explore the most recent records here, or open the full company archive to filter across all available years.</p></div><Link className="studio-inline-action" href={`/company/${company.slug}/contracts`}>Full contract history ↗</Link></div><AwardTable rows={data.awards.map((award: any) => ({ ...award, canonical_name: company.canonical_name, company_slug: company.slug }))} /></div>
-      <div className="profile-subsection" id="history"><ContractHistoryChart annual={data.annual} /><div className="studio-history-archive-cta"><p>Historical awards and modifications are preserved as individual records.</p><Link className="studio-outline-link" href={`/company/${company.slug}/contracts`}>Browse all company contracts ↗</Link></div></div>
-    </section>
+    {hasGovernmentBusiness?<section className="section profile-section-group" id="government-business"><div className="section-header"><div><p className="eyebrow">Disclosed procurement context</p><h2>Government Business</h2><p>Money leads this view. Values represent disclosed obligations and procurement amounts—not company revenue.</p></div></div>{hasContracts?<div className="metrics-grid company-metrics"><MetricCard label="Total Net Obligations" value={compactMoney(metrics.total_activity)} note="U.S. transaction obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(metrics.obligations_12m)} note="Previous 365 days" />{data.awards[0]?<MetricCard label="Latest Award" value={compactMoney(data.awards[0].total_obligated)} note={dateLabel(data.awards[0].award_date)} />:null}{latestMaterial?<MetricCard label="Latest Material Adjustment" value={nativeMoney(latestMaterial.value, latestMaterial.currency)} note={dateLabel(latestMaterial.event_at)} />:null}</div>:null}
+      {data.globalMetrics.length>0?<div className="profile-subsection"><div className="section-header"><div><h3>Global government business</h3><p>Markets and currencies remain separate; incompatible currencies are never summed.</p></div></div>{data.globalMetrics.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>Market</th><th>Disclosed value</th><th>Currency</th><th>Latest activity</th><th>Processes</th></tr></thead><tbody>{data.globalMetrics.map((row: any) => <tr key={`${row.source_country}-${row.currency || "none"}`}><td>{row.source_country}</td><td className="numeric"><strong>{nativeMoney(row.disclosed_value, row.currency)}</strong></td><td>{reported(row.currency)}</td><td>{dateLabel(row.latest_activity)}</td><td className="numeric">{Number(row.process_count).toLocaleString()}</td></tr>)}</tbody></table></div> : null}</div>:null}
+      {data.agencies.length>0 || data.locations.length>0?<div className="profile-subsection split-grid">
+        {data.agencies.length>0?<div className="panel"><h3>Top agencies by net obligations</h3><RankedList rows={data.agencies.map((row: any) => ({ ...row, awards: row.award_count, activity: row.activity }))} /></div>:null}
+        {data.locations.length>0?<div className="panel"><h3>Top work locations by net obligations</h3><RankedList rows={data.locations.map((row: any) => ({ name: [row.performance_city, row.performance_county, row.performance_state].filter(Boolean).join(", "), awards: row.award_count, activity: row.activity }))} /></div>:null}
+      </div>:null}
+      {data.awards.length>0?<div className="profile-subsection" id="contracts"><div className="section-header"><div><h3>Latest U.S. awards</h3><p>Explore the most recent records here, or open the full company archive to filter across all available years.</p></div><Link className="studio-inline-action" href={`/company/${company.slug}/contracts`}>Full contract history ↗</Link></div><AwardTable rows={data.awards.map((award: any) => ({ ...award, canonical_name: company.canonical_name, company_slug: company.slug }))} /></div>:null}
+      {data.annual.length>0?<div className="profile-subsection" id="history"><ContractHistoryChart annual={data.annual} /><div className="studio-history-archive-cta"><p>Historical awards and modifications are preserved as individual records.</p><Link className="studio-outline-link" href={`/company/${company.slug}/contracts`}>Browse all company contracts ↗</Link></div></div>:null}
+    </section>:null}
 
-    <section className="section" id="sources"><div className="section-header"><div><p className="eyebrow">Evidence and identifiers</p><h2>Sources &amp; Coverage</h2><p>Technical identifiers live here, with retained official links and visible coverage limitations.</p></div><Link href="/coverage">Platform coverage →</Link></div><TrackingCoverageMatrix rows={data.tracking.coverage} /><div className="panel source-identifiers"><h3>Source identifiers</h3>{data.identifiers.length ? <ul className="plain-list">{data.identifiers.map((row: any) => <li key={`${row.identifier_system}-${row.identifier_value}`}><strong>{row.identifier_system}</strong><span>{row.identifier_value}{row.is_verified ? " · verified from source" : ""}{row.source_url ? <> · <a href={row.source_url} target="_blank" rel="noreferrer">source ↗</a></> : null}</span></li>)}</ul> : <p>No source identifiers are available for this legal entity.</p>}</div></section>
+    {hasSourceDetails?<section className="section" id="sources"><div className="section-header"><div><p className="eyebrow">Evidence and identifiers</p><h2>Sources &amp; Coverage</h2><p>Technical identifiers live here, with retained official links and visible coverage limitations.</p></div><Link href="/coverage">Platform coverage →</Link></div>
+      {data.tracking.coverage.length>0?<TrackingCoverageMatrix rows={data.tracking.coverage} />:null}
+      {data.identifiers.length>0?<div className="panel source-identifiers"><h3>Source identifiers</h3><ul className="plain-list">{data.identifiers.map((row: any) => <li key={`${row.identifier_system}-${row.identifier_value}`}><strong>{row.identifier_system}</strong><span>{row.identifier_value}{row.is_verified ? " · verified from source" : ""}{row.source_url ? <> · <a href={row.source_url} target="_blank" rel="noreferrer">source ↗</a></> : null}</span></li>)}</ul></div>:null}
+    </section>:null}
   </>;
 }

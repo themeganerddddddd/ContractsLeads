@@ -93,11 +93,13 @@ describe("location-first business change", () => {
   it("adds establishment intelligence to company and establishment profiles", () => {
     const company = readFileSync(resolve(root, "app/company/[slug]/page.tsx"), "utf8");
     const establishment = readFileSync(resolve(root, "app/establishment/[id]/page.tsx"), "utf8");
-    expect(company).toContain(">Locations</a>");
+    expect(company).toContain(">Locations &amp; Events</a>");
     expect(company).toContain("Company and locations stay distinct");
     expect(company).toContain("Supported operating locations");
     expect(company).toContain("EstablishmentIntelligencePanel");
-    expect(company.match(/<a href="#/g)).toHaveLength(6);
+    expect(company.match(/<a href="#/g)).toHaveLength(9);
+    expect(company).toContain("CompanyContactsCard");
+    expect(company).toContain("ProcurementBaselinePanel");
     expect(establishment).toContain("Physical business location");
     expect(establishment).toContain("Outcome ≠ indication ≠ signal");
     expect(establishment).toContain("Address history");
