@@ -150,7 +150,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
                 <div className="metrics-grid company-metrics"><MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" /><MetricCard label="Verified Locations" value={establishments.length ? currentEstablishments.length.toLocaleString() : "—"} note="Supported operating locations only" /><MetricCard label="Latest Change" value={changeLabel(String(latestChange || ""))} note={latestChangeDate ? dateLabel(String(latestChangeDate)) : "No supported change signal"} /></div>
         </aside>
       </div>
-      <ProcurementBaselinePanel snapshot={snapshot} />
+      <ProcurementBaselinePanel snapshot={snapshot} newWorkMarkets={data.newWorkMarkets || []} />
 
       <div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
       {visibleKinds.length
