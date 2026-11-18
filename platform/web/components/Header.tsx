@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 const primaryLinks = [
   ["Overview", "/workspace"],
   ["Expansion Intelligence", "/predicted-expansion"],
-  ["Movement Intelligence", "/predicted-moves"],
   ["Retention Intelligence", "/predicted-contraction"],
   ["Companies", "/companies"],
   ["New Deals", "/deals"],
@@ -18,7 +17,7 @@ const primaryLinks = [
 ] as const;
 
 const moreLinks = [
-  { label: "Research", links: [["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Business changes", "/business-change"], ["Public source archive", "/public-records"]] },
+  { label: "Research", links: [["Government Business", "/search"], ["Industries", "/industries"], ["Agencies", "/agencies"], ["Business changes", "/business-change"], ["Observed moves", "/business-change?tab=moving"], ["Public source archive", "/public-records"]] },
   { label: "Workspace", links: [["Saved", "/saved-searches"], ["Alerts", "/alerts"], ["Coverage", "/coverage"]] },
   { label: "About the data", links: [["Methodology", "/methodology"]] },
 ] as const;
