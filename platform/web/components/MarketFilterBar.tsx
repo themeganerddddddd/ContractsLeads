@@ -122,9 +122,10 @@ export function MarketFilterBar({
               </select>
             </label>
             <label>Signal period
-              <select name="recency" defaultValue={String(values.recencyDays||180)}>
+              <select name="recency" defaultValue={String(values.recencyDays ?? 0)}>
+                <option value="0">All available signal history</option>
                 <option value="30">30 days</option><option value="90">90 days</option>
-                <option value="180">6 months</option><option value="365">12 months</option>
+                <option value="180">6 months</option><option value="365">12 months</option><option value="730">24 months</option>
               </select>
             </label>
             <label>Forecast horizon
