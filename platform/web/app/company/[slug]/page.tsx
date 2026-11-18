@@ -17,6 +17,8 @@ import { RankedList } from "@/components/RankedList";
 import { TrackingCoverageMatrix } from "@/components/TrackingCoverageMatrix";
 import { WatchCompanyButton } from "@/components/WatchCompanyButton";
 import { CompanyGeographicOutlook } from "@/components/CompanyGeographicOutlook";
+import { CompanyContactsCard } from "@/components/CompanyContactsCard";
+import { ProcurementBaselinePanel } from "@/components/ProcurementBaselinePanel";
 import { getCompanySnapshotBySlug, type CompanySnapshotRow } from "@/lib/company-intelligence";
 import { can } from "@/lib/entitlements";
 import { compactMoney, dateLabel, reported } from "@/lib/format";
@@ -135,16 +137,20 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
       <div className="entity-header-row"><div><p className="eyebrow">FIRMQUARRY / COMPANY INTELLIGENCE</p><h1>{company.canonical_name}</h1><p className="entity-subtitle">{reported(company.industry_name)} · {geography ? geography + " · " + geographyBasis.toLowerCase() : "Verified headquarters unavailable"}</p>{company.parent_company_name ? <p className="company-parent">Parent: {company.parent_company_name}</p> : null}</div><div className="entity-actions"><Link className="button studio-profile-history-cta" href={`/company/${company.slug}/contracts`}>View contract history ↗</Link>{viewer.user && can(viewer.plan, "company_watches") ? <WatchCompanyButton companyId={company.id} /> : <Link className="button secondary" href="/pricing#pro">Track with Pro</Link>}<DataNote updated={data.lastUpdated} demo={company.is_demo} source="official procurement and company-intelligence sources" /></div></div>
     </section>
 
-    <nav className="tabs company-profile-tabs studio-profile-tabs" aria-label="Company profile sections"><a href="#overview">Overview</a><a href="#geo-outlook">Geographic Outlook</a><a href="#locations-change">Locations</a><a href="#intelligence-timeline">Timeline</a><a href="#government-business">Government Business</a><a href="#sources">Sources</a></nav>
+    <nav className="tabs company-profile-tabs studio-profile-tabs" aria-label="Company profile sections"><a href="#overview">Overview</a><a href="#company-contacts">Contacts</a><a href="#contract-baseline">Contract Baseline</a><a href="#geo-outlook">Geographic Outlook</a><a href="#locations-change">Locations</a><a href="#intelligence-timeline">Timeline</a><a href="#government-business">Government Business</a><a href="#sources">Sources</a></nav>
 
     <section id="overview" className="company-overview">
       <div className="fq-pitchbook-intro">
+        <div className="fq-pitchbook-left">
               <div className="company-facts"><h2>Company facts</h2><dl className="detail-grid"><div><dt>Company industry</dt><dd>{reported(company.industry_name)}</dd></div><div><dt>Legal name</dt><dd>{reported(company.legal_name)}</dd></div><div><dt>Parent company</dt><dd>{reported(company.parent_company_name)}</dd></div><div><dt>Observed geography</dt><dd>{geography ? geography + " · " + geographyBasis : "Not reported"}</dd></div><div><dt>Known operating locations</dt><dd>{establishments.length ? currentEstablishments.length.toLocaleString() : "Not available"}</dd></div><div><dt>First / latest observed</dt><dd>{dateLabel(company.first_seen)} — {dateLabel(company.last_seen)}</dd></div></dl></div>
+          <CompanyContactsCard companyName={company.canonical_name} uei={company.uei} website={company.website} />
+        </div>
         <aside className="fq-pitchbook-snapshot" aria-label="Company snapshot">
           <div className="fq-pitchbook-snapshot-heading"><span className="eyebrow">RESEARCH SNAPSHOT</span><h2>At a glance</h2></div>
                 <div className="metrics-grid company-metrics"><MetricCard label="Government Business" value={compactMoney(snapshot?.government_business ?? metrics.total_activity)} note="Total disclosed U.S. net obligations" /><MetricCard label="12M Net Obligations" value={signedMoney(snapshot?.obligations_12m ?? metrics.obligations_12m)} note="Previous 365 days, including negatives" /><MetricCard label="Verified Locations" value={establishments.length ? currentEstablishments.length.toLocaleString() : "—"} note="Supported operating locations only" /><MetricCard label="Latest Change" value={changeLabel(String(latestChange || ""))} note={latestChangeDate ? dateLabel(String(latestChangeDate)) : "No supported change signal"} /></div>
         </aside>
       </div>
+      <ProcurementBaselinePanel snapshot={snapshot} />
 
       <div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
       {visibleKinds.length
