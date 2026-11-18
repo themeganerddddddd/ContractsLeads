@@ -86,16 +86,18 @@ function Outlook({ kind, snapshot, intelligence }: { kind: "expansion" | "reloca
     kind === "contraction" && contracts.status === "below";
   const warnCue=kind==="contraction" && (snapshot?.warn_notice_count_24m||0)>0;
   const observedContraction=kind==="contraction" && snapshot?.has_confirmed_contraction===true;
+  const observedMove=kind==="relocation" && snapshot?.has_confirmed_relocation===true;
   const cueText = contracts.relativeChangePct == null ? "Historical procurement shift" :
       `${contracts.relativeChangePct>0?"+":""}${contracts.relativeChangePct.toFixed(0)}% vs normal contracts`;
   return <article className="outlook-card">
     <span>{title}</span>
     <strong>{calibrated ? `${Math.round(Number(prediction.probability) * 100)}% predicted probability` :
-      score != null ? signalBand(score,sufficiency) : warnCue ? "Official WARN workforce notice" : observedContraction ? "Verified closure / contraction" : contractCue ? cueText : "Insufficient evidence"}</strong>
+      score != null ? signalBand(score,sufficiency) : warnCue ? "Official WARN workforce notice" : observedContraction ? "Verified closure / contraction" : observedMove ? "Verified relocation event" : contractCue ? cueText : "Insufficient evidence"}</strong>
     <small>{calibrated ? `${prediction.horizon_days}-day validated model · ${dateLabel(prediction.as_of_date)}` :
       score != null ? `Evidence score only; not a probability · ${dateLabel(String(date))}` :
       warnCue ? "Source-verified MD/VA WARN notice; planned workforce change is not a forecast" :
       observedContraction ? "Independent source-backed outcome, not a forecast" :
+      observedMove ? "Independently documented company movement; not a future relocation prediction" :
       contractCue ? "Procurement research cue · not a validated expansion, contraction or move forecast" :
       "No recent supported assessment or validated model"}</small>
   </article>;
