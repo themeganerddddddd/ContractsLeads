@@ -107,7 +107,7 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
           const baseline=assessProcurementMomentum({current:row.obligations_12m,annualBaseline:row.obligations_baseline_annual,baselineSupported:row.baseline_supported});
           return <>
             <strong className={`fq-momentum-label fq-momentum-${baseline.status}`}>{baseline.status==="insufficient"?"History limited":baseline.relativeChangePct==null?"—":`${baseline.relativeChangePct>0?"+":""}${baseline.relativeChangePct.toFixed(0)}%`}</strong>
-            <small>12M ${compactMoney(row.obligations_12m)} · 3Y annual normal ${baseline.status==="insufficient"?"unknown":compactMoney(row.obligations_baseline_annual)}</small>
+            <small>12M {compactMoney(row.obligations_12m)} · 3Y annual normal {baseline.status==="insufficient"?"unknown":compactMoney(row.obligations_baseline_annual)}</small>
           </>;
         })()}</td>
         {kind==="contraction"?<td className="fq-warn-column">{row.warn_notice_count_24m>0?<>
