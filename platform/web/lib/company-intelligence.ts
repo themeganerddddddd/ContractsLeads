@@ -95,8 +95,7 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
       WHERE t.obligation IS NOT NULL AND t.action_date >= current_date - interval '365 days'
     ) AS obligations_12m,
     sum(t.obligation) FILTER (
-      WHERE t.obligation IS NOT NULL
-        AND t.action_date >= current_date - interval '48 months'
+      WHERE t.obligation IS NOT NULL AND t.action_date >= current_date - interval '48 months'
         AND t.action_date < current_date - interval '12 months'
     ) / 3.0 AS obligations_baseline_annual,
     min(t.action_date) <= current_date - interval '48 months' AS baseline_supported,
@@ -123,7 +122,7 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
     ) AS has_positive_award,
     count(*) FILTER (WHERE award_date >= current_date - interval '12 months')::integer AS new_awards_12m,
     count(*) FILTER (WHERE award_date >= current_date - interval '48 months'
-                       AND award_date < current_date - interval '12 months') / 3.0 AS new_awards_baseline_annual
+      AND award_date < current_date - interval '12 months') / 3.0 AS new_awards_baseline_annual
   FROM awards
   WHERE NOT is_demo AND NOT is_benchmark
   GROUP BY recipient_company_id
@@ -132,7 +131,21 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   FROM awards a JOIN companies c ON c.id=a.recipient_company_id
   WHERE NOT a.is_demo AND NOT a.is_benchmark
     AND a.award_date >= current_date - interval '12 months'
-    AND upper(a.performance_state) ~ '^[A-Z]{2}
+    AND upper(a.performance_state) ~ '^[A-Z]{2}$'
+    AND upper(a.performance_state) <> upper(COALESCE(c.recipient_state,''))
+), new_work_states AS MATERIALIZED (
+  SELECT rn.company_id,count(*)::integer AS count_12m
+  FROM recent_new_work_states rn
+  WHERE NOT EXISTS (
+    SELECT 1 FROM awards older
+    WHERE older.recipient_company_id=rn.company_id
+      AND NOT older.is_demo AND NOT older.is_benchmark
+      AND older.award_date >= current_date - interval '48 months'
+      AND older.award_date < current_date - interval '12 months'
+      AND upper(older.performance_state)=rn.state
+  )
+  GROUP BY rn.company_id
+), global_activity AS MATERIALIZED (
   SELECT ps.company_id,bool_or(COALESCE(p.value_native,0) > 0) AS has_positive_process
   FROM procurement_process_suppliers ps
   JOIN procurement_processes p ON p.id=ps.process_id
@@ -277,11 +290,11 @@ function applyCommonFilters(filters: SqlFilters, input: CompanyScreenerInput | P
     filters.add("s.baseline_supported AND s.obligations_baseline_annual::numeric >= ?", input.baselineAnnualMin);
   if (input.obligations12mMin != null)
     filters.add("s.obligations_12m::numeric >= ?", input.obligations12mMin);
-  // This is descriptive procurement momentum, not a calibrated business-outcome prediction.
+  // Descriptive procurement change, not a validated business-outcome prediction.
   if (input.baselineTrend === "above")
-    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric >= s.obligations_baseline_annual::numeric * 1.25 AND s.obligations_12m::numeric - s.obligations_baseline_annual::numeric >= 250000)");
+    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric >= s.obligations_baseline_annual::numeric*1.25 AND s.obligations_12m::numeric - s.obligations_baseline_annual::numeric >= 250000)");
   if (input.baselineTrend === "below")
-    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric * 0.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)");
+    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric*.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)");
 }
 
 function applyScreenerFilters(filters: SqlFilters, input: CompanyScreenerInput) {
@@ -397,481 +410,6 @@ export async function searchPredictionCompanies(
       ? "(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric*.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)"
       : "(s.new_work_states_12m > 0)";
   filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active') OR ${contractCue})`);
-  if (input.recencyDays) {
-    filters.add(
-      `s.${scoreColumn}_date::date >= current_date - (?::integer * interval '1 day')`,
-      input.recencyDays,
-    );
-  }
-  if (input.horizon) filters.add("(cp.horizon_days=? OR cp.horizon_days IS NULL)", input.horizon);
-  const entitlementLimit = searchResultLimit(plan);
-  const pageSize = Math.min(25, entitlementLimit);
-  const offset = Math.max(0, (input.page - 1) * pageSize);
-  const values = [...filters.values, pageSize, offset];
-  // A "most likely" sort is a probability ranking ONLY for calibrated, active models.
-  // Non-calibrated companies remain ordered by descriptive evidence score, never a fake percentage.
-  const orderBy = input.rank === "recent"
-    ? `s.${scoreColumn}_date::date DESC NULLS LAST,s.${scoreColumn}_score::numeric DESC NULLS LAST,s.canonical_name`
-    : input.rank === "evidence"
-      ? `s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`
-      : `CASE WHEN pm.probability_eligible = true AND pm.status = 'active'
-            AND cp.data_sufficiency = 'sufficient' AND cp.probability IS NOT NULL
-          THEN cp.probability ELSE NULL END DESC NULLS LAST,
-          s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`;
-  const rows = await query<PredictionCompanyRow>(
-    `${SNAPSHOT_CTES}
-     SELECT s.*,cp.probability::text,cp.data_sufficiency AS prediction_sufficiency,
-       pm.probability_eligible,pm.status AS model_status,cp.horizon_days,count(*) OVER()::text AS full_count
-     FROM company_snapshot s
-     LEFT JOIN LATERAL (
-       SELECT p.* FROM company_change_predictions p
-       WHERE p.company_id=s.id::uuid AND p.prediction_type='${config.prediction}'
-       ORDER BY p.as_of_date DESC,p.generated_at DESC LIMIT 1
-     ) cp ON true
-     LEFT JOIN prediction_models pm ON pm.id=cp.model_id
-     ${filters.text()}
-     ORDER BY ${orderBy}
-     LIMIT $${values.length - 1} OFFSET $${values.length}`,
-    values,
-  );
-  const total = Number(rows[0]?.full_count || 0);
-  const visibleTotal = Math.min(total, entitlementLimit);
-  return {
-    rows,
-    total,
-    visibleTotal,
-    page: input.page,
-    pageSize,
-    resultLimited: total > visibleTotal,
-  };
-}
-
-export type CompanyFilterOptions = {
-  industries: Array<{ slug: string; name: string }>;
-  countries: Array<{ value: string; label: string }>;
-  states: string[];
-  counties: string[];
-  cities: string[];
-};
-
-const COUNTRY_LABELS: Record<string, string> = {
-  US: "United States",
-  GB: "United Kingdom",
-  GBR: "United Kingdom",
-  EU: "European Union",
-  DEU: "Germany",
-  FRA: "France",
-  ESP: "Spain",
-  ITA: "Italy",
-  NLD: "Netherlands",
-  BEL: "Belgium",
-  IRL: "Ireland",
-  POL: "Poland",
-  CZE: "Czechia",
-  ROU: "Romania",
-  BGR: "Bulgaria",
-  HRV: "Croatia",
-  AUT: "Austria",
-  SWE: "Sweden",
-  FIN: "Finland",
-  PRT: "Portugal",
-  HUN: "Hungary",
-  SVN: "Slovenia",
-};
-
-const COUNTRY_VARIANTS: Record<string, string[]> = {
-  US: ["US", "USA", "UNITED STATES"],
-  GB: ["GB", "GBR", "UK", "UNITED KINGDOM"],
-  AU: ["AU", "AUS", "AUSTRALIA"],
-  CA: ["CA", "CAN", "CANADA"],
-  DE: ["DE", "DEU", "GERMANY"],
-  FR: ["FR", "FRA", "FRANCE"],
-  ES: ["ES", "ESP", "SPAIN"],
-  IT: ["IT", "ITA", "ITALY"],
-  NL: ["NL", "NLD", "NETHERLANDS"],
-  BE: ["BE", "BEL", "BELGIUM"],
-  IE: ["IE", "IRL", "IRELAND"],
-  PL: ["PL", "POL", "POLAND"],
-  SE: ["SE", "SWE", "SWEDEN"],
-  FI: ["FI", "FIN", "FINLAND"],
-  PT: ["PT", "PRT", "PORTUGAL"],
-  RO: ["RO", "ROU", "ROMANIA"],
-  HR: ["HR", "HRV", "CROATIA"],
-};
-
-function canonicalCountry(value: string) {
-  const upper = value.toUpperCase();
-  return Object.entries(COUNTRY_VARIANTS).find(([, variants]) => variants.includes(upper))?.[0] || upper;
-}
-
-function countryVariants(value: string) {
-  const canonical = canonicalCountry(value);
-  return COUNTRY_VARIANTS[canonical] || [canonical];
-}
-
-export function countryLabel(value: string | null | undefined) {
-  if (!value) return "Country not reported";
-  const canonical = canonicalCountry(value);
-  if (COUNTRY_LABELS[canonical]) return COUNTRY_LABELS[canonical];
-  if (canonical.length === 2) {
-    try {
-      return new Intl.DisplayNames(["en"], { type: "region" }).of(canonical) || canonical;
-    } catch {
-      return canonical;
-    }
-  }
-  return canonical.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-export async function getCompanyFilterOptions(
-  country?: string,
-  state?: string,
-  county?: string,
-): Promise<CompanyFilterOptions> {
-  const countryValue = country?.toUpperCase();
-  const rows = await query<{
-    industries: Array<{ slug: string; name: string }>;
-    countries: string[];
-    states: string[];
-    counties: string[];
-    cities: string[];
-  }>(`SELECT
-    COALESCE((SELECT jsonb_agg(jsonb_build_object('slug',slug,'name',name) ORDER BY name) FROM industries),'[]'::jsonb) AS industries,
-    COALESCE((SELECT jsonb_agg(value ORDER BY value) FROM (
-      SELECT DISTINCT COALESCE(NULLIF(legal_entity_country,''),
-        CASE WHEN recipient_country='UNITED STATES' THEN 'US' ELSE recipient_country END) AS value
-      FROM companies WHERE NOT is_demo AND NOT is_benchmark
-        AND COALESCE(NULLIF(legal_entity_country,''),recipient_country) IS NOT NULL
-    ) country_options),'[]'::jsonb) AS countries,
-    COALESCE((SELECT jsonb_agg(value ORDER BY value) FROM (
-      SELECT DISTINCT recipient_state AS value FROM companies
-      WHERE NOT is_demo AND NOT is_benchmark AND recipient_state IS NOT NULL
-        AND ($1::text[] IS NULL OR upper(COALESCE(NULLIF(legal_entity_country,''),
-          CASE WHEN recipient_country='UNITED STATES' THEN 'US' ELSE recipient_country END))=ANY($1::text[]))
-    ) state_options),'[]'::jsonb) AS states,
-    COALESCE((SELECT jsonb_agg(value ORDER BY value) FROM (
-      SELECT DISTINCT recipient_county AS value FROM companies
-      WHERE NOT is_demo AND NOT is_benchmark AND recipient_county IS NOT NULL
-        AND $2::text IS NOT NULL AND recipient_state=$2
-    ) county_options),'[]'::jsonb) AS counties,
-    COALESCE((SELECT jsonb_agg(value ORDER BY value) FROM (
-      SELECT DISTINCT recipient_city AS value FROM companies
-      WHERE NOT is_demo AND NOT is_benchmark AND recipient_city IS NOT NULL
-        AND $2::text IS NOT NULL AND recipient_state=$2
-        AND ($3::text IS NULL OR recipient_county=$3)
-    ) city_options),'[]'::jsonb) AS cities`, [countryValue ? countryVariants(countryValue) : null, state?.toUpperCase() || null, county || null]);
-  const options = rows[0] || { industries: [], countries: [], states: [], counties: [], cities: [] };
-  return {
-    industries: options.industries,
-    countries: Array.from(
-      new Map(options.countries.map((value) => {
-        const canonical = canonicalCountry(value);
-        return [canonical, { value: canonical, label: countryLabel(canonical) }];
-      })).values(),
-    ).sort((left, right) => left.label.localeCompare(right.label)),
-    states: options.states,
-    counties: options.counties,
-    cities: options.cities,
-  };
-}
-
-export async function getHomepageCompanyExamples() {
-  const result = await searchCompanySnapshots(
-    {
-      page: 1,
-      pageSize: 5,
-      sort: "government_desc",
-      trackedOnly: false,
-    },
-    "free",
-  );
-  return result.rows.slice(0, 5);
-}
-
-export async function getCompanySnapshotBySlug(
-  slug: string,
-  userId: string | null = null,
-): Promise<CompanySnapshotRow | null> {
-  const rows = await query<CompanySnapshotRow>(
-    `${SNAPSHOT_CTES}
-     SELECT s.* FROM company_snapshot s WHERE s.slug=$2 LIMIT 1`,
-    [userId, slug],
-  );
-  return rows[0] || null;
-}
-
-
-    AND upper(a.performance_state) <> upper(COALESCE(c.recipient_state,''))
-), new_work_states AS MATERIALIZED (
-  SELECT rn.company_id,count(*)::integer AS count_12m
-  FROM recent_new_work_states rn
-  WHERE NOT EXISTS (
-    SELECT 1 FROM awards older
-    WHERE older.recipient_company_id=rn.company_id
-      AND NOT older.is_demo AND NOT older.is_benchmark
-      AND older.award_date >= current_date - interval '48 months'
-      AND older.award_date < current_date - interval '12 months'
-      AND upper(older.performance_state)=rn.state
-  )
-  GROUP BY rn.company_id
-), global_activity AS MATERIALIZED (
-  SELECT ps.company_id,bool_or(COALESCE(p.value_native,0) > 0) AS has_positive_process
-  FROM procurement_process_suppliers ps
-  JOIN procurement_processes p ON p.id=ps.process_id
-  WHERE NOT p.is_demo
-  GROUP BY ps.company_id
-), establishment_activity AS MATERIALIZED (
-  SELECT company_id,count(*)::text AS known_locations,
-    bool_or(verified_headquarters) AS has_verified_headquarters,
-    bool_or(location_status IN ('opening','active','expanding','relocating')) AS has_operating_location,
-    bool_or(location_status IN ('opening','planned')) AS has_opening,
-    bool_or(location_status='closing') AS has_closing
-  FROM business_establishments
-  WHERE company_id IS NOT NULL
-    AND match_status IN ('auto_verified','approved')
-    AND verification_status IN ('source_verified','corroborated')
-  GROUP BY company_id
-), best_location AS MATERIALIZED (
-  SELECT DISTINCT ON (company_id) company_id,city,county,state_code,postal_code,country_code,verified_headquarters,
-    establishment_type,location_status
-  FROM business_establishments
-  WHERE company_id IS NOT NULL
-    AND match_status IN ('auto_verified','approved')
-    AND verification_status IN ('source_verified','corroborated')
-  ORDER BY company_id,verified_headquarters DESC,
-    CASE location_status WHEN 'active' THEN 0 WHEN 'expanding' THEN 1 WHEN 'opening' THEN 2 ELSE 3 END,
-    last_observed_at DESC
-), latest_assessments AS MATERIALIZED (
-  SELECT DISTINCT ON (company_id,assessment_type) company_id,assessment_type,as_of_date,score,
-    data_sufficiency,components,explanation
-  FROM movement_assessments
-  WHERE company_id IS NOT NULL AND model_version='company-change-indication-v2'
-    AND assessment_type IN ('expansion','growth','relocation','contraction','closure_distress')
-  ORDER BY company_id,assessment_type,as_of_date DESC,generated_at DESC
-), assessment_summary AS MATERIALIZED (
-  SELECT company_id,
-    max(score) FILTER (WHERE assessment_type='expansion') AS expansion_score,
-    max(as_of_date) FILTER (WHERE assessment_type='expansion') AS expansion_date,
-    (array_agg(data_sufficiency ORDER BY as_of_date DESC) FILTER (WHERE assessment_type='expansion'))[1] AS expansion_sufficiency,
-    (array_agg(components ORDER BY as_of_date DESC) FILTER (WHERE assessment_type='expansion'))[1] AS expansion_components,
-    (array_agg(explanation ORDER BY as_of_date DESC) FILTER (WHERE assessment_type='expansion'))[1] AS expansion_explanation,
-    max(score) FILTER (WHERE assessment_type='relocation') AS relocation_score,
-    max(as_of_date) FILTER (WHERE assessment_type='relocation') AS relocation_date,
-    (array_agg(data_sufficiency ORDER BY as_of_date DESC) FILTER (WHERE assessment_type='relocation'))[1] AS relocation_sufficiency,
-    (array_agg(components ORDER BY as_of_date DESC) FILTER (WHERE assessment_type='relocation'))[1] AS relocation_components,
-    (array_agg(explanation ORDER BY as_of_date DESC) FILTER (WHERE assessment_type='relocation'))[1] AS relocation_explanation,
-    max(score) FILTER (WHERE assessment_type IN ('contraction','closure_distress')) AS contraction_score,
-    max(as_of_date) FILTER (WHERE assessment_type IN ('contraction','closure_distress')) AS contraction_date,
-    (array_agg(data_sufficiency ORDER BY as_of_date DESC) FILTER (WHERE assessment_type IN ('contraction','closure_distress')))[1] AS contraction_sufficiency,
-    (array_agg(components ORDER BY as_of_date DESC) FILTER (WHERE assessment_type IN ('contraction','closure_distress')))[1] AS contraction_components,
-    (array_agg(explanation ORDER BY as_of_date DESC) FILTER (WHERE assessment_type IN ('contraction','closure_distress')))[1] AS contraction_explanation
-  FROM latest_assessments GROUP BY company_id
-), latest_change AS MATERIALIZED (
-  SELECT DISTINCT ON (company_id) company_id,assessment_type,as_of_date,score,data_sufficiency,components,explanation
-  FROM latest_assessments
-  ORDER BY company_id,as_of_date DESC,score DESC NULLS LAST
-), supported_change AS MATERIALIZED (
-  SELECT company_id,
-    bool_or(outcome_type IN ('establishment_opened','business_formed')) AS has_opening,
-    bool_or(outcome_type IN ('establishment_expanded')) AS has_expansion,
-    bool_or(outcome_type='establishment_relocated') AS has_relocation,
-    bool_or(outcome_type IN ('establishment_contracted','establishment_closed','business_dissolved')) AS has_contraction
-  FROM business_change_outcomes WHERE company_id IS NOT NULL GROUP BY company_id
-), supported_license AS MATERIALIZED (
-  SELECT company_id,true AS has_license FROM business_licenses
-  WHERE company_id IS NOT NULL AND resolution_status IN ('auto_verified','approved') GROUP BY company_id
-), supported_registration AS MATERIALIZED (
-  SELECT company_id,true AS has_registration FROM business_registrations
-  WHERE company_id IS NOT NULL AND resolution_status IN ('auto_verified','approved') GROUP BY company_id
-), company_snapshot AS MATERIALIZED (
-  SELECT c.id::text,c.slug,c.canonical_name,c.legal_name,p.canonical_name AS parent_company_name,
-    i.name AS industry_name,i.slug AS industry_slug,
-    COALESCE(NULLIF(c.legal_entity_country,''),
-      CASE WHEN c.recipient_country='UNITED STATES' THEN 'US' ELSE c.recipient_country END,
-      bl.country_code) AS country_code,
-    COALESCE(bl.city,c.recipient_city) AS location_city,
-    COALESCE(bl.county,c.recipient_county) AS location_county,
-    COALESCE(bl.state_code,c.recipient_state) AS location_state,
-    COALESCE(bl.postal_code,c.recipient_zip) AS location_postal,
-    concat_ws(', ',COALESCE(bl.city,c.recipient_city),COALESCE(bl.state_code,c.recipient_state)) AS location_label,
-    CASE WHEN bl.verified_headquarters THEN 'Verified headquarters'
-      WHEN bl.company_id IS NOT NULL THEN 'Supported operating location'
-      WHEN c.recipient_city IS NOT NULL OR c.recipient_state IS NOT NULL THEN 'Observed recipient location'
-      ELSE 'Location not reported' END AS location_basis,
-    ta.government_business::text,ta.obligations_12m::text,
-    ta.obligations_baseline_annual::text,
-    COALESCE(ta.baseline_supported,false) AS baseline_supported,
-    COALESCE(aa.new_awards_12m,0)::integer AS new_awards_12m,
-    aa.new_awards_baseline_annual::text,
-    COALESCE(ea.known_locations,'0') AS known_locations,
-    lt.action_date::text AS latest_transaction_date,lt.obligation::text AS latest_transaction_obligation,
-    lt.is_material AS latest_transaction_material,
-    lc.assessment_type AS latest_change_type,lc.as_of_date::text AS latest_change_date,lc.score::text AS latest_change_score,
-    lc.data_sufficiency AS latest_change_sufficiency,lc.components AS latest_change_components,
-    lc.explanation AS latest_change_explanation,
-    ass.expansion_score::text,ass.expansion_date::text,ass.expansion_sufficiency,ass.expansion_components,ass.expansion_explanation,
-    ass.relocation_score::text,ass.relocation_date::text,ass.relocation_sufficiency,ass.relocation_components,ass.relocation_explanation,
-    ass.contraction_score::text,ass.contraction_date::text,ass.contraction_sufficiency,ass.contraction_components,ass.contraction_explanation,
-    COALESCE(sc.has_opening,false) OR COALESCE(ea.has_opening,false) AS has_opening,
-    COALESCE(sc.has_expansion,false) AS has_confirmed_expansion,
-    COALESCE(sc.has_relocation,false) AS has_confirmed_relocation,
-    COALESCE(sc.has_contraction,false) OR COALESCE(ea.has_closing,false) AS has_confirmed_contraction,
-    COALESCE(sr.has_registration,false) AS has_registration,
-    EXISTS (SELECT 1 FROM company_watches w WHERE w.company_id=c.id AND w.user_id=$1::uuid) AS watched
-  FROM companies c
-  LEFT JOIN companies p ON p.id=c.parent_company_id
-  LEFT JOIN industries i ON i.id=c.primary_industry_id
-  LEFT JOIN transaction_activity ta ON ta.company_id=c.id
-  LEFT JOIN latest_transaction lt ON lt.company_id=c.id
-  LEFT JOIN award_activity aa ON aa.company_id=c.id
-  LEFT JOIN global_activity ga ON ga.company_id=c.id
-  LEFT JOIN establishment_activity ea ON ea.company_id=c.id
-  LEFT JOIN best_location bl ON bl.company_id=c.id
-  LEFT JOIN assessment_summary ass ON ass.company_id=c.id
-  LEFT JOIN latest_change lc ON lc.company_id=c.id
-  LEFT JOIN supported_change sc ON sc.company_id=c.id
-  LEFT JOIN supported_license sl ON sl.company_id=c.id
-  LEFT JOIN supported_registration sr ON sr.company_id=c.id
-  WHERE NOT c.is_demo AND NOT c.is_benchmark AND (
-    COALESCE(ta.has_positive_transaction,false) OR COALESCE(aa.has_positive_award,false)
-    OR COALESCE(ga.has_positive_process,false) OR COALESCE(ea.has_operating_location,false)
-    OR COALESCE(sl.has_license,false) OR COALESCE(sr.has_registration,false)
-    OR sc.company_id IS NOT NULL
-    OR EXISTS (SELECT 1 FROM company_watches w WHERE w.company_id=c.id)
-  )
-)`;
-
-function applyCommonFilters(filters: SqlFilters, input: CompanyScreenerInput | PredictionInput) {
-  if (input.industry) filters.add("s.industry_slug=?", input.industry);
-  if (input.country && input.country !== "ALL")
-    filters.add("upper(s.country_code)=ANY(?::text[])", countryVariants(input.country));
-  if (input.state) filters.add("upper(s.location_state)=?", input.state);
-  if (input.county)
-    filters.add("(s.location_county ILIKE ? OR s.location_county=?)", input.county);
-  if (input.city) filters.add("s.location_city ILIKE ?", input.city);
-  if ("postal" in input && input.postal)
-    filters.add("s.location_postal ILIKE ? || '%'", input.postal);
-  if (input.governmentMin != null)
-    filters.add("s.government_business::numeric >= ?", input.governmentMin);
-  if (input.baselineAnnualMin != null)
-    filters.add("s.baseline_supported AND s.obligations_baseline_annual::numeric >= ?", input.baselineAnnualMin);
-  if (input.obligations12mMin != null)
-    filters.add("s.obligations_12m::numeric >= ?", input.obligations12mMin);
-  // This is descriptive procurement momentum, not a calibrated business-outcome prediction.
-  if (input.baselineTrend === "above")
-    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric >= s.obligations_baseline_annual::numeric * 1.25 AND s.obligations_12m::numeric - s.obligations_baseline_annual::numeric >= 250000)");
-  if (input.baselineTrend === "below")
-    filters.clauses.push("(s.baseline_supported AND s.obligations_baseline_annual::numeric > 0 AND s.obligations_12m::numeric <= s.obligations_baseline_annual::numeric * 0.75 AND s.obligations_baseline_annual::numeric - s.obligations_12m::numeric >= 250000)");
-}
-
-function applyScreenerFilters(filters: SqlFilters, input: CompanyScreenerInput) {
-  applyCommonFilters(filters, input);
-  if (input.q) {
-    filters.add(
-      "(s.canonical_name ILIKE '%' || ? || '%' OR s.legal_name ILIKE '%' || ? || '%' OR s.parent_company_name ILIKE '%' || ? || '%')",
-      input.q,
-    );
-  }
-  if (input.knownLocations != null)
-    filters.add("s.known_locations::integer >= ?", input.knownLocations);
-  if (input.trackedOnly) filters.clauses.push("s.watched");
-  if (input.latestSignal === "award_increased")
-    filters.clauses.push("s.latest_transaction_material AND s.latest_transaction_obligation::numeric > 0");
-  if (input.latestSignal === "award_decreased")
-    filters.clauses.push("s.latest_transaction_material AND s.latest_transaction_obligation::numeric < 0");
-  if (input.latestSignal === "expansion")
-    filters.clauses.push("s.expansion_score IS NOT NULL");
-  if (input.latestSignal === "move")
-    filters.clauses.push("s.relocation_score IS NOT NULL");
-  if (input.latestSignal === "contraction")
-    filters.clauses.push("s.contraction_score IS NOT NULL");
-
-  const changeClauses: Record<string, string> = {
-    opening: "s.has_opening",
-    growing: "(s.expansion_score IS NOT NULL OR s.latest_change_type='growth')",
-    expansion: "(s.expansion_score IS NOT NULL OR s.has_confirmed_expansion)",
-    moving: "(s.relocation_score IS NOT NULL OR s.has_confirmed_relocation)",
-    shrinking: "(s.contraction_score IS NOT NULL OR s.has_confirmed_contraction)",
-    closing: "s.has_confirmed_contraction",
-    new_business: "s.has_registration",
-  };
-  if (input.change && changeClauses[input.change])
-    filters.clauses.push(changeClauses[input.change]);
-}
-
-function sortSql(sort: CompanySort) {
-  const sorts: Record<CompanySort, string> = {
-    government_desc: "s.government_business::numeric DESC NULLS LAST,s.canonical_name",
-    obligations_12m_desc: "s.obligations_12m::numeric DESC NULLS LAST,s.canonical_name",
-    latest_signal:
-      "greatest(s.latest_transaction_date::date,s.latest_change_date::date) DESC NULLS LAST,s.canonical_name",
-    latest_change: "s.latest_change_date::date DESC NULLS LAST,s.canonical_name",
-    company: "s.canonical_name",
-  };
-  return sorts[sort];
-}
-
-export async function searchCompanySnapshots(
-  input: CompanyScreenerInput,
-  plan: Plan,
-  userId: string | null = null,
-): Promise<CompanyScreenerResult> {
-  const filters = new SqlFilters(userId);
-  applyScreenerFilters(filters, input);
-  const entitlementLimit = searchResultLimit(plan);
-  const pageSize = Math.max(1, Math.min(input.pageSize, entitlementLimit));
-  const offset = Math.max(0, (input.page - 1) * pageSize);
-  const values = [...filters.values, pageSize, offset];
-  const rows = await query<CompanySnapshotRow>(
-    `${SNAPSHOT_CTES}
-     SELECT s.*,count(*) OVER()::text AS full_count
-     FROM company_snapshot s ${filters.text()}
-     ORDER BY ${sortSql(input.sort)}
-     LIMIT $${values.length - 1} OFFSET $${values.length}`,
-    values,
-  );
-  const total = Number(rows[0]?.full_count || 0);
-  const visibleTotal = Math.min(total, entitlementLimit);
-  return {
-    rows,
-    total,
-    visibleTotal,
-    page: input.page,
-    pageSize,
-    resultLimited: total > visibleTotal,
-  };
-}
-
-const PREDICTION_CONFIG: Record<PredictionKind, { prediction: string }> = {
-  expansion: { prediction: "company_expansion" },
-  moves: { prediction: "company_relocation" },
-  contraction: { prediction: "company_contraction" },
-};
-
-export type PredictionCompanyRow = CompanySnapshotRow & {
-  probability: string | null;
-  prediction_sufficiency: string | null;
-  probability_eligible: boolean | null;
-  model_status: string | null;
-  horizon_days: number | null;
-};
-
-export async function searchPredictionCompanies(
-  kind: PredictionKind,
-  input: PredictionInput,
-  plan: Plan,
-  userId: string | null = null,
-): Promise<Omit<CompanyScreenerResult, "rows"> & { rows: PredictionCompanyRow[] }> {
-  const filters = new SqlFilters(userId);
-  applyCommonFilters(filters, input);
-  if (input.q) filters.add(
-    "(s.canonical_name ILIKE '%' || ? || '%' OR s.legal_name ILIKE '%' || ? || '%')",
-    input.q
-  );
-  const config = PREDICTION_CONFIG[kind];
-  const scoreColumn = kind === "moves" ? "relocation" : kind;
-  // Include an active calibrated prediction even if the parallel evidence-score snapshot is absent.
-  filters.clauses.push(`(s.${scoreColumn}_score IS NOT NULL OR (cp.probability IS NOT NULL AND cp.data_sufficiency = 'sufficient' AND pm.probability_eligible = true AND pm.status = 'active'))`);
   if (input.recencyDays) {
     filters.add(
       `s.${scoreColumn}_date::date >= current_date - (?::integer * interval '1 day')`,
