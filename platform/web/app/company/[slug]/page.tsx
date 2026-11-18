@@ -83,18 +83,19 @@ function Outlook({ kind, snapshot, intelligence }: { kind: "expansion" | "reloca
   const title = kind === "relocation" ? "Move" : kind[0].toUpperCase() + kind.slice(1);
   const contracts = assessProcurementMomentum({ current:snapshot?.obligations_12m, annualBaseline:snapshot?.obligations_baseline_annual, baselineSupported:snapshot?.baseline_supported===true });
   const contractCue = kind === "expansion" && contracts.status === "above" ||
-    kind === "contraction" && contracts.status === "below" ||
-    kind === "relocation" && (snapshot?.new_work_states_12m || 0) > 0;
-  const cueText = kind === "relocation"
-    ? `${snapshot?.new_work_states_12m || 0} new work-performance geography(ies)`
-    : contracts.relativeChangePct == null ? "Historical procurement shift" :
+    kind === "contraction" && contracts.status === "below";
+  const warnCue=kind==="contraction" && (snapshot?.warn_notice_count_24m||0)>0;
+  const observedContraction=kind==="contraction" && snapshot?.has_confirmed_contraction===true;
+  const cueText = contracts.relativeChangePct == null ? "Historical procurement shift" :
       `${contracts.relativeChangePct>0?"+":""}${contracts.relativeChangePct.toFixed(0)}% vs normal contracts`;
   return <article className="outlook-card">
     <span>{title}</span>
     <strong>{calibrated ? `${Math.round(Number(prediction.probability) * 100)}% predicted probability` :
-      score != null ? signalBand(score,sufficiency) : contractCue ? cueText : "Insufficient evidence"}</strong>
+      score != null ? signalBand(score,sufficiency) : warnCue ? "Official WARN workforce notice" : observedContraction ? "Verified closure / contraction" : contractCue ? cueText : "Insufficient evidence"}</strong>
     <small>{calibrated ? `${prediction.horizon_days}-day validated model · ${dateLabel(prediction.as_of_date)}` :
       score != null ? `Evidence score only; not a probability · ${dateLabel(String(date))}` :
+      warnCue ? "Source-verified MD/VA WARN notice; planned workforce change is not a forecast" :
+      observedContraction ? "Independent source-backed outcome, not a forecast" :
       contractCue ? "Procurement research cue · not a validated expansion, contraction or move forecast" :
       "No recent supported assessment or validated model"}</small>
   </article>;
@@ -226,7 +227,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
       </div>
 
 
-      <div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
+      {visibleKinds.length>0?<div className="outlook-section studio-outlook-section"><div className="section-header"><div><p className="eyebrow">{focus ? focus.toUpperCase() + " / FOCUSED RESEARCH" : "SUPPORTED COMPANY SIGNALS"}</p><h2>{focus ? (focus === "relocation" ? "Movement" : focus[0].toUpperCase()+focus.slice(1)) + " outlook" : "Company change signals"}</h2><p>Only supported categories appear in the default dossier. Opening from a specific screener keeps that category in focus. Evidence scores are not probabilities.</p></div></div>
       {visibleKinds.length
         ? <div className="outlook-grid fq-focused-outlook">{visibleKinds.map(kind => <Outlook key={kind} kind={kind} snapshot={snapshot} intelligence={data.changeIntelligence} />)}</div>
         : <p className="fq-no-confirmed-signal">No expansion, contraction or relocation assessment currently meets the evidence threshold for this company.</p>}
