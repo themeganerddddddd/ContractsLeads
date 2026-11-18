@@ -85,7 +85,7 @@ export function parsePredictionInput(raw: RawParams): PredictionInput {
     county: one(raw.county)?.trim() || undefined,
     city: one(raw.city)?.trim() || undefined,
     horizon: horizon && [90, 180, 365].includes(horizon) ? horizon : 180,
-    recencyDays: recencyDays && [30, 90, 180, 365].includes(recencyDays) ? recencyDays : 180,
+    recencyDays: recencyDays !== undefined && [0, 30, 90, 180, 365, 730].includes(recencyDays) ? recencyDays : 0,
     governmentMin: optionalNumber(one(raw.government_min)),
     rank: ranking === "evidence" || ranking === "recent" ? ranking : "likelihood",
     page: positiveInteger(one(raw.page), 1),
