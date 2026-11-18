@@ -70,7 +70,8 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
   if(!rows.length) return <section className="terminal-empty">
     <div className="terminal-empty-symbol">—</div>
     <h2>No ranked signals match these filters.</h2>
-    <p>Try the full United States, broaden the time range, or clear your county filter. This is a data-coverage statement, not proof that no business activity occurred.</p>
+    <p>No source-backed assessments were returned for this category and geography. This does not prove that no companies will {kind === "moves" ? "relocate" : kind === "contraction" ? "contract" : "expand"}. Try a broader market or see recorded business events instead.</p>
+    <Link className="fq-empty-fallback-link" href={kind === "moves" ? "/business-change?tab=moving" : kind === "contraction" ? "/business-change?tab=shrinking" : "/business-change?tab=growing"}>Browse documented {kind === "moves" ? "moves" : kind === "contraction" ? "contractions" : "growth"} instead ↗</Link>
   </section>;
   return <div className="terminal-table-scroll"><table className="terminal-table terminal-ranking-table">
     <thead><tr>
