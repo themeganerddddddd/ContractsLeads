@@ -25,6 +25,8 @@ export function CompanyContactsCard({
   const checkedAt = published?.checked_date && /^\d{4}-\d{2}-\d{2}$/.test(published.checked_date)
     ? published.checked_date : null;
 
+  // No placeholder section when there is no source-backed professional contact.
+  if (!published) return null;
   return (
     <section id="company-contacts" className="fq-company-contacts" aria-label="Company contact information">
       <header>
