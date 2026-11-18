@@ -179,28 +179,34 @@ const SNAPSHOT_CTES = `WITH transaction_activity AS MATERIALIZED (
   ORDER BY company_id,verified_headquarters DESC,
     CASE location_status WHEN 'active' THEN 0 WHEN 'expanding' THEN 1 WHEN 'opening' THEN 2 ELSE 3 END,
     last_observed_at DESC
-), warn_activity AS MATERIALIZED (
-  SELECT ec.company_id,
-    count(DISTINCT e.id)::integer AS notice_count_24m,
-    COALESCE(sum(e.jobs_affected),0)::integer AS jobs_affected_24m,
-    max(COALESCE(e.effective_start_date,e.announced_date))::text AS latest_warn_date,
-    (array_agg(src.original_url ORDER BY COALESCE(e.effective_start_date,e.announced_date) DESC NULLS LAST)
-      FILTER (WHERE src.original_url ~ '^https://'))[1] AS latest_warn_source_url
-  FROM company_events e
-  JOIN company_event_companies ec ON ec.event_id=e.id
-    AND ec.review_status IN ('auto_verified','approved')
-    AND ec.relationship_type IN ('subject','affected_employer','employer','operator')
+), warn_events AS MATERIALIZED (
+  SELECT DISTINCT ON (ec.company_id,e.id)
+    ec.company_id,e.id,e.jobs_affected,
+    COALESCE(e.effective_start_date,e.announced_date) AS event_date,
+    src.original_url
+  FROM company_event_companies ec
+  JOIN company_events e ON e.id=ec.event_id
   LEFT JOIN LATERAL (
     SELECT ces.original_url FROM company_event_sources ces
     WHERE ces.event_id=e.id AND ces.record_status IN ('parsed','linked')
-      AND ces.original_url ~ '^https://' ORDER BY ces.is_primary DESC,ces.collected_at DESC LIMIT 1
+      AND ces.original_url ~ '^https://'
+    ORDER BY ces.is_primary DESC,ces.collected_at DESC LIMIT 1
   ) src ON true
-  WHERE e.source_system IN ('maryland_warn','virginia_warn')
+  WHERE ec.review_status IN ('auto_verified','approved')
+    AND ec.relationship_type IN ('subject','affected_employer','employer','operator')
+    AND e.source_system IN ('maryland_warn','virginia_warn')
     AND e.verification_status IN ('source_verified','corroborated')
     AND e.event_type IN ('layoff','closure','furlough')
-    AND e.event_status NOT IN ('rescinded','cancelled','rejected')
+    AND e.event_status NOT IN ('rescinded','cancelled')
     AND COALESCE(e.effective_start_date,e.announced_date) >= current_date - interval '24 months'
-  GROUP BY ec.company_id
+  ORDER BY ec.company_id,e.id,ec.is_primary DESC
+), warn_activity AS MATERIALIZED (
+  SELECT company_id,count(*)::integer AS notice_count_24m,
+    COALESCE(sum(jobs_affected),0)::integer AS jobs_affected_24m,
+    max(event_date)::text AS latest_warn_date,
+    (array_agg(original_url ORDER BY event_date DESC NULLS LAST)
+      FILTER (WHERE original_url ~ '^https://'))[1] AS latest_warn_source_url
+  FROM warn_events GROUP BY company_id
 ), latest_assessments AS MATERIALIZED (
   SELECT DISTINCT ON (company_id,assessment_type) company_id,assessment_type,as_of_date,score,
     data_sufficiency,components,explanation
