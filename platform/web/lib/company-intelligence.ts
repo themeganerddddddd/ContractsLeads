@@ -465,14 +465,17 @@ export async function searchPredictionCompanies(
   const values = [...filters.values, pageSize, offset];
   // A "most likely" sort is a probability ranking ONLY for calibrated, active models.
   // Non-calibrated companies remain ordered by descriptive evidence score, never a fake percentage.
+  const verifiedRetentionSort = kind === "contraction"
+    ? "s.warn_notice_count_24m DESC,s.has_confirmed_contraction DESC,"
+    : "";
   const orderBy = input.rank === "recent"
-    ? `s.${scoreColumn}_date::date DESC NULLS LAST,s.${scoreColumn}_score::numeric DESC NULLS LAST,s.canonical_name`
+    ? `${kind==="contraction"?"GREATEST(s.contraction_date::date,s.latest_warn_date::date)":"s."+scoreColumn+"_date::date"} DESC NULLS LAST,${verifiedRetentionSort}s.${scoreColumn}_score::numeric DESC NULLS LAST,s.canonical_name`
     : input.rank === "evidence"
-      ? `s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`
+      ? `${verifiedRetentionSort}s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`
       : `CASE WHEN pm.probability_eligible = true AND pm.status = 'active'
             AND cp.data_sufficiency = 'sufficient' AND cp.probability IS NOT NULL
           THEN cp.probability ELSE NULL END DESC NULLS LAST,
-          s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`;
+          ${verifiedRetentionSort}s.${scoreColumn}_score::numeric DESC NULLS LAST,s.${scoreColumn}_date::date DESC NULLS LAST,s.canonical_name`;
   const rows = await query<PredictionCompanyRow>(
     `${SNAPSHOT_CTES}
      SELECT s.*,cp.probability::text,cp.data_sufficiency AS prediction_sufficiency,
