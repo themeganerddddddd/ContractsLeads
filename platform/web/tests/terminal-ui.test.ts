@@ -22,7 +22,7 @@ describe("location-first institutional intelligence terminal",()=>{
     expect(source).toContain("THEN cp.probability ELSE NULL END DESC NULLS LAST");
     expect(source).toContain("s.${scoreColumn}_score::numeric DESC NULLS LAST");
     const radar=read("components/PredictionScreener.tsx");
-    expect(radar).toContain("Evidence strength is not a calibrated probability.");
+    expect(radar).toContain("A procurement cue is not a prediction.");
     expect(radar).toContain("<RankingsEmptyState variant={kind}/>");
   });
   it("renders country, state, and county controls without database queries",()=>{
