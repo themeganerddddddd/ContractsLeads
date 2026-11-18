@@ -77,9 +77,10 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
   return <div className="terminal-table-scroll"><table className="terminal-table terminal-ranking-table">
     <thead><tr>
       <th scope="col">Rank</th><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Observed geography</th>
+      <th scope="col">Contracts vs. normal</th>
+      {kind==="contraction"?<th scope="col">WARN / retention alerts</th>:null}
       <th scope="col">Likelihood / indication</th><th scope="col">Key evidence</th>
-      {kind==="moves"?<th scope="col">Potential destination</th>:<th scope="col">Government business</th>}
-      <th scope="col">Contract vs 3Y baseline</th><th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
+      <th scope="col">12M obligations</th><th scope="col">Last signal</th><th scope="col" aria-label="Open company"/>
     </tr></thead>
     <tbody>{rows.map((row,index)=>{
       const item=assessment(row,kind);
@@ -91,6 +92,7 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
       const band=evidenceBand(item.score);
       const contract = assessProcurementMomentum({current:row.obligations_12m,annualBaseline:row.obligations_baseline_annual,baselineSupported:row.baseline_supported});
       const procurementCue = kind === "moves" ? row.new_work_states_12m > 0 : kind === "expansion" ? contract.status === "above" : contract.status === "below";
+      const officialWorkforceCue = kind === "contraction" && (row.warn_notice_count_24m>0 || row.has_confirmed_contraction);
       const cueLabel = kind === "moves" ? "New contract work geography" : kind === "expansion" ? "Above-normal contracts" : "Below-normal contracts";
       const cueExplanation = kind === "moves"
         ? `${row.new_work_states_12m} newly observed out-of-state work-performance market(s), not verified relocation destinations`
@@ -99,26 +101,29 @@ function RankedSignalsTable({kind,rows,page}:{kind:PredictionKind;rows:Predictio
       return <tr key={row.id}>
         <td className="terminal-rank">#{String((page-1)*25+index+1).padStart(2,"0")}</td>
         <td className="terminal-company"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`}>{row.canonical_name}</Link>
-          <small>{row.legal_name !== row.canonical_name ? row.legal_name : "Company dossier"}</small></td>
+          <small>{row.legal_name !== row.canonical_name ? row.legal_name : "Company dossier"} · {reported(row.location_label)}</small></td>
         <td>{reported(row.industry_name)}</td>
-        <td><strong>{reported(row.location_label)}</strong><small>{row.location_basis}</small></td>
+        <td className="fq-momentum-table-cell fq-primary-contract-cell">{(() => {
+          const baseline=assessProcurementMomentum({current:row.obligations_12m,annualBaseline:row.obligations_baseline_annual,baselineSupported:row.baseline_supported});
+          return <>
+            <strong className={`fq-momentum-label fq-momentum-${baseline.status}`}>{baseline.status==="insufficient"?"History limited":baseline.relativeChangePct==null?"—":`${baseline.relativeChangePct>0?"+":""}${baseline.relativeChangePct.toFixed(0)}%`}</strong>
+            <small>12M ${compactMoney(row.obligations_12m)} · 3Y annual normal ${baseline.status==="insufficient"?"unknown":compactMoney(row.obligations_baseline_annual)}</small>
+          </>;
+        })()}</td>
+        {kind==="contraction"?<td className="fq-warn-column">{row.warn_notice_count_24m>0?<>
+          <strong className="fq-warn-alert">Official WARN · {row.warn_notice_count_24m}</strong>
+          <small>{row.warn_jobs_affected_24m>0?`${row.warn_jobs_affected_24m.toLocaleString()} reported affected jobs`:"Workforce notice recorded"}</small>
+          {row.latest_warn_source_url ? <a href={row.latest_warn_source_url} target="_blank" rel="noopener noreferrer">Official notice ↗</a> : null}
+        </>:row.has_confirmed_contraction?<strong className="fq-confirmed-risk">Verified location contraction</strong>:<span className="fq-no-warn">No verified WARN</span>}</td>:null}
         <td><div className="terminal-indication">
           {calibrated?
             <strong className="terminal-probability">{Math.round(Number(row.probability)*100)}% <span>calibrated</span></strong> :
-            <strong className={`terminal-band terminal-band-${band.toLowerCase().replaceAll(" ","-")}`}>{item.score == null && procurementCue ? cueLabel : indicationLabel(item.score,item.sufficiency||undefined)}</strong>}
-          <small>{calibrated?`${row.horizon_days||180}-day validated model`:item.score!=null?`Evidence score ${Number(item.score).toFixed(0)}/100 · not a probability`:procurementCue?"Procurement research cue · not a probability":"Prediction not yet available"}</small>
+            <strong className={`terminal-band terminal-band-${band.toLowerCase().replaceAll(" ","-")}`}>{item.score == null && officialWorkforceCue ? (row.warn_notice_count_24m>0?"WARN workforce notice":"Verified contraction") : item.score == null && procurementCue ? cueLabel : indicationLabel(item.score,item.sufficiency||undefined)}</strong>}
+          <small>{calibrated?`${row.horizon_days||180}-day validated model`:item.score!=null?`Evidence score ${Number(item.score).toFixed(0)}/100 · not a probability`:officialWorkforceCue?"Source-verified workforce or closure evidence · not a probability":procurementCue?"Procurement research cue · not a probability":"Prediction not yet available"}</small>
         </div></td>
-        <td><strong className="terminal-evidence-label">{item.score == null && procurementCue ? cueLabel : evidenceLabel(item.components)}</strong>
-          <small>{item.explanation||(procurementCue?cueExplanation:"Open company dossier for supporting sources.")}</small></td>
-        {kind==="moves"?<td>{destinationLabel(item.components)}</td>:
-          <td className="terminal-money">{compactMoney(row.government_business)}<small>Disclosed obligations</small></td>}
-        <td className="fq-momentum-table-cell">{(() => {
-          const baseline = assessProcurementMomentum({ current: row.obligations_12m, annualBaseline: row.obligations_baseline_annual, baselineSupported: row.baseline_supported });
-          return <>
-            <strong className={`fq-momentum-label fq-momentum-${baseline.status}`}>{baseline.status === "insufficient" || baseline.relativeChangePct == null ? "History limited" : `${baseline.relativeChangePct > 0 ? "+" : ""}${baseline.relativeChangePct.toFixed(0)}%`}</strong>
-            <small>12M {compactMoney(row.obligations_12m)} · annual normal {baseline.status === "insufficient" ? "unknown" : compactMoney(row.obligations_baseline_annual)}</small>
-          </>;
-        })()}</td>
+        <td><strong className="terminal-evidence-label">{item.score == null && officialWorkforceCue ? (row.warn_notice_count_24m>0?"Official workforce notice":"Verified contraction") : item.score == null && procurementCue ? cueLabel : evidenceLabel(item.components)}</strong>
+          <small>{item.explanation||(officialWorkforceCue?"Company-linked verified WARN, closure, or contraction evidence. Investigate locally." :procurementCue?cueExplanation:"Open company dossier for supporting sources.")}</small></td>
+        <td className="terminal-money">{compactMoney(row.obligations_12m)}<small>Net in previous 12 months</small></td>
         <td>{dateLabel(item.date || (procurementCue ? row.latest_transaction_date : null))}</td><td className="terminal-chevron"><Link href={`/company/${row.slug}?focus=${kind==="moves"?"relocation":kind}`} aria-label={`View ${row.canonical_name}`}>↗</Link></td>
       </tr>;
     })}</tbody>
