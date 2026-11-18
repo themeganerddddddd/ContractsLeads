@@ -109,6 +109,12 @@ export function MarketFilterBar({
       </label>
       <button type="submit" className="market-filter-submit">Search <span aria-hidden="true">↗</span></button>
     </div>
+    <div className="fq-procurement-search" aria-label="Contract dollar thresholds and procurement baseline">
+      <div className="fq-procurement-search-intro"><span className="bc-microcopy">PROCUREMENT BASELINE</span><small>Compare each firm with its own normal annual contract obligations—not a generic industry average.</small></div>
+      <label>12-month net obligations ≥ <span>USD</span><input type="number" name="obligations_12m_min" min="0" step="1000" defaultValue={values.obligations12mMin ?? ""} placeholder="Any dollar amount" /></label>
+      <label>Prior 3-year annual average ≥ <span>USD</span><input type="number" name="baseline_annual_min" min="0" step="1000" defaultValue={values.baselineAnnualMin ?? ""} placeholder="Any baseline" /></label>
+      <label>Change vs company baseline<select name="baseline_trend" defaultValue={values.baselineTrend||""}><option value="">Any change</option><option value="above">25%+ above (at least $250k)</option><option value="below">25%+ below (at least $250k)</option></select></label>
+    </div>
     <div className="market-filter-secondary">
       <details className="market-filter-advanced" open={showAdvanced} onToggle={e=>setShowAdvanced(e.currentTarget.open)}>
         <summary>Advanced filters <span className="bc-advanced-description">Industry · date · ranking</span></summary>
