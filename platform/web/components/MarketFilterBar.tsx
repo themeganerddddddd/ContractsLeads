@@ -129,7 +129,8 @@ export function MarketFilterBar({
               </select>
             </label>
             <label>Forecast horizon
-              <select name="horizon" defaultValue={String(values.horizon||180)}>
+              <select name="horizon" defaultValue={String(values.horizon||0)}>
+                <option value="0">Any validated horizon</option>
                 <option value="90">90 days</option><option value="180">6 months</option>
                 <option value="365">12 months</option>
               </select>
